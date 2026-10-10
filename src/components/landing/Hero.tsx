@@ -27,6 +27,7 @@ export const Hero: React.FC = () => {
   });
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) return;
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -60,48 +61,48 @@ export const Hero: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative min-h-[100vh] flex flex-col justify-center items-center pt-28 pb-16 md:pt-32 md:pb-24 bg-green-hero text-text-onDark overflow-hidden rounded-b-[36px] shadow-2xl">
+    <section className="relative min-h-[100dvh] flex flex-col justify-center items-center pt-24 pb-14 sm:pt-28 sm:pb-16 md:pt-32 md:pb-24 bg-green-hero text-text-onDark overflow-hidden rounded-b-[28px] sm:rounded-b-[36px] shadow-2xl px-3 sm:px-6">
       {/* Background Organic Butter Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-butter-cream/10 blur-3xl pointer-events-none blob-float" />
-      <div className="absolute top-[20%] right-[-5%] w-[600px] h-[600px] rounded-full bg-green-light/20 blur-3xl pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[320px] sm:w-[500px] h-[320px] sm:h-[500px] rounded-full bg-butter-cream/10 blur-3xl pointer-events-none blob-float" />
+      <div className="absolute top-[20%] right-[-5%] w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] rounded-full bg-green-light/20 blur-3xl pointer-events-none" />
       
       {/* Interactive Background Vector Images (Hover-to-glow, floating motifs) */}
       <HeroVectorMotifs />
 
-      <div className="relative max-w-[1240px] mx-auto px-6 text-center flex flex-col items-center z-10">
+      <div className="relative max-w-[1240px] mx-auto px-2 sm:px-6 text-center flex flex-col items-center z-10 w-full">
         {/* Pill Tag */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter-cream/15 border border-butter-cream/30 text-butter-cream text-xs font-bold uppercase tracking-wider mb-6 hover:bg-butter-cream/25 hover:border-butter-cream/60 hover:shadow-[0_0_20px_rgba(255,240,179,0.35)] hover:scale-105 transition-all duration-300 cursor-default">
-          <Sparkles className="w-3.5 h-3.5 fill-butter-cream animate-pulse" />
-          The AI Sponsorship OS for College Fests & Hackathons
+        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-butter-cream/15 border border-butter-cream/30 text-butter-cream text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-5 sm:mb-6 hover:bg-butter-cream/25 hover:border-butter-cream/60 hover:shadow-[0_0_20px_rgba(255,240,179,0.35)] hover:scale-105 transition-all duration-300 cursor-default max-w-full">
+          <Sparkles className="w-3.5 h-3.5 fill-butter-cream animate-pulse shrink-0" />
+          <span className="truncate">The AI Sponsorship OS for College Fests & Hackathons</span>
         </div>
 
         {/* Display Headline in Fraunces */}
-        <h1 className="display-font text-4xl sm:text-5xl md:text-6xl lg:text-[68px] leading-[1.08] font-black text-butter-cream max-w-4xl tracking-tight mb-6">
+        <h1 className="display-font text-3xl sm:text-5xl md:text-6xl lg:text-[68px] leading-[1.12] sm:leading-[1.08] font-black text-butter-cream max-w-4xl tracking-tight mb-4 sm:mb-6">
           Find, research and win event sponsors — with AI that asks before it sends.
         </h1>
 
         {/* Subline */}
-        <p className="text-base sm:text-lg md:text-xl text-text-onDarkSub max-w-2xl font-normal leading-relaxed mb-10">
+        <p className="text-sm sm:text-base md:text-xl text-text-onDarkSub max-w-2xl font-normal leading-relaxed mb-8 sm:mb-10 px-2">
           Built for student organizers, fest conveners, and club leads. SponFy finds high-fit companies, cites verified sources, drafts tailored pitches, and waits for your nod.
         </p>
 
         {/* Action CTAs */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-16 z-10">
-          <Link href="/app">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-16 z-10 w-full sm:w-auto px-4 sm:px-0">
+          <Link href="/app" className="w-full sm:w-auto">
             <Button
               variant="butter"
               size="lg"
-              className="text-base font-bold shadow-xl hover:scale-105 hover:shadow-[0_10px_30px_rgba(255,240,179,0.45)] transition-all duration-300 group"
+              className="w-full sm:w-auto text-sm sm:text-base font-bold shadow-xl hover:scale-105 hover:shadow-[0_10px_30px_rgba(255,240,179,0.45)] transition-all duration-300 group justify-center"
             >
               Start a campaign free
-              <ArrowRight className="w-5 h-5 ml-1 transition-transform duration-200 group-hover:translate-x-1" />
+              <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 ml-1 transition-transform duration-200 group-hover:translate-x-1" />
             </Button>
           </Link>
-          <Link href="/workflow">
+          <Link href="/workflow" className="w-full sm:w-auto">
             <Button
               variant="hero-ghost"
               size="lg"
-              className="text-base font-semibold hover:scale-105 hover:bg-butter-cream/20 hover:border-butter-cream hover:shadow-md transition-all duration-300"
+              className="w-full sm:w-auto text-sm sm:text-base font-semibold hover:scale-105 hover:bg-butter-cream/20 hover:border-butter-cream hover:shadow-md transition-all duration-300 justify-center"
             >
               See how it works
             </Button>
@@ -133,16 +134,18 @@ export const Hero: React.FC = () => {
             }}
           />
           {/* Card Topbar Mock */}
-          <div className="flex items-center justify-between border-b border-green-dark/10 pb-4 mb-6">
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-red-400" />
-              <span className="w-3 h-3 rounded-full bg-amber-400" />
-              <span className="w-3 h-3 rounded-full bg-green-400" />
-              <span className="text-xs font-bold text-text-dim ml-2 uppercase tracking-wider">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-0 border-b border-green-dark/10 pb-4 mb-6">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-red-400" />
+                <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-amber-400" />
+                <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-green-400" />
+              </div>
+              <span className="text-[11px] sm:text-xs font-bold text-text-dim ml-1 sm:ml-2 uppercase tracking-wider">
                 SponFy Hackathon 2026 — Live Pipeline
               </span>
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-dark/5 text-xs font-semibold text-green-dark border border-green-dark/10">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-green-dark/5 text-[11px] sm:text-xs font-semibold text-green-dark border border-green-dark/10 self-start sm:self-auto">
               <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
               Human Approval Required
             </div>

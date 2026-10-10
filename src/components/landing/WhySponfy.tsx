@@ -48,7 +48,7 @@ export const WhySponfy: React.FC = () => {
           {differentiators.map((d, idx) => (
             <div
               key={idx}
-              className="p-8 bg-white rounded-3xl border border-green-dark/12 shadow-sm feature-card-interactive flex items-start gap-5 group cursor-default"
+              className="p-5 sm:p-8 bg-white rounded-3xl border border-green-dark/12 shadow-sm feature-card-interactive flex flex-col sm:flex-row items-start gap-4 sm:gap-5 group cursor-default"
             >
               <div className="w-14 h-14 rounded-2xl bg-butter-cream shrink-0 flex items-center justify-center text-green-dark shadow-sm group-hover:scale-110 group-hover:rotate-6 group-hover:bg-butter-gold group-hover:shadow-[0_0_18px_rgba(254,231,144,0.7)] transition-all duration-300">
                 <d.icon className="w-7 h-7 stroke-[1.75]" />

@@ -89,38 +89,45 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-x-0 top-16 md:top-[72px] bg-green-dark border-b border-green-mid p-6 shadow-2xl z-50 flex flex-col gap-3 text-center sm:hidden animate-fade-in pointer-events-auto">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "text-base font-semibold py-2.5 px-4 rounded-xl transition-colors border",
-                  isActive
-                    ? "bg-green-mid text-butter-cream border-butter-cream/60 shadow-sm"
-                    : "text-butter-cream/80 hover:text-butter-cream hover:bg-green-mid/40 border-transparent"
-                )}
-              >
-                {item.name}
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-2xs z-40 sm:hidden pointer-events-auto"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="fixed inset-x-4 top-20 bg-green-dark border-2 border-butter-cream/50 rounded-3xl p-6 shadow-2xl z-50 flex flex-col gap-2.5 text-center sm:hidden animate-fade-in pointer-events-auto max-h-[80vh] overflow-y-auto">
+            {NAV_ITEMS.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "text-base font-semibold py-2.5 px-4 rounded-xl transition-colors border",
+                    isActive
+                      ? "bg-green-mid text-butter-cream border-butter-cream/60 shadow-sm"
+                      : "text-butter-cream/80 hover:text-butter-cream hover:bg-green-mid/40 border-transparent"
+                  )}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
+            <div className="pt-2 flex flex-col gap-2.5 border-t border-green-mid/40 mt-1">
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="hero-ghost" className="w-full justify-center">
+                  Log in
+                </Button>
               </Link>
-            );
-          })}
-          <div className="pt-2 flex flex-col gap-3">
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="hero-ghost" className="w-full">
-                Log in
-              </Button>
-            </Link>
-            <Link href="/app" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="butter" className="w-full">
-                Start a campaign
-              </Button>
-            </Link>
+              <Link href="/app" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="butter" className="w-full justify-center font-bold shadow-md">
+                  Start a campaign
+                  <ArrowRight className="w-4 h-4 ml-1.5" />
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );
