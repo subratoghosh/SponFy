@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
   const lastUpdated = "October 11, 2026";
 
   return (
-    <div className="flex flex-col pt-24 pb-20">
+    <div className="flex flex-col pt-24 sm:pt-28 pb-16">
       {/* Hero Header */}
       <section className="relative px-6 pb-14 border-b border-green-dark/10">
         <div className="max-w-[1040px] mx-auto text-center space-y-4">
