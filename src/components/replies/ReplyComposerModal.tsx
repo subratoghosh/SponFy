@@ -25,15 +25,15 @@ export function ReplyComposerModal({
   onClose,
   onSend,
 }: ReplyComposerModalProps) {
-  if (!message) return null;
-
-  const defaultSubject = message.subject.startsWith('Re:') ? message.subject : `Re: ${message.subject}`;
+  const defaultSubject = message?.subject?.startsWith('Re:') ? message.subject : `Re: ${message?.subject || ''}`;
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(
     `Hi,\n\nThank you for getting back to us regarding ${company?.name || 'your'} sponsorship at SponFy Hackathon 2026.\n\nWe have attached our comprehensive Tier Deck and developer track guidelines. We'd love to schedule a brief 15-minute sync with your team this Thursday at 4 PM IST.\n\nLooking forward to partnering together!\n\nBest regards,\nSubrato Ghosh\nLead Organizer, SponFy Hackathon`
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
+
+  if (!message) return null;
 
   const handleAISuggest = () => {
     setIsGenerating(true);

@@ -240,7 +240,7 @@ export interface AIJob {
 // Integration Status
 export interface IntegrationHealth {
   name: string;
-  service: "gemini" | "tavily" | "gmail" | "supabase";
+  service: "gemini" | "tavily" | "gmail" | "database" | "neon" | "supabase";
   isConfigured: boolean;
   statusText: string;
   lastChecked?: string;
@@ -318,3 +318,29 @@ export const ReplyAnalysisSchema = z.object({
   urgency: z.enum(["high", "medium", "low"]),
   meetingRequested: z.boolean(),
 });
+
+export interface UserProfile {
+  fullName: string;
+  organization: string;
+  email: string;
+  avatarUrl: string;
+  title: string;
+  signature: string;
+  dailySendLimit: number;
+}
+
+export interface SuppressionEntry {
+  id: string;
+  email: string;
+  domain?: string;
+  reason: string;
+  createdAt: string;
+}
+
+export interface GmailConnectionStatus {
+  connected: boolean;
+  email?: string;
+  historyId?: string;
+  lastSyncAt?: string;
+  isMock: boolean;
+}
