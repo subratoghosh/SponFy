@@ -43,7 +43,7 @@ Built with Next.js 15 (App Router), TypeScript, Tailwind CSS, Google Gemini 2.5 
 - **AI & Reasoning:** Google Gemini 2.5 Flash (`@google/genai`)
 - **Web Research:** Tavily Search API
 - **Email Protocol:** Google APIs (`googleapis`) with Gmail OAuth 2.0
-- **Database / Auth Layer:** Supabase SSR (with zero-credentials Demo fallback memory store)
+- **Database & ORM:** PostgreSQL + Prisma ORM on Neon Serverless (`@prisma/client`, `@neondatabase/serverless`)
 - **Charts:** Recharts
 
 ---
@@ -60,8 +60,12 @@ npm install
 ### 2. Configure Environment Variables (Optional)
 SponFy runs **out of the box with zero configuration** in full Demo Mode (`SponFy Hackathon 2026` with 24 pre-seeded sponsors, research reports, drafts, and threads).
 
-To enable live Google Gemini, Tavily Web Search, or Gmail sending, create `.env.local`:
+To connect your live Neon Serverless PostgreSQL database, Gemini AI, Tavily Web Search, or Gmail, create `.env.local`:
 ```env
+# Neon Serverless PostgreSQL (Prisma ORM)
+DATABASE_URL="postgresql://user:password@ep-cool-sample.us-east-2.aws.neon.tech/neondb?sslmode=require"
+DIRECT_URL="postgresql://user:password@ep-cool-sample.us-east-2.aws.neon.tech/neondb?sslmode=require"
+
 # Gemini AI
 GEMINI_API_KEY=your_gemini_api_key_here
 
@@ -73,12 +77,15 @@ GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback/google
 
-# Supabase (Optional)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
 # Encryption Key (AES-256 for OAuth tokens)
-ENCRYPTION_SECRET=32_character_random_hex_key_here
+TOKEN_ENCRYPTION_KEY=32_character_random_hex_key_here
+```
+
+### 3. Database Schema Push (Neon / Postgres)
+```bash
+npm run db:push     # Synchronize Prisma schema with your Neon database
+npm run db:generate # Generate Prisma client
+npm run db:studio   # (Optional) Open Prisma Studio visual inspector
 ```
 
 ### 3. Run Development Server
@@ -120,7 +127,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 🔒 Security & Privacy
 
 - Tokens are encrypted at rest with AES-256-GCM.
-- Strict Supabase Row Level Security (RLS) policies.
+- Parameterized PostgreSQL queries with strict Prisma ORM schema modeling and type safety.
 - Non-bypassable Human Approval Gate on every outbound message.
 - Full respect of suppression lists and instant unsubscribe handling.
 
