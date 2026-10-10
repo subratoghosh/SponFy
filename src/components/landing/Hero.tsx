@@ -97,7 +97,7 @@ export const Hero: React.FC = () => {
               <ArrowRight className="w-5 h-5 ml-1 transition-transform duration-200 group-hover:translate-x-1" />
             </Button>
           </Link>
-          <a href="#workflow">
+          <Link href="/workflow">
             <Button
               variant="hero-ghost"
               size="lg"
@@ -105,7 +105,7 @@ export const Hero: React.FC = () => {
             >
               See how it works
             </Button>
-          </a>
+          </Link>
         </div>
 
         {/* Overlapping Product Preview UI Card — 3D Parallax Tilt Card */}

@@ -2,13 +2,24 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Sparkles, Menu, X, ArrowRight } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
+import { cn } from "@/lib/utils";
+
+const NAV_ITEMS = [
+  { name: "Workflow", href: "/workflow" },
+  { name: "Showcase", href: "/showcase" },
+  { name: "Intelligence", href: "/intelligence" },
+  { name: "Analytics", href: "/analytics" },
+  { name: "FAQ", href: "/faq" },
+];
 
 export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
@@ -20,36 +31,23 @@ export const Header: React.FC = () => {
 
         {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-1 text-sm font-semibold text-text-onDarkSub">
-          <a
-            href="#workflow"
-            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
-          >
-            Workflow
-          </a>
-          <a
-            href="#showcase"
-            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
-          >
-            Showcase
-          </a>
-          <a
-            href="#intelligence"
-            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
-          >
-            Intelligence
-          </a>
-          <a
-            href="#analytics"
-            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
-          >
-            Analytics
-          </a>
-          <a
-            href="#faq"
-            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
-          >
-            FAQ
-          </a>
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-full transition-all duration-200 inline-block font-semibold",
+                  isActive
+                    ? "text-butter-cream border border-butter-cream/90 bg-green-mid/80 shadow-[0_2px_10px_rgba(0,0,0,0.25)]"
+                    : "text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 border border-transparent"
+                )}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
         </div>
 
         {/* CTA & Actions */}
@@ -91,42 +89,25 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-x-0 top-16 md:top-[72px] bg-green-dark border-b border-green-mid p-6 shadow-2xl z-50 flex flex-col gap-3 text-center sm:hidden animate-fade-in">
-          <a
-            href="#workflow"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-semibold text-butter-cream py-2 border-b border-green-mid"
-          >
-            Workflow
-          </a>
-          <a
-            href="#showcase"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-semibold text-butter-cream py-2 border-b border-green-mid"
-          >
-            Showcase
-          </a>
-          <a
-            href="#intelligence"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-semibold text-butter-cream py-2 border-b border-green-mid"
-          >
-            Intelligence
-          </a>
-          <a
-            href="#analytics"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-semibold text-butter-cream py-2 border-b border-green-mid"
-          >
-            Analytics
-          </a>
-          <a
-            href="#faq"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-semibold text-butter-cream py-2 border-b border-green-mid"
-          >
-            FAQ
-          </a>
+        <div className="fixed inset-x-0 top-16 md:top-[72px] bg-green-dark border-b border-green-mid p-6 shadow-2xl z-50 flex flex-col gap-3 text-center sm:hidden animate-fade-in pointer-events-auto">
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "text-base font-semibold py-2.5 px-4 rounded-xl transition-colors border",
+                  isActive
+                    ? "bg-green-mid text-butter-cream border-butter-cream/60 shadow-sm"
+                    : "text-butter-cream/80 hover:text-butter-cream hover:bg-green-mid/40 border-transparent"
+                )}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
           <div className="pt-2 flex flex-col gap-3">
             <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="hero-ghost" className="w-full">

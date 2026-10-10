@@ -7,7 +7,6 @@ import { ApprovalPreview } from "@/components/landing/ApprovalPreview";
 import { AnalyticsPreview } from "@/components/landing/AnalyticsPreview";
 import { WhySponfy } from "@/components/landing/WhySponfy";
 import { FAQ } from "@/components/landing/FAQ";
-import { CTASection } from "@/components/landing/CTASection";
 
 export default function LandingPage() {
   return (
@@ -35,9 +34,6 @@ export default function LandingPage() {
 
       {/* 8. Frequently Asked Questions */}
       <FAQ />
-
-      {/* 9. Final CTA Panel */}
-      <CTASection />
     </div>
   );
 }
