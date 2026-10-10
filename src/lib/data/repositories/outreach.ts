@@ -1,11 +1,12 @@
 import { EmailDraft, Message, DraftStatus } from "@/types";
 import { DEMO_DRAFTS, DEMO_MESSAGES } from "../seed-data";
+import { memoryStore } from "@/lib/data/memory-store";
 import { updateSponsorStage } from "./sponsors";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { DraftStatus as DbDraftStatus, Direction } from "@prisma/client";
 
-let draftsStore: EmailDraft[] = [...DEMO_DRAFTS];
-let messagesStore: Message[] = [...DEMO_MESSAGES];
+const draftsStoreRef = memoryStore<EmailDraft[]>("drafts", () => [...DEMO_DRAFTS]);
+const messagesStoreRef = memoryStore<Message[]>("messages", () => [...DEMO_MESSAGES]);
 
 const DRAFT_STATUS_TO_DB: Record<string, DbDraftStatus> = {
   draft: "DRAFT",
@@ -55,9 +56,9 @@ export async function getDrafts(status?: DraftStatus): Promise<EmailDraft[]> {
   }
 
   if (status) {
-    return draftsStore.filter((d) => d.status === status);
+    return draftsStoreRef.value.filter((d) => d.status === status);
   }
-  return [...draftsStore];
+  return [...draftsStoreRef.value];
 }
 
 export async function getDraftById(id: string): Promise<EmailDraft | null> {
@@ -84,7 +85,7 @@ export async function getDraftById(id: string): Promise<EmailDraft | null> {
     }
   }
 
-  const found = draftsStore.find((d) => d.id === id);
+  const found = draftsStoreRef.value.find((d) => d.id === id);
   return found || null;
 }
 
@@ -113,7 +114,7 @@ export async function getDraftsByCompanyId(companyId: string): Promise<EmailDraf
     }
   }
 
-  return draftsStore.filter((d) => d.companyId === companyId);
+  return draftsStoreRef.value.filter((d) => d.companyId === companyId);
 }
 
 export async function getDraftByCompanyId(companyId: string): Promise<EmailDraft | null> {
@@ -191,7 +192,7 @@ export async function createDraft(
     id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: new Date().toISOString(),
   };
-  draftsStore.unshift(newDraft);
+  draftsStoreRef.value.unshift(newDraft);
   return newDraft;
 }
 
@@ -255,14 +256,14 @@ export async function updateDraft(
     }
   }
 
-  const idx = draftsStore.findIndex((d) => d.id === id);
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
   if (idx === -1) return null;
-  draftsStore[idx] = {
-    ...draftsStore[idx],
+  draftsStoreRef.value[idx] = {
+    ...draftsStoreRef.value[idx],
     ...updates,
     ...(clearApproval ? { approvedAt: undefined } : {}),
   };
-  return draftsStore[idx];
+  return draftsStoreRef.value[idx];
 }
 
 export async function approveDraft(id: string): Promise<EmailDraft | null> {
@@ -299,18 +300,18 @@ export async function approveDraft(id: string): Promise<EmailDraft | null> {
     }
   }
 
-  const idx = draftsStore.findIndex((d) => d.id === id);
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
   if (idx === -1) return null;
 
-  draftsStore[idx] = {
-    ...draftsStore[idx],
+  draftsStoreRef.value[idx] = {
+    ...draftsStoreRef.value[idx],
     status: "approved",
     approvedAt: new Date().toISOString(),
   };
 
   // Move company to Approved stage
-  await updateSponsorStage(draftsStore[idx].companyId, "Approved");
-  return draftsStore[idx];
+  await updateSponsorStage(draftsStoreRef.value[idx].companyId, "Approved");
+  return draftsStoreRef.value[idx];
 }
 
 /**
@@ -329,9 +330,9 @@ export async function claimDraftForSending(id: string): Promise<boolean> {
   }
 
   // Memory store: check-and-set with no await in between, so it is atomic in JS.
-  const idx = draftsStore.findIndex((d) => d.id === id);
-  if (idx === -1 || draftsStore[idx].status !== "approved") return false;
-  draftsStore[idx] = { ...draftsStore[idx], status: "sending" };
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
+  if (idx === -1 || draftsStoreRef.value[idx].status !== "approved") return false;
+  draftsStoreRef.value[idx] = { ...draftsStoreRef.value[idx], status: "sending" };
   return true;
 }
 
@@ -344,9 +345,9 @@ export async function releaseDraftClaim(id: string): Promise<void> {
     });
     return;
   }
-  const idx = draftsStore.findIndex((d) => d.id === id);
-  if (idx !== -1 && draftsStore[idx].status === "sending") {
-    draftsStore[idx] = { ...draftsStore[idx], status: "approved" };
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
+  if (idx !== -1 && draftsStoreRef.value[idx].status === "sending") {
+    draftsStoreRef.value[idx] = { ...draftsStoreRef.value[idx], status: "approved" };
   }
 }
 
@@ -411,8 +412,8 @@ export async function recordSentMessage(
     }
   }
 
-  const sentIdx = draftsStore.findIndex((d) => d.id === draftId);
-  if (sentIdx !== -1) draftsStore[sentIdx] = { ...draftsStore[sentIdx], status: "sent" };
+  const sentIdx = draftsStoreRef.value.findIndex((d) => d.id === draftId);
+  if (sentIdx !== -1) draftsStoreRef.value[sentIdx] = { ...draftsStoreRef.value[sentIdx], status: "sent" };
 
   const message: Message = {
     id: `msg-${Date.now()}`,
@@ -428,7 +429,7 @@ export async function recordSentMessage(
     sentAt: new Date().toISOString(),
   };
 
-  messagesStore.unshift(message);
+  messagesStoreRef.value.unshift(message);
   await updateSponsorStage(draft.companyId, "Contacted");
   return message;
 }
@@ -461,7 +462,7 @@ export async function getMessages(companyId?: string): Promise<Message[]> {
   }
 
   if (companyId) {
-    return messagesStore.filter((m) => m.companyId === companyId);
+    return messagesStoreRef.value.filter((m) => m.companyId === companyId);
   }
-  return [...messagesStore];
+  return [...messagesStoreRef.value];
 }

@@ -3,8 +3,9 @@ import { DEMO_COMPANIES } from "../seed-data";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Stage, ContactStatus, ResearchStatus } from "@prisma/client";
 import { findDuplicateCompany, DuplicateCompanyError } from "@/lib/outreach/duplicates";
+import { memoryStore } from "@/lib/data/memory-store";
 
-let sponsorsStore: Company[] = [...DEMO_COMPANIES];
+const sponsorsStoreRef = memoryStore<Company[]>("sponsors", () => [...DEMO_COMPANIES]);
 
 const STAGE_MAP: Record<string, Stage> = {
   Discovered: "DISCOVERED",
@@ -107,9 +108,9 @@ export async function getSponsors(campaignId?: string): Promise<Company[]> {
   }
 
   if (campaignId) {
-    return sponsorsStore.filter((c) => c.campaignId === campaignId);
+    return sponsorsStoreRef.value.filter((c) => c.campaignId === campaignId);
   }
-  return [...sponsorsStore];
+  return [...sponsorsStoreRef.value];
 }
 
 export async function getSponsorById(id: string): Promise<Company | null> {
@@ -169,7 +170,7 @@ export async function getSponsorById(id: string): Promise<Company | null> {
     }
   }
 
-  const found = sponsorsStore.find((c) => c.id === id);
+  const found = sponsorsStoreRef.value.find((c) => c.id === id);
   return found || null;
 }
 
@@ -200,14 +201,14 @@ export async function updateSponsorStage(id: string, stage: PipelineStage): Prom
     }
   }
 
-  const idx = sponsorsStore.findIndex((c) => c.id === id);
+  const idx = sponsorsStoreRef.value.findIndex((c) => c.id === id);
   if (idx === -1) return null;
-  sponsorsStore[idx] = {
-    ...sponsorsStore[idx],
+  sponsorsStoreRef.value[idx] = {
+    ...sponsorsStoreRef.value[idx],
     stage,
     updatedAt: new Date().toISOString(),
   };
-  return sponsorsStore[idx];
+  return sponsorsStoreRef.value[idx];
 }
 
 export async function updateSponsor(id: string, updates: Partial<Company>): Promise<Company | null> {
@@ -258,14 +259,14 @@ export async function updateSponsor(id: string, updates: Partial<Company>): Prom
     }
   }
 
-  const idx = sponsorsStore.findIndex((c) => c.id === id);
+  const idx = sponsorsStoreRef.value.findIndex((c) => c.id === id);
   if (idx === -1) return null;
-  sponsorsStore[idx] = {
-    ...sponsorsStore[idx],
+  sponsorsStoreRef.value[idx] = {
+    ...sponsorsStoreRef.value[idx],
     ...updates,
     updatedAt: new Date().toISOString(),
   };
-  return sponsorsStore[idx];
+  return sponsorsStoreRef.value[idx];
 }
 
 export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "updatedAt">): Promise<Company> {
@@ -324,7 +325,7 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  sponsorsStore.unshift(newCompany);
+  sponsorsStoreRef.value.unshift(newCompany);
   return newCompany;
 }
 
@@ -366,7 +367,7 @@ export async function addContact(companyId: string, contact: Omit<Contact, "id" 
     }
   }
 
-  const company = sponsorsStore.find((c) => c.id === companyId);
+  const company = sponsorsStoreRef.value.find((c) => c.id === companyId);
   if (!company) return null;
 
   const newContact: Contact = {

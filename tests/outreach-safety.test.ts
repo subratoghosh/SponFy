@@ -234,6 +234,18 @@ describe("outreach routes (demo store)", () => {
     expect((await save(post({ id: draft.id, subject: "x", body: "y" }))).status).toBe(409);
   });
 
+  it("two separately-bundled copies of the repositories share one demo store (Next dev bundles each route alone)", async () => {
+    const { vi } = await import("vitest");
+    const first = await import("@/lib/data/repositories/outreach");
+    const { draft } = await freshDraftForUncontactedCompany();
+    await first.approveDraft(draft.id);
+
+    vi.resetModules(); // simulates another route getting its own module instance
+    const second = await import("@/lib/data/repositories/outreach");
+    expect(second).not.toBe(first);
+    expect((await second.getDraftById(draft.id))?.status).toBe("approved");
+  });
+
   it("blocks a second approved draft to a company that was just emailed", async () => {
     const { POST: send } = await import("@/app/api/outreach/send/route");
     const { POST: approve } = await import("@/app/api/outreach/approve/route");
