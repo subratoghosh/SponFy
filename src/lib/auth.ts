@@ -3,6 +3,10 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 
+if (!process.env.AUTH_SECRET) {
+  process.env.AUTH_SECRET = "sponfy-dev-auth-secret-super-safe-fallback-32chars";
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: isDatabaseConfigured() ? PrismaAdapter(prisma) : undefined,
   session: {

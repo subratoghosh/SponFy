@@ -9,8 +9,8 @@ export function middleware(request: NextRequest) {
     !process.env.DATABASE_URL ||
     process.env.DATABASE_URL.includes("placeholder");
 
-  // Protect /app and /onboarding
-  if (pathname.startsWith("/app") || pathname.startsWith("/onboarding")) {
+  // Protect /app, /onboarding, and /admin
+  if (pathname.startsWith("/app") || pathname.startsWith("/onboarding") || pathname.startsWith("/admin")) {
     if (isDemo) {
       return NextResponse.next();
     }
@@ -33,5 +33,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/onboarding/:path*"],
+  matcher: ["/app/:path*", "/onboarding/:path*", "/admin/:path*"],
 };
