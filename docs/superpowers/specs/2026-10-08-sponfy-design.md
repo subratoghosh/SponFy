@@ -63,7 +63,7 @@ Adheres strictly to the canonical tokens, typography, radii, spacing, button hie
 * **Framework**: Next.js 15+ (App Router), React 19, TypeScript (strict mode).
 * **Styling & Icons**: Tailwind CSS, CSS variables, `lucide-react` (stroke 1.5 for large, 2.0 for UI).
 * **Animation & Charts**: Framer Motion (page transitions, micro-physics), Recharts (responsive analytics).
-* **Database & Auth**: Supabase SSR (`@supabase/ssr`), Postgres with strict Row Level Security (RLS) on all tables.
+* **Database & ORM**: PostgreSQL + Prisma ORM (`@prisma/client`, `@neondatabase/serverless`) on Neon Serverless.
 * **AI & Graph Execution**:
   * Gemini API (`@google/genai`) with structured JSON schema outputs validated by Zod.
   * LangGraph JS (`@langchain/langgraph`) for stateful, multi-step agent workflows.
@@ -82,12 +82,12 @@ Adheres strictly to the canonical tokens, typography, radii, spacing, button hie
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
 │           Repository Layer (lib/data/repositories)          │
-│         (Data abstraction: Supabase vs Mock Seed)           │
+│         (Data abstraction: Prisma ORM vs Mock Seed)         │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
 ┌──────────────▼──────────────┐ ┌─────────────▼───────────────┐
-│     Supabase SSR Client     │ │     Integrations Layer      │
-│     (Postgres + RLS + RTime)│ │  (lib/integrations/factory) │
+│     Prisma Client (Neon)    │ │     Integrations Layer      │
+│   (Postgres Serverless Pool)│ │  (lib/integrations/factory) │
 └─────────────────────────────┘ ├─────────────────────────────┤
                                 │ • Gemini (Real / Mock)      │
                                 │ • Tavily (Real / Mock)      │
@@ -95,7 +95,7 @@ Adheres strictly to the canonical tokens, typography, radii, spacing, button hie
                                 └─────────────────────────────┘
 ```
 
-UI components NEVER import Supabase or 3rd-party integration SDKs directly. All operations pass through repository abstractions and integration factories that inspect environment credentials.
+UI components NEVER import database clients or 3rd-party integration SDKs directly. All operations pass through repository abstractions and integration factories that inspect environment credentials.
 
 ---
 
@@ -234,7 +234,7 @@ All tables include `user_id uuid references auth.users(id) on delete cascade` an
 * **Settings (`/app/settings`)**:
   * Profile & Organization details.
   * Gmail OAuth Connect with honest test-mode disclaimer.
-  * Integration connection status cards (Gemini, Tavily, Gmail, Supabase) showing live health.
+  * Integration connection status cards (Gemini, Tavily, Gmail, Neon PostgreSQL) showing live health.
   * Daily send cap configuration (default: 30).
   * Suppression list management (Add/Remove blocked domains).
   * CSV/JSON Data export.

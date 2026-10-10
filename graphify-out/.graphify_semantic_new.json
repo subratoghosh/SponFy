@@ -1,0 +1,202 @@
+{
+  "nodes": [
+    {
+      "id": "readme_sponfy_engine",
+      "label": "SponFy Sponsorship Engine",
+      "file_type": "document",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_quickstart",
+      "label": "Local Quickstart & Demo Mode",
+      "file_type": "document",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_tech_stack",
+      "label": "Next.js 15, Prisma ORM & Neon Serverless Stack",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "butgreendesign_butter_and_green",
+      "label": "Butter and Green Design System",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\butgreendesign.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "butgreendesign_tokens",
+      "label": "Warm Editorial Design Tokens",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\butgreendesign.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_specs_2026_10_08_sponfy_design_spec",
+      "label": "SponFy Product & Architecture Specification",
+      "file_type": "document",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\docs\\superpowers\\specs\\2026-10-08-sponfy-design.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_specs_2026_10_08_sponfy_design_pipeline",
+      "label": "12-Stage Sponsor Pipeline Architecture",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\docs\\superpowers\\specs\\2026-10-08-sponfy-design.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_specs_2026_10_08_sponfy_design_hitl",
+      "label": "Human-in-the-Loop Approval & Quality Score Gate",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\docs\\superpowers\\specs\\2026-10-08-sponfy-design.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_10_08_sponfy_implementation_plan",
+      "label": "SponFy 10-Task Implementation Roadmap",
+      "file_type": "document",
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\docs\\superpowers\\plans\\2026-10-08-sponfy-implementation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "readme_sponfy_engine",
+      "target": "readme_tech_stack",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_sponfy_engine",
+      "target": "readme_quickstart",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "butgreendesign_butter_and_green",
+      "target": "butgreendesign_tokens",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\butgreendesign.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_specs_2026_10_08_sponfy_design_spec",
+      "target": "docs_superpowers_specs_2026_10_08_sponfy_design_pipeline",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\docs\\superpowers\\specs\\2026-10-08-sponfy-design.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_specs_2026_10_08_sponfy_design_spec",
+      "target": "docs_superpowers_specs_2026_10_08_sponfy_design_hitl",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\docs\\superpowers\\specs\\2026-10-08-sponfy-design.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_10_08_sponfy_implementation_plan",
+      "target": "docs_superpowers_specs_2026_10_08_sponfy_design_spec",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\docs\\superpowers\\plans\\2026-10-08-sponfy-implementation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_tech_stack",
+      "target": "docs_superpowers_specs_2026_10_08_sponfy_design_spec",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "butgreendesign_butter_and_green",
+      "target": "readme_sponfy_engine",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\butgreendesign.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "sponfy_core_spec_triad",
+      "label": "SponFy Architecture Specification Triad",
+      "nodes": [
+        "readme_sponfy_engine",
+        "docs_superpowers_specs_2026_10_08_sponfy_design_spec",
+        "docs_superpowers_plans_2026_10_08_sponfy_implementation_plan"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Subrato Ghosh\\OneDrive\\Desktop\\SponFy\\README.md"
+    }
+  ],
+  "input_tokens": 1200,
+  "output_tokens": 450
+}
