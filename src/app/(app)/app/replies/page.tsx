@@ -11,10 +11,12 @@ import { ReplyAnalysisPanel } from '@/components/replies/ReplyAnalysisPanel';
 import { ReplyComposerModal } from '@/components/replies/ReplyComposerModal';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
+import { InboxSkeleton } from '@/components/skeletons/InboxSkeleton';
 
 export default function RepliesPage() {
   const [threadItems, setThreadItems] = useState<Array<{ message: Message; analysis?: ReplyAnalysis }>>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [filterIntent, setFilterIntent] = useState<string>('all');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -25,14 +27,19 @@ export default function RepliesPage() {
   }, []);
 
   const loadData = async () => {
-    const [threads, comps] = await Promise.all([
-      getInboundThreads(),
-      getSponsors(),
-    ]);
-    setThreadItems(threads);
-    setCompanies(comps);
-    if (threads.length > 0 && !selectedMessageId) {
-      setSelectedMessageId(threads[0].message.id);
+    setLoading(true);
+    try {
+      const [threads, comps] = await Promise.all([
+        getInboundThreads(),
+        getSponsors(),
+      ]);
+      setThreadItems(threads);
+      setCompanies(comps);
+      if (threads.length > 0 && !selectedMessageId) {
+        setSelectedMessageId(threads[0].message.id);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,42 +121,46 @@ export default function RepliesPage() {
         </div>
       </div>
 
-      {/* Main Inbox 3-column layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Column 1: Thread List */}
-        <div className="w-80 md:w-96 border-r border-[#0C382E]/10 bg-[#FFFFFF] flex flex-col shrink-0">
-          <ThreadList
-            threads={filteredThreads}
-            companies={companies}
-            selectedMessageId={selectedMessageId}
-            onSelectThread={(id) => setSelectedMessageId(id)}
-          />
-        </div>
-
-        {/* Column 2: Thread View */}
-        {selectedItem ? (
-          <ThreadView
-            message={selectedItem.message}
-            company={selectedCompany}
-            onComposeReply={() => setIsComposerOpen(true)}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-center p-8 bg-[#FFFDF6]">
-            <div>
-              <Mail className="w-12 h-12 text-[#0C382E]/20 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-[#0C382E]/60">Select a message to view thread conversation</p>
-            </div>
+      {/* Main Inbox 3-column layout or Skeleton */}
+      {loading ? (
+        <InboxSkeleton />
+      ) : (
+        <div className="flex-1 flex overflow-hidden">
+          {/* Column 1: Thread List */}
+          <div className="w-80 md:w-96 border-r border-[#0C382E]/10 bg-[#FFFFFF] flex flex-col shrink-0">
+            <ThreadList
+              threads={filteredThreads}
+              companies={companies}
+              selectedMessageId={selectedMessageId}
+              onSelectThread={(id) => setSelectedMessageId(id)}
+            />
           </div>
-        )}
 
-        {/* Column 3: AI Intelligence Panel */}
-        {selectedItem && (
-          <ReplyAnalysisPanel
-            analysis={selectedItem.analysis}
-            onExecuteRecommendation={() => setIsComposerOpen(true)}
-          />
-        )}
-      </div>
+          {/* Column 2: Thread View */}
+          {selectedItem ? (
+            <ThreadView
+              message={selectedItem.message}
+              company={selectedCompany}
+              onComposeReply={() => setIsComposerOpen(true)}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-center p-8 bg-[#FFFDF6]">
+              <div>
+                <Mail className="w-12 h-12 text-[#0C382E]/20 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-[#0C382E]/60">Select a message to view thread conversation</p>
+              </div>
+            </div>
+          )}
+
+          {/* Column 3: AI Intelligence Panel */}
+          {selectedItem && (
+            <ReplyAnalysisPanel
+              analysis={selectedItem.analysis}
+              onExecuteRecommendation={() => setIsComposerOpen(true)}
+            />
+          )}
+        </div>
+      )}
 
       {/* Reply Composer Modal */}
       <ReplyComposerModal

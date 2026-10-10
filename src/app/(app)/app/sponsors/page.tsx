@@ -9,18 +9,26 @@ import { SponsorFilters } from "@/components/sponsors/SponsorFilters";
 import { useToast } from "@/components/ui/toast";
 import { Building2, Sparkles, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
+
+import { SponsorsKanbanSkeleton } from "@/components/skeletons/SponsorsKanbanSkeleton";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 export default function SponsorsPipelinePage() {
   const { toast } = useToast();
   const [sponsors, setSponsors] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("all");
   const [selectedStage, setSelectedStage] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
 
   const loadSponsors = () => {
-    getSponsors().then(setSponsors);
+    setLoading(true);
+    getSponsors()
+      .then(setSponsors)
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -91,8 +99,36 @@ export default function SponsorsPipelinePage() {
         onViewModeChange={setViewMode}
       />
 
-      {/* Main Content Area */}
-      {viewMode === "kanban" ? (
+      {/* Main Content Area: Skeletons, Empty State, or Data */}
+      {loading ? (
+        viewMode === "kanban" ? (
+          <SponsorsKanbanSkeleton />
+        ) : (
+          <TableSkeleton rows={6} cols={5} />
+        )
+      ) : filteredSponsors.length === 0 ? (
+        sponsors.length === 0 ? (
+          <EmptyState
+            icon={Building2}
+            title="No sponsors discovered yet"
+            description="Use SponFy's AI discovery engine to find active companies with campus and hackathon sponsorship budgets."
+            actionLabel="Discover Sponsors with AI"
+            actionHref="/app/discover"
+          />
+        ) : (
+          <EmptyState
+            icon={Building2}
+            title="No sponsors match your filters"
+            description="No sponsors in your pipeline match your current keyword, stage, or industry criteria."
+            actionLabel="Reset Filters"
+            onAction={() => {
+              setSearch("");
+              setSelectedIndustry("all");
+              setSelectedStage("all");
+            }}
+          />
+        )
+      ) : viewMode === "kanban" ? (
         <KanbanBoard
           sponsors={filteredSponsors}
           onStageChange={handleStageChange}

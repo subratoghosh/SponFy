@@ -11,25 +11,33 @@ import { SafetyChecklist } from "@/components/outreach/SafetyChecklist";
 import { SendConfirmationDialog } from "@/components/outreach/SendConfirmationDialog";
 import { useToast } from "@/components/ui/toast";
 import { Send, Sparkles } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { OutreachSkeleton } from "@/components/skeletons/OutreachSkeleton";
 
 export default function OutreachPage() {
   const { toast } = useToast();
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
   const loadData = async () => {
-    const [allDrafts, allCompanies] = await Promise.all([
-      getDrafts(),
-      getSponsors(),
-    ]);
-    setDrafts(allDrafts);
-    setCompanies(allCompanies);
-    if (allDrafts.length > 0 && !selectedDraftId) {
-      setSelectedDraftId(allDrafts[0].id);
+    setLoading(true);
+    try {
+      const [allDrafts, allCompanies] = await Promise.all([
+        getDrafts(),
+        getSponsors(),
+      ]);
+      setDrafts(allDrafts);
+      setCompanies(allCompanies);
+      if (allDrafts.length > 0 && !selectedDraftId) {
+        setSelectedDraftId(allDrafts[0].id);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,56 +120,70 @@ export default function OutreachPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Queue List */}
-        <div className="lg:col-span-4 h-[750px]">
-          <DraftQueueList
-            drafts={drafts}
-            companies={companies}
-            selectedDraftId={selectedDraftId}
-            onSelectDraft={setSelectedDraftId}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-          />
-        </div>
+      {loading ? (
+        <OutreachSkeleton />
+      ) : drafts.length === 0 ? (
+        <EmptyState
+          icon={Send}
+          title="No outreach drafts generated yet"
+          description="SponFy generates high-converting, personalized email pitches for discovered sponsors with safety checks. Find sponsors and generate your first pitch."
+          actionLabel="View Sponsors Pipeline"
+          actionHref="/app/sponsors"
+          secondaryActionLabel="Discover Sponsors with AI"
+          secondaryActionHref="/app/discover"
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Queue List */}
+          <div className="lg:col-span-4 h-[750px]">
+            <DraftQueueList
+              drafts={drafts}
+              companies={companies}
+              selectedDraftId={selectedDraftId}
+              onSelectDraft={setSelectedDraftId}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+          </div>
 
-        {/* Right Column: Composer & Quality / Safety Panel */}
-        <div className="lg:col-span-8 space-y-6">
-          {activeDraft ? (
-            <>
-              <EmailComposer
-                key={activeDraft.id}
-                draft={activeDraft}
-                company={activeCompany}
-                onSave={handleSave}
-                onApprove={handleApprove}
-                onOpenSendDialog={() => setConfirmOpen(true)}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SafetyChecklist
-                  checks={{
-                    recipientVerified: !!activeCompany?.contacts?.[0]?.email,
-                    hasSponsorshipAsk:
-                      activeDraft.body.includes("₹") ||
-                      activeDraft.body.includes("$") ||
-                      activeDraft.body.includes("Tier") ||
-                      activeDraft.body.includes("Partner"),
-                    notSuppressed: true,
-                    withinDailyCap: true,
-                  }}
+          {/* Right Column: Composer & Quality / Safety Panel */}
+          <div className="lg:col-span-8 space-y-6">
+            {activeDraft ? (
+              <>
+                <EmailComposer
+                  key={activeDraft.id}
+                  draft={activeDraft}
+                  company={activeCompany}
+                  onSave={handleSave}
+                  onApprove={handleApprove}
+                  onOpenSendDialog={() => setConfirmOpen(true)}
                 />
 
-                <QualityScorePanel quality={activeDraft.quality} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <SafetyChecklist
+                    checks={{
+                      recipientVerified: !!activeCompany?.contacts?.[0]?.email,
+                      hasSponsorshipAsk:
+                        activeDraft.body.includes("₹") ||
+                        activeDraft.body.includes("$") ||
+                        activeDraft.body.includes("Tier") ||
+                        activeDraft.body.includes("Partner"),
+                      notSuppressed: true,
+                      withinDailyCap: true,
+                    }}
+                  />
+
+                  <QualityScorePanel quality={activeDraft.quality} />
+                </div>
+              </>
+            ) : (
+              <div className="p-12 text-center bg-white rounded-3xl border border-green-dark/10">
+                <p className="text-text-dim text-sm">Select a draft from the queue to review.</p>
               </div>
-            </>
-          ) : (
-            <div className="p-12 text-center bg-white rounded-3xl border border-green-dark/10">
-              <p className="text-text-dim text-sm">Select a draft from the queue to review.</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Confirmation Dialog */}
       {activeDraft && activeCompany && (

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { DiscoverPromptBox } from "@/components/discover/DiscoverPromptBox";
 import { LiveJobProgress } from "@/components/discover/LiveJobProgress";
 import { CandidateList } from "@/components/discover/CandidateList";
+import { CandidateListSkeleton } from "@/components/skeletons/CandidateListSkeleton";
 import { Company } from "@/types";
 import { useToast } from "@/components/ui/toast";
 
@@ -65,8 +66,12 @@ export default function DiscoverPage() {
       {/* 2. Live Job Progress Stream */}
       <LiveJobProgress active={jobActive} step={currentStep} />
 
-      {/* 3. Streamed Candidates List */}
-      <CandidateList candidates={results} />
+      {/* 3. Streamed Candidates List or Skeletons */}
+      {loading ? (
+        <CandidateListSkeleton />
+      ) : (
+        <CandidateList candidates={results} />
+      )}
     </div>
   );
 }
