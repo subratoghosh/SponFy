@@ -2,6 +2,7 @@ import { Company, PipelineStage, Contact } from "@/types";
 import { DEMO_COMPANIES } from "../seed-data";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Stage, ContactStatus, ResearchStatus } from "@prisma/client";
+import { findDuplicateCompany, DuplicateCompanyError } from "@/lib/outreach/duplicates";
 
 let sponsorsStore: Company[] = [...DEMO_COMPANIES];
 
@@ -268,6 +269,14 @@ export async function updateSponsor(id: string, updates: Partial<Company>): Prom
 }
 
 export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "updatedAt">): Promise<Company> {
+  // Duplicate-outreach rule: one record per company per campaign, so two
+  // teammates can never each own (and email) the same sponsor.
+  const existing = await getSponsors(company.campaignId);
+  const dup = findDuplicateCompany(existing, company);
+  if (dup) {
+    throw new DuplicateCompanyError(company.name, dup.id);
+  }
+
   if (isDatabaseConfigured()) {
     try {
       const user = await prisma.user.findFirst();

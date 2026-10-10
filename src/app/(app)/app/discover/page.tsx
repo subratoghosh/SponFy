@@ -39,7 +39,13 @@ export default function DiscoverPage() {
         setResults(data.candidates || []);
         setJobActive(false);
         setLoading(false);
-        toast(`Discovered ${data.count || 5} matching sponsors!`, "success");
+        const skippedCount = Array.isArray(data.skipped) ? data.skipped.length : 0;
+        toast(
+          `Added ${data.count ?? 0} new sponsor(s)` +
+            (skippedCount ? `, skipped ${skippedCount} already in the pipeline` : "") +
+            ".",
+          "success"
+        );
       }, 2400);
     } catch (err) {
       toast("Discovery search failed", "error");

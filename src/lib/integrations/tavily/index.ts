@@ -47,23 +47,31 @@ export class RealTavilyClient implements ITavilyClient {
         snippet: r.content,
       }));
 
+      // Only report what the search actually returned. Anything we could not
+      // verify from a cited source is left empty / flagged instead of invented.
+      const topSnippet = (sources[0]?.snippet || "").trim().slice(0, 500);
+      const unverified = "Not verified from search sources";
       return {
         sources,
         sections: {
-          overview: `${companyName} is a recognized technology company with active community involvement.`,
-          productsAndServices: ["Core Platform", "Developer APIs", "Cloud Services"],
-          targetAudience: "Software developers, tech enthusiasts, engineering students.",
-          recentInitiatives: ["Developer Community Meetups", "University Hackathon Challenges"],
-          studentDeveloperPrograms: ["Student Ambassador Program", "Campus Grant Support"],
-          sponsorshipOpportunities: ["Challenge Track Sponsor", "Product Credits & Swag Kits"],
-          suggestedAngle: `Emphasize student adoption of ${companyName}'s developer tools during the 36h hackathon.`,
+          overview: topSnippet
+            ? `${topSnippet} (from: ${sources[0].url})`
+            : `No public information about ${companyName} was found in search results.`,
+          productsAndServices: [],
+          targetAudience: unverified,
+          recentInitiatives: [],
+          studentDeveloperPrograms: [],
+          sponsorshipOpportunities: [],
+          suggestedAngle: `${unverified}: review the ${sources.length} cited source(s) before choosing an angle for ${companyName}.`,
         },
-        recommendedAngle: `Propose a sponsored challenge track around ${companyName}'s API and developer suite.`,
+        recommendedAngle: sources.length
+          ? `Read the ${sources.length} cited source(s) and pick an ask that matches what ${companyName} has publicly done.`
+          : `No verified sponsorship history found for ${companyName}; treat any ask as a cold pitch.`,
       };
-    } catch (err) {
-      console.warn("Real Tavily research failed, using mock:", err);
-      const mock = new MockTavilyClient();
-      return mock.searchSponsorshipInfo(companyName, website);
+    } catch (err: any) {
+      // Never fall back to synthetic "sources" for a real company.
+      console.error("Real Tavily research failed:", err);
+      throw new Error(`Tavily research failed: ${err?.message || err}`);
     }
   }
 }

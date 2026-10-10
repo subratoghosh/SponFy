@@ -82,7 +82,7 @@ export const ResearchTab: React.FC<{ company: Company; onRefresh: () => void }> 
               Core Products:
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {(report?.productsAndServices || ["Developer API", "Cloud Platform", "SDKs"]).map((p, i) => (
+              {(report?.productsAndServices ?? []).map((p, i) => (
                 <span
                   key={i}
                   className="bg-butter-bg text-green-dark px-2.5 py-1 rounded-md border border-green-dark/8 font-medium"
@@ -97,7 +97,7 @@ export const ResearchTab: React.FC<{ company: Company; onRefresh: () => void }> 
               Target Audience:
             </span>
             <p className="text-text-dim leading-relaxed">
-              {report?.targetAudience || "Software engineers, student developers, backend builders."}
+              {report?.targetAudience || "Not verified yet: run research to fill this in."}
             </p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export const ResearchTab: React.FC<{ company: Company; onRefresh: () => void }> 
             Student & Developer Community Programs
           </h4>
           <ul className="space-y-2 text-xs text-text-dim">
-            {(report?.studentDeveloperPrograms || ["Student Ambassador Network", "Campus Grants"]).map((prog, i) => (
+            {(report?.studentDeveloperPrograms ?? []).map((prog, i) => (
               <li key={i} className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
                 <span>{prog}</span>

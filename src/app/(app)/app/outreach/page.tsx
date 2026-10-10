@@ -51,12 +51,12 @@ export default function OutreachPage() {
   const handleSave = async (subject: string, body: string) => {
     if (!activeDraft) return;
     await saveDraft({
+      id: activeDraft.id, // update this draft instead of creating a copy
       companyId: activeDraft.companyId,
       contactId: activeDraft.contactId,
       subject,
       body,
       quality: activeDraft.quality,
-      status: activeDraft.status,
     });
     loadData();
   };
@@ -73,6 +73,8 @@ export default function OutreachPage() {
       if (data.success) {
         toast("Draft approved! Ready to dispatch via Gmail.", "success");
         loadData();
+      } else {
+        toast(data.error || "Approval failed", "error");
       }
     } catch {
       toast("Failed to approve draft", "error");
@@ -81,7 +83,11 @@ export default function OutreachPage() {
 
   const handleConfirmSend = async () => {
     if (!activeDraft || !activeCompany) return;
-    const recipientEmail = activeCompany.contacts?.[0]?.email || "partner@company.com";
+    const recipientEmail = activeCompany.contacts?.[0]?.email;
+    if (!recipientEmail) {
+      toast("Add a verified contact for this company before sending.", "error");
+      return;
+    }
     setSending(true);
 
     try {

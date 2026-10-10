@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { approveDraft, getDraftById } from "@/lib/data/repositories/outreach";
+import { approveDraft } from "@/lib/data/repositories/outreach";
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +9,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Draft ID required" }, { status: 400 });
     }
 
-    const approved = await approveDraft(draftId);
+    let approved;
+    try {
+      approved = await approveDraft(draftId);
+    } catch (err: any) {
+      // e.g. trying to re-approve an email that was already sent
+      return NextResponse.json({ error: err.message || "Cannot approve this draft" }, { status: 409 });
+    }
     if (!approved) {
       return NextResponse.json({ error: "Draft not found" }, { status: 404 });
     }
