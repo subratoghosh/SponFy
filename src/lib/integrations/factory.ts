@@ -67,10 +67,10 @@ export function getIntegrationStatus(): IntegrationHealth[] {
     !process.env.GOOGLE_CLIENT_ID.includes("your-")
   );
 
-  const supabaseConfigured = !!(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-")
+  const dbConfigured = !!(
+    process.env.DATABASE_URL &&
+    !process.env.DATABASE_URL.includes("your-neon-host") &&
+    !process.env.DATABASE_URL.includes("placeholder")
   );
 
   return [
@@ -96,10 +96,10 @@ export function getIntegrationStatus(): IntegrationHealth[] {
       lastChecked: new Date().toISOString(),
     },
     {
-      name: "Supabase SSR (Postgres & RLS)",
-      service: "supabase",
-      isConfigured: supabaseConfigured,
-      statusText: supabaseConfigured ? "Database Connected" : "In-Memory Demo Store",
+      name: "PostgreSQL & Prisma ORM (Neon DB)",
+      service: "neon",
+      isConfigured: dbConfigured,
+      statusText: dbConfigured ? "Connected (Neon Serverless)" : "In-Memory Demo Store",
       lastChecked: new Date().toISOString(),
     },
   ];

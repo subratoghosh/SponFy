@@ -1259,6 +1259,10 @@ export const DEMO_FOLLOWUPS: FollowupTask[] = [
   },
 ];
 
+export const DEMO_REPLIES = DEMO_REPLY_ANALYSES;
+
+export const DEMO_CONTACTS: Contact[] = DEMO_COMPANIES.flatMap((c) => c.contacts || []);
+
 export const DEMO_ACTIVITIES: Activity[] = [
   {
     id: "act-1",
