@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { verifyAdminSession } from "@/lib/admin/auth";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminMobileTabBar } from "@/components/admin/AdminMobileTabBar";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 import { ShieldAlert, ArrowLeft, LogIn, Lock } from "lucide-react";
 
@@ -78,11 +79,12 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen flex bg-[#FAF4E6] selection:bg-[#FFF0B3] selection:text-[#0C382E]">
       <AdminSidebar />
-      <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
+      <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0 pb-20 lg:pb-0">
         <main className="flex-1">
           {children}
         </main>
       </div>
+      <AdminMobileTabBar />
     </div>
   );
 }
