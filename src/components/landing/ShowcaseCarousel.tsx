@@ -98,14 +98,14 @@ export const ShowcaseCarousel: React.FC = () => {
             <button
               onClick={handlePrev}
               aria-label="Previous showcase sponsor"
-              className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream transition-colors shadow-sm"
+              className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-110 hover:border-green-dark/30 hover:shadow-md active:scale-95 transition-all duration-200"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={handleNext}
               aria-label="Next showcase sponsor"
-              className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream transition-colors shadow-sm"
+              className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-110 hover:border-green-dark/30 hover:shadow-md active:scale-95 transition-all duration-200"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -119,29 +119,29 @@ export const ShowcaseCarousel: React.FC = () => {
             return (
               <div
                 key={item.name}
-                className="bg-white rounded-2xl p-6 border border-green-dark/12 shadow-sm feature-card-interactive flex flex-col justify-between"
+                className="bg-white rounded-2xl p-6 border border-green-dark/12 shadow-sm feature-card-interactive flex flex-col justify-between group/card"
               >
                 <div>
                   <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-butter-warm flex items-center justify-center text-green-dark border border-green-dark/10">
+                    <div className="w-12 h-12 rounded-xl bg-butter-warm flex items-center justify-center text-green-dark border border-green-dark/10 group-hover/card:scale-110 group-hover/card:rotate-6 group-hover/card:bg-butter-gold group-hover/card:shadow-[0_0_14px_rgba(254,231,144,0.6)] transition-all duration-300">
                       <Building2 className="w-6 h-6" />
                     </div>
                     <div className="text-right">
-                      <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 border border-green-300">
+                      <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 border border-green-300 hover:scale-105 hover:bg-green-200 transition-all cursor-default">
                         <TrendingUp className="w-3.5 h-3.5" />
                         {item.fitScore}% Fit
                       </span>
                     </div>
                   </div>
 
-                  <h3 className="font-heading font-extrabold text-xl text-green-dark mb-1">
+                  <h3 className="font-heading font-extrabold text-xl text-green-dark mb-1 group-hover/card:text-green-mid transition-colors">
                     {item.name}
                   </h3>
                   <p className="text-xs text-text-dim mb-4 leading-relaxed line-clamp-2">
                     {item.description}
                   </p>
 
-                  <div className="p-3.5 bg-butter-panel rounded-xl text-xs space-y-2 border border-green-dark/8 mb-4">
+                  <div className="p-3.5 bg-butter-panel rounded-xl text-xs space-y-2 border border-green-dark/8 mb-4 hover:border-green-dark/20 transition-colors">
                     <div>
                       <span className="font-bold text-green-dark block mb-0.5">Target Tier:</span>
                       <span className="font-mono text-green-800 font-bold">{item.targetTier}</span>
@@ -159,8 +159,8 @@ export const ShowcaseCarousel: React.FC = () => {
                     <span className="truncate max-w-[140px]">{item.contact}</span>
                   </div>
                   <Link href="/app/sponsors">
-                    <span className="font-bold text-green-dark hover:text-green-mid inline-flex items-center gap-1">
-                      View Dossier <ArrowRight className="w-3.5 h-3.5" />
+                    <span className="font-bold text-green-dark group-hover/card:text-green-mid inline-flex items-center gap-1 transition-colors">
+                      View Dossier <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/card:translate-x-1" />
                     </span>
                   </Link>
                 </div>

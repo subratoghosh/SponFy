@@ -84,24 +84,24 @@ export const WorkflowStory: React.FC = () => {
                 key={idx}
                 onClick={() => setActiveStep(idx)}
                 className={cn(
-                  "p-5 rounded-2xl border transition-all cursor-pointer text-left flex items-start gap-4",
+                  "p-5 rounded-2xl border transition-all cursor-pointer text-left flex items-start gap-4 group",
                   activeStep === idx
                     ? "bg-white border-green-dark shadow-md scale-[1.02]"
-                    : "bg-white/60 border-green-dark/10 hover:bg-white hover:border-green-dark/30"
+                    : "bg-white/60 border-green-dark/10 hover:bg-white hover:border-green-dark/30 hover:translate-x-1.5 hover:shadow-sm"
                 )}
               >
                 <div
                   className={cn(
-                    "w-10 h-10 rounded-xl shrink-0 flex items-center justify-center font-bold text-sm transition-colors",
+                    "w-10 h-10 rounded-xl shrink-0 flex items-center justify-center font-bold text-sm transition-all group-hover:scale-105",
                     activeStep === idx
                       ? "bg-green-dark text-butter-cream"
-                      : "bg-butter-warm text-text-dim"
+                      : "bg-butter-warm text-text-dim group-hover:bg-butter-gold"
                   )}
                 >
                   {s.step}
                 </div>
                 <div>
-                  <h3 className="font-heading font-bold text-base text-green-dark mb-1">
+                  <h3 className="font-heading font-bold text-base text-green-dark mb-1 group-hover:text-green-mid transition-colors">
                     {s.title}
                   </h3>
                   <p className="text-xs text-text-dim leading-relaxed">
@@ -113,14 +113,14 @@ export const WorkflowStory: React.FC = () => {
           </div>
 
           {/* Right Column: Live Step Simulation Card */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border-2 border-green-dark/15 shadow-xl min-h-[420px] flex flex-col justify-between">
+          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border-2 border-green-dark/15 shadow-xl min-h-[420px] flex flex-col justify-between hover:shadow-2xl hover:border-green-dark/30 transition-all duration-300">
             <div>
               <div className="flex items-center justify-between border-b border-green-dark/10 pb-4 mb-6">
                 <div className="flex items-center gap-2 text-xs font-bold text-green-dark uppercase tracking-wider">
                   <Sparkles className="w-4 h-4 text-green-mid" />
                   Step {steps[activeStep].step} — {steps[activeStep].title}
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-butter-cream text-green-dark">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-butter-cream text-green-dark hover:scale-105 transition-transform cursor-default">
                   Live Preview
                 </span>
               </div>
@@ -128,21 +128,21 @@ export const WorkflowStory: React.FC = () => {
               {/* Dynamic Step Previews */}
               {activeStep === 0 && (
                 <div className="space-y-4 text-xs animate-fade-in">
-                  <div className="p-4 bg-butter-panel rounded-xl border border-green-dark/15 font-mono text-green-dark">
+                  <div className="p-4 bg-butter-panel rounded-xl border border-green-dark/15 font-mono text-green-dark hover:border-green-dark/30 transition-colors">
                     "Find 25 cloud and devtool companies sponsoring Indian student hackathons with ₹50k+ budgets"
                   </div>
                   <div className="space-y-2">
-                    <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between border border-green-200">
+                    <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between border border-green-200 hover:bg-green-100 hover:scale-[1.01] transition-all cursor-pointer">
                       <span className="font-bold text-green-900">Postman — API Platform</span>
-                      <span className="font-mono text-green-700">Fit: 94%</span>
+                      <span className="font-mono text-green-700 font-bold">Fit: 94%</span>
                     </div>
-                    <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between border border-green-200">
+                    <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between border border-green-200 hover:bg-green-100 hover:scale-[1.01] transition-all cursor-pointer">
                       <span className="font-bold text-green-900">Devfolio — Builder Ecosystem</span>
-                      <span className="font-mono text-green-700">Fit: 98%</span>
+                      <span className="font-mono text-green-700 font-bold">Fit: 98%</span>
                     </div>
-                    <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between border border-green-200">
+                    <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between border border-green-200 hover:bg-green-100 hover:scale-[1.01] transition-all cursor-pointer">
                       <span className="font-bold text-green-900">Razorpay — Fintech & Payments</span>
-                      <span className="font-mono text-green-700">Fit: 88%</span>
+                      <span className="font-mono text-green-700 font-bold">Fit: 88%</span>
                     </div>
                   </div>
                 </div>
@@ -236,9 +236,9 @@ export const WorkflowStory: React.FC = () => {
               </p>
               <button
                 onClick={() => setActiveStep((prev) => (prev + 1) % steps.length)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-green-dark hover:text-green-mid"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-green-dark hover:text-green-mid hover:translate-x-1 transition-all group/btn"
               >
-                Next Step <ArrowRight className="w-3.5 h-3.5" />
+                Next Step <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
               </button>
             </div>
           </div>

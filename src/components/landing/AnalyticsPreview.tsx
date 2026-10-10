@@ -31,20 +31,20 @@ export const AnalyticsPreview: React.FC = () => {
           {metrics.map((m, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-2xl p-6 border border-green-dark/12 shadow-sm feature-card-interactive"
+              className="bg-white rounded-2xl p-6 border border-green-dark/12 shadow-sm feature-card-interactive group/stat hover:-translate-y-2 hover:shadow-card-hover transition-all duration-300"
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold uppercase text-text-muted tracking-wider">
                   {m.label}
                 </span>
-                <div className="w-9 h-9 rounded-xl bg-butter-warm flex items-center justify-center text-green-dark">
+                <div className="w-9 h-9 rounded-xl bg-butter-warm flex items-center justify-center text-green-dark group-hover/stat:scale-110 group-hover/stat:rotate-6 group-hover/stat:bg-butter-gold group-hover/stat:shadow-[0_0_14px_rgba(254,231,144,0.6)] transition-all duration-300">
                   <m.icon className="w-4 h-4" />
                 </div>
               </div>
-              <h3 className="stat-font text-3xl font-extrabold text-green-dark mb-1">
+              <h3 className="stat-font text-3xl font-extrabold text-green-dark mb-1 group-hover/stat:text-green-mid transition-colors">
                 {m.value}
               </h3>
-              <p className="text-xs font-medium text-green-700 flex items-center gap-1">
+              <p className="text-xs font-medium text-green-700 flex items-center gap-1 group-hover/stat:translate-x-0.5 transition-transform">
                 <ArrowUpRight className="w-3.5 h-3.5" /> {m.change}
               </p>
             </div>
@@ -52,7 +52,7 @@ export const AnalyticsPreview: React.FC = () => {
         </div>
 
         {/* Funnel Visual Mock */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/15 shadow-md">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/15 shadow-md hover:shadow-2xl hover:border-green-dark/25 transition-all duration-300">
           <div className="flex items-center justify-between border-b border-green-dark/10 pb-4 mb-6">
             <div>
               <h3 className="font-heading font-bold text-lg text-green-dark">
@@ -61,13 +61,13 @@ export const AnalyticsPreview: React.FC = () => {
               <p className="text-xs text-text-dim">Conversion stages from Discovered to Closed Deals</p>
             </div>
             <Link href="/app/analytics">
-              <Button variant="glass" size="sm" className="text-xs font-bold">
+              <Button variant="glass" size="sm" className="text-xs font-bold hover:scale-105 hover:bg-butter-cream hover:border-green-dark transition-all duration-200">
                 View Full Analytics
               </Button>
             </Link>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[
               { stage: "Discovered", count: 24, percent: "100%", color: "bg-green-dark" },
               { stage: "Qualified (Fit >= 70)", count: 21, percent: "87.5%", color: "bg-green-mid" },
@@ -76,14 +76,14 @@ export const AnalyticsPreview: React.FC = () => {
               { stage: "Interested & Negotiating", count: 8, percent: "33.3%", color: "bg-amber-600" },
               { stage: "Committed Sponsors 🎉", count: 3, percent: "12.5%", color: "bg-green-600" },
             ].map((f, i) => (
-              <div key={i} className="space-y-1">
-                <div className="flex justify-between text-xs font-bold text-green-dark">
+              <div key={i} className="space-y-1 p-2 -mx-2 rounded-xl hover:bg-butter-warm/40 hover:scale-[1.01] transition-all cursor-pointer group/row">
+                <div className="flex justify-between text-xs font-bold text-green-dark group-hover/row:text-green-mid transition-colors">
                   <span>{f.stage}</span>
                   <span className="font-mono">{f.count} companies ({f.percent})</span>
                 </div>
                 <div className="w-full h-3 bg-butter-warm rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${f.color} rounded-full transition-all duration-700`}
+                    className={`h-full ${f.color} rounded-full transition-all duration-700 group-hover/row:brightness-110 group-hover/row:shadow-[0_0_8px_rgba(12,56,46,0.3)]`}
                     style={{ width: f.percent }}
                   />
                 </div>

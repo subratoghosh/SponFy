@@ -12,41 +12,62 @@ export const Header: React.FC = () => {
 
   return (
     <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
-      <nav className="pointer-events-auto w-full max-w-[1240px] bg-green-hero/90 backdrop-blur-md border border-butter-cream/25 rounded-full px-5 py-3 shadow-xl flex items-center justify-between transition-all">
+      <nav className="pointer-events-auto w-full max-w-[1240px] bg-green-dark border-2 border-butter-cream/85 hover:border-butter-cream ring-1 ring-butter-cream/30 rounded-full px-6 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex items-center justify-between transition-all duration-200">
         {/* Logo Wordmark */}
-        <SponfyBrand href="/" size="md" theme="dark" />
+        <div className="hover:scale-105 transition-transform duration-200">
+          <SponfyBrand href="/" size="md" theme="dark" />
+        </div>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden md:flex items-center gap-7 text-sm font-semibold text-text-onDarkSub">
-          <a href="#workflow" className="hover:text-butter-cream transition-colors">
+        <div className="hidden md:flex items-center gap-1 text-sm font-semibold text-text-onDarkSub">
+          <a
+            href="#workflow"
+            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
+          >
             Workflow
           </a>
-          <a href="#showcase" className="hover:text-butter-cream transition-colors">
+          <a
+            href="#showcase"
+            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
+          >
             Showcase
           </a>
-          <a href="#intelligence" className="hover:text-butter-cream transition-colors">
+          <a
+            href="#intelligence"
+            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
+          >
             Intelligence
           </a>
-          <a href="#analytics" className="hover:text-butter-cream transition-colors">
+          <a
+            href="#analytics"
+            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
+          >
             Analytics
           </a>
-          <a href="#faq" className="hover:text-butter-cream transition-colors">
+          <a
+            href="#faq"
+            className="px-3.5 py-1.5 rounded-full text-text-onDarkSub hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150"
+          >
             FAQ
           </a>
         </div>
 
         {/* CTA & Actions */}
-        <div className="hidden sm:flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-3">
           <Link
             href="/login"
-            className="text-sm font-semibold text-text-onDark hover:text-butter-cream transition-colors px-3 py-1.5"
+            className="text-sm font-semibold text-text-onDark hover:text-butter-cream hover:bg-green-mid/70 transition-all duration-150 px-3.5 py-1.5 rounded-full"
           >
             Log in
           </Link>
           <Link href="/app">
-            <Button variant="butter" size="sm" className="font-bold shadow-md">
+            <Button
+              variant="butter"
+              size="sm"
+              className="font-bold shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
+            >
               Start a campaign
-              <ArrowRight className="w-4 h-4 ml-1" />
+              <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
         </div>
@@ -70,7 +91,7 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="pointer-events-auto fixed inset-x-4 top-20 bg-green-hero border border-butter-cream/20 rounded-2xl p-6 shadow-2xl z-50 flex flex-col gap-4 text-center sm:hidden animate-fade-in">
+        <div className="fixed inset-x-0 top-16 md:top-[72px] bg-green-dark border-b border-green-mid p-6 shadow-2xl z-50 flex flex-col gap-3 text-center sm:hidden animate-fade-in">
           <a
             href="#workflow"
             onClick={() => setMobileMenuOpen(false)}

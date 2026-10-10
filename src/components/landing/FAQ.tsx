@@ -70,19 +70,19 @@ export const FAQ: React.FC = () => {
             return (
               <div
                 key={idx}
-                className="bg-white rounded-2xl border border-green-dark/12 overflow-hidden shadow-sm transition-all"
+                className="bg-white rounded-2xl border border-green-dark/12 overflow-hidden shadow-sm hover:border-green-dark/35 hover:shadow-md transition-all duration-200 group"
               >
                 <button
                   onClick={() => toggle(idx)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-heading font-bold text-base sm:text-lg text-green-dark hover:text-green-mid transition-colors"
+                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-heading font-bold text-base sm:text-lg text-green-dark hover:text-green-mid hover:bg-butter-panel/40 transition-all"
                 >
                   <span className="flex items-center gap-3">
-                    <HelpCircle className="w-5 h-5 text-green-mid shrink-0" />
+                    <HelpCircle className="w-5 h-5 text-green-mid shrink-0 group-hover:scale-110 group-hover:text-green-dark group-hover:rotate-6 transition-all duration-200" />
                     {faq.question}
                   </span>
                   <ChevronDown
                     className={cn(
-                      "w-5 h-5 text-text-muted shrink-0 transition-transform duration-200",
+                      "w-5 h-5 text-text-muted shrink-0 transition-all duration-200 group-hover:scale-110",
                       isOpen && "rotate-180 text-green-dark"
                     )}
                   />

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -14,42 +14,64 @@ import {
   UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HeroVectorMotifs } from "./HeroVectorMotifs";
 
 export const Hero: React.FC = () => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({
+    rotateX: 0,
+    rotateY: 0,
+    glareX: 50,
+    glareY: 50,
+    active: false,
+  });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // Smooth subtle tilt angles (-6deg to +6deg)
+    const rotateX = -((y - centerY) / centerY) * 6;
+    const rotateY = ((x - centerX) / centerX) * 6;
+    const glareX = (x / rect.width) * 100;
+    const glareY = (y / rect.height) * 100;
+
+    setTilt({
+      rotateX,
+      rotateY,
+      glareX,
+      glareY,
+      active: true,
+    });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTilt({
+      rotateX: 0,
+      rotateY: 0,
+      glareX: 50,
+      glareY: 50,
+      active: false,
+    });
+  }, []);
+
   return (
     <section className="relative pt-32 pb-24 md:pt-40 md:pb-36 bg-green-hero text-text-onDark overflow-hidden rounded-b-[36px] shadow-2xl">
       {/* Background Organic Butter Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-butter-cream/10 blur-3xl pointer-events-none blob-float" />
       <div className="absolute top-[20%] right-[-5%] w-[600px] h-[600px] rounded-full bg-green-light/20 blur-3xl pointer-events-none" />
       
-      {/* Abstract Network/Data Line-Art Motif (Stroke Butter, Opacity ~0.2) */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none opacity-20"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <pattern
-            id="network-grid"
-            width="60"
-            height="60"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M 60 0 L 0 0 0 60"
-              fill="none"
-              stroke="#FFF0B3"
-              strokeWidth="0.8"
-            />
-            <circle cx="0" cy="0" r="2" fill="#FFF0B3" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#network-grid)" />
-      </svg>
+      {/* Interactive Background Vector Images (Hover-to-glow, floating motifs) */}
+      <HeroVectorMotifs />
 
-      <div className="relative max-w-[1240px] mx-auto px-6 text-center flex flex-col items-center">
+      <div className="relative max-w-[1240px] mx-auto px-6 text-center flex flex-col items-center z-10">
         {/* Pill Tag */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter-cream/15 border border-butter-cream/30 text-butter-cream text-xs font-bold uppercase tracking-wider mb-6">
-          <Sparkles className="w-3.5 h-3.5 fill-butter-cream" />
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter-cream/15 border border-butter-cream/30 text-butter-cream text-xs font-bold uppercase tracking-wider mb-6 hover:bg-butter-cream/25 hover:border-butter-cream/60 hover:shadow-[0_0_20px_rgba(255,240,179,0.35)] hover:scale-105 transition-all duration-300 cursor-default">
+          <Sparkles className="w-3.5 h-3.5 fill-butter-cream animate-pulse" />
           The AI Sponsorship OS for College Fests & Hackathons
         </div>
 
@@ -66,20 +88,50 @@ export const Hero: React.FC = () => {
         {/* Action CTAs */}
         <div className="flex flex-col sm:flex-row items-center gap-4 mb-16 z-10">
           <Link href="/app">
-            <Button variant="butter" size="lg" className="text-base font-bold shadow-xl">
+            <Button
+              variant="butter"
+              size="lg"
+              className="text-base font-bold shadow-xl hover:scale-105 hover:shadow-[0_10px_30px_rgba(255,240,179,0.45)] transition-all duration-300 group"
+            >
               Start a campaign free
-              <ArrowRight className="w-5 h-5 ml-1" />
+              <ArrowRight className="w-5 h-5 ml-1 transition-transform duration-200 group-hover:translate-x-1" />
             </Button>
           </Link>
           <a href="#workflow">
-            <Button variant="hero-ghost" size="lg" className="text-base font-semibold">
+            <Button
+              variant="hero-ghost"
+              size="lg"
+              className="text-base font-semibold hover:scale-105 hover:bg-butter-cream/20 hover:border-butter-cream hover:shadow-md transition-all duration-300"
+            >
               See how it works
             </Button>
           </a>
         </div>
 
-        {/* Overlapping Product Preview UI Card */}
-        <div className="w-full max-w-5xl bg-butter-panel text-green-dark rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-hero-card border-2 border-butter-cream/50 relative z-20 text-left transition-all transform hover:scale-[1.01]">
+        {/* Overlapping Product Preview UI Card — 3D Parallax Tilt Card */}
+        <div
+          ref={cardRef}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            transform: tilt.active
+              ? `perspective(1200px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale3d(1.018, 1.018, 1.018)`
+              : "perspective(1200px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)",
+            transition: tilt.active
+              ? "transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1)"
+              : "transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)",
+            transformStyle: "preserve-3d",
+          }}
+          className="w-full max-w-5xl bg-butter-panel text-green-dark rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-hero-card border-2 border-butter-cream/65 relative z-20 text-left transition-shadow duration-300 hover:border-butter-cream hover:shadow-[0_35px_80px_-15px_rgba(0,0,0,0.65)] will-change-transform group/parallax cursor-default"
+        >
+          {/* Dynamic Glare Light Reflection following cursor */}
+          <div
+            className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none transition-opacity duration-300 z-30 overflow-hidden"
+            style={{
+              opacity: tilt.active ? 0.35 : 0,
+              background: `radial-gradient(circle 500px at ${tilt.glareX}% ${tilt.glareY}%, rgba(255, 240, 179, 0.5) 0%, rgba(255, 255, 255, 0.15) 30%, transparent 65%)`,
+            }}
+          />
           {/* Card Topbar Mock */}
           <div className="flex items-center justify-between border-b border-green-dark/10 pb-4 mb-6">
             <div className="flex items-center gap-3">
@@ -97,18 +149,21 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* Inner Grid Preview: Left Kanban Card + Right "Why 86?" Card */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start" style={{ transformStyle: "preserve-3d" }}>
             {/* Left Sponsor Dossier Preview */}
-            <div className="md:col-span-7 bg-white rounded-xl p-5 border border-green-dark/12 shadow-sm space-y-4">
+            <div
+              style={{ transform: "translateZ(20px)" }}
+              className="md:col-span-7 bg-white rounded-xl p-5 border border-green-dark/12 shadow-sm space-y-4 hover:border-green-dark/30 hover:shadow-md transition-all duration-200 group/card"
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-butter-warm flex items-center justify-center font-bold text-green-dark text-lg border border-green-dark/10">
+                  <div className="w-12 h-12 rounded-xl bg-butter-warm flex items-center justify-center font-bold text-green-dark text-lg border border-green-dark/10 group-hover/card:scale-105 group-hover/card:rotate-2 transition-transform duration-200">
                     <Building2 className="w-6 h-6 text-green-dark" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-lg text-green-dark">Postman</h3>
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-800 border border-green-300">
+                      <h3 className="font-bold text-lg text-green-dark group-hover/card:text-green-mid transition-colors">Postman</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-800 border border-green-300 hover:scale-105 transition-transform cursor-default">
                         Interested
                       </span>
                     </div>
@@ -121,7 +176,7 @@ export const Hero: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-butter-bg/80 rounded-lg text-xs space-y-1.5 border border-green-dark/5">
+              <div className="p-3 bg-butter-bg/80 rounded-lg text-xs space-y-1.5 border border-green-dark/5 hover:border-green-dark/15 transition-colors">
                 <div className="flex items-center justify-between text-text-dim font-medium">
                   <span>Verified Contact:</span>
                   <span className="font-semibold text-green-dark flex items-center gap-1">
@@ -138,37 +193,40 @@ export const Hero: React.FC = () => {
                     href="https://postman.com/student-program"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-blue-700 underline flex items-center gap-1 hover:text-blue-900"
+                    className="text-blue-700 underline flex items-center gap-1 hover:text-blue-900 group/link"
                   >
-                    postman.com/student-program <ExternalLink className="w-3 h-3" />
+                    postman.com/student-program <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                   </a>
                 </div>
               </div>
 
               {/* Draft Preview Bar */}
-              <div className="bg-green-dark text-butter-cream p-3 rounded-lg flex items-center justify-between text-xs font-medium">
+              <div className="bg-green-dark text-butter-cream p-3 rounded-lg flex items-center justify-between text-xs font-medium hover:bg-green-mid transition-colors shadow-sm">
                 <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-butter-gold" />
+                  <Zap className="w-4 h-4 text-butter-gold animate-pulse" />
                   <span>Draft Ready: 95% Quality Score</span>
                 </div>
-                <span className="bg-butter-cream text-green-dark px-2.5 py-0.5 rounded-full font-bold text-[11px]">
+                <span className="bg-butter-cream text-green-dark px-2.5 py-0.5 rounded-full font-bold text-[11px] hover:bg-butter-gold hover:scale-105 transition-all cursor-pointer shadow-sm">
                   Review & Approve
                 </span>
               </div>
             </div>
 
             {/* Right Fit Score Breakdown ("Why 94?") */}
-            <div className="md:col-span-5 bg-white rounded-xl p-5 border border-green-dark/12 shadow-sm space-y-3">
+            <div
+              style={{ transform: "translateZ(20px)" }}
+              className="md:col-span-5 bg-white rounded-xl p-5 border border-green-dark/12 shadow-sm space-y-3 hover:border-green-dark/30 hover:shadow-md transition-all duration-200 group/score"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
                     AI Fit Score
                   </span>
-                  <h4 className="font-heading font-extrabold text-2xl text-green-dark flex items-baseline gap-1">
+                  <h4 className="font-heading font-extrabold text-2xl text-green-dark flex items-baseline gap-1 group-hover/score:text-green-mid transition-colors">
                     94 <span className="text-xs font-semibold text-text-muted">/ 100</span>
                   </h4>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-800">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-800 group-hover/score:scale-110 group-hover/score:bg-green-200 transition-all duration-200">
                   <TrendingUp className="w-5 h-5" />
                 </div>
               </div>
@@ -178,19 +236,19 @@ export const Hero: React.FC = () => {
               </p>
 
               <div className="space-y-2 text-xs">
-                <div className="flex items-start gap-2 text-green-800">
+                <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
                   <div>
                     <span className="font-bold">+20 pts:</span> High industry synergy with 800 CS student builders.
                   </div>
                 </div>
-                <div className="flex items-start gap-2 text-green-800">
+                <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
                   <div>
                     <span className="font-bold">+15 pts:</span> Active Postman Student Expert program in India.
                   </div>
                 </div>
-                <div className="flex items-start gap-2 text-green-800">
+                <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
                   <div>
                     <span className="font-bold">+15 pts:</span> Standard ₹75k track sponsorship history.
