@@ -85,10 +85,11 @@ export class RealGmailClient implements IGmailClient {
         threadId: res.data.threadId || `thread-${Date.now()}`,
         sentAt: new Date().toISOString(),
       };
-    } catch (err) {
-      console.warn("Real Gmail API send failed, using mock:", err);
-      const mock = new MockGmailClient();
-      return mock.sendEmail(to, subject, body, threadId);
+    } catch (err: any) {
+      // Never pretend a real send succeeded: the caller must see the failure,
+      // otherwise the tracker marks a sponsor "Contacted" when nothing was sent.
+      console.error("Real Gmail API send failed:", err);
+      throw new Error(`Gmail send failed: ${err?.message || err}`);
     }
   }
 
@@ -135,10 +136,9 @@ export class RealGmailClient implements IGmailClient {
       }
 
       return messages;
-    } catch (err) {
-      console.warn("Real Gmail poll failed, using mock:", err);
-      const mock = new MockGmailClient();
-      return mock.pollReplies(lastSyncedAt);
+    } catch (err: any) {
+      console.error("Real Gmail poll failed:", err);
+      throw new Error(`Gmail reply sync failed: ${err?.message || err}`);
     }
   }
 }

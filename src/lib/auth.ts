@@ -3,7 +3,10 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 
-if (!process.env.AUTH_SECRET) {
+// Dev-only fallback. This string is public (it is in the repo), so using it in
+// production would let anyone forge a session cookie, including an admin's.
+// In production AUTH_SECRET must be set; Auth.js will refuse to start otherwise.
+if (!process.env.AUTH_SECRET && process.env.NODE_ENV !== "production") {
   process.env.AUTH_SECRET = "sponfy-dev-auth-secret-super-safe-fallback-32chars";
 }
 

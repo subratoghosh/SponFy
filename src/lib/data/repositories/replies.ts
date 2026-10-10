@@ -2,8 +2,9 @@ import { Message, ReplyAnalysis, ReplyIntent } from "@/types";
 import { DEMO_MESSAGES, DEMO_REPLIES } from "../seed-data";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Direction, Intent } from "@prisma/client";
+import { memoryStore } from "@/lib/data/memory-store";
 
-let replyAnalysesStore: ReplyAnalysis[] = [...DEMO_REPLIES];
+const replyAnalysesStoreRef = memoryStore<ReplyAnalysis[]>("replyAnalyses", () => [...DEMO_REPLIES]);
 
 const INTENT_TO_DB: Record<string, Intent> = {
   Interested: "INTERESTED",
@@ -73,9 +74,9 @@ export async function getReplyAnalyses(companyId?: string): Promise<ReplyAnalysi
   }
 
   if (companyId) {
-    return replyAnalysesStore.filter((r) => r.companyId === companyId);
+    return replyAnalysesStoreRef.value.filter((r) => r.companyId === companyId);
   }
-  return [...replyAnalysesStore];
+  return [...replyAnalysesStoreRef.value];
 }
 
 export async function getInboundThreads(): Promise<{ message: Message; analysis?: ReplyAnalysis }[]> {
@@ -130,7 +131,7 @@ export async function getInboundThreads(): Promise<{ message: Message; analysis?
 
   const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
   return inbounds.map((msg) => {
-    const analysis = replyAnalysesStore.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
+    const analysis = replyAnalysesStoreRef.value.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
     return {
       message: msg,
       analysis,
@@ -227,7 +228,7 @@ export async function recordInboundReply(
     createdAt: new Date().toISOString(),
   };
 
-  replyAnalysesStore.unshift(newAnalysis);
+  replyAnalysesStoreRef.value.unshift(newAnalysis);
 
   return {
     message: newMsg,

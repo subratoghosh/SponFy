@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
 import { addSponsor } from "@/lib/data/repositories/sponsors";
+import { DuplicateCompanyError } from "@/lib/outreach/duplicates";
 import { getGeminiClient } from "@/lib/integrations/factory";
 
 export async function POST(req: Request) {
@@ -63,33 +64,43 @@ export async function POST(req: Request) {
     ];
 
     const added = [];
+    const skipped: { name: string; reason: string }[] = [];
     for (const c of candidates.slice(0, targetCount)) {
-      const spon = await addSponsor({
-        campaignId: campaign.id,
-        name: c.name,
-        website: c.website,
-        industry: c.industry,
-        description: c.description,
-        stage: "Discovered",
-        fitScore: c.fitScore,
-        scoreBreakdown: [
-          { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: "High synergy with technical student builders", positive: true },
-          { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} students in ${campaign.location}`, positive: true },
-          { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Developer tooling integration track", positive: true },
-          { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of tech hackathons", positive: true },
-          { factor: "Student Program History", points: 13, maxPoints: 15, reason: "Free developer allowances", positive: true },
-          { factor: "Financial Capability", points: 8, maxPoints: 10, reason: "Standard track budget tier", positive: true },
-          { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "National reach", positive: true },
-        ],
-        pipelineValue: c.pipelineValue,
-        signals: c.signals,
-        confidence: 90,
-        researchStatus: "pending",
-      });
+      let spon;
+      try {
+        spon = await addSponsor({
+          campaignId: campaign.id,
+          name: c.name,
+          website: c.website,
+          industry: c.industry,
+          description: c.description,
+          stage: "Discovered",
+          fitScore: c.fitScore,
+          scoreBreakdown: [
+            { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: "High synergy with technical student builders", positive: true },
+            { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} students in ${campaign.location}`, positive: true },
+            { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Developer tooling integration track", positive: true },
+            { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of tech hackathons", positive: true },
+            { factor: "Student Program History", points: 13, maxPoints: 15, reason: "Free developer allowances", positive: true },
+            { factor: "Financial Capability", points: 8, maxPoints: 10, reason: "Standard track budget tier", positive: true },
+            { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "National reach", positive: true },
+          ],
+          pipelineValue: c.pipelineValue,
+          signals: c.signals,
+          confidence: 90,
+          researchStatus: "pending",
+        });
+      } catch (err) {
+        if (err instanceof DuplicateCompanyError) {
+          skipped.push({ name: c.name, reason: "Already in this campaign's pipeline" });
+          continue;
+        }
+        throw err;
+      }
       added.push(spon);
     }
 
-    return NextResponse.json({ success: true, count: added.length, candidates: added });
+    return NextResponse.json({ success: true, count: added.length, candidates: added, skipped });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Discovery failed" }, { status: 500 });
   }

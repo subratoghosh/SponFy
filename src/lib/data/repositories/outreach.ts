@@ -1,11 +1,12 @@
 import { EmailDraft, Message, DraftStatus } from "@/types";
 import { DEMO_DRAFTS, DEMO_MESSAGES } from "../seed-data";
+import { memoryStore } from "@/lib/data/memory-store";
 import { updateSponsorStage } from "./sponsors";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { DraftStatus as DbDraftStatus, Direction } from "@prisma/client";
 
-let draftsStore: EmailDraft[] = [...DEMO_DRAFTS];
-let messagesStore: Message[] = [...DEMO_MESSAGES];
+const draftsStoreRef = memoryStore<EmailDraft[]>("drafts", () => [...DEMO_DRAFTS]);
+const messagesStoreRef = memoryStore<Message[]>("messages", () => [...DEMO_MESSAGES]);
 
 const DRAFT_STATUS_TO_DB: Record<string, DbDraftStatus> = {
   draft: "DRAFT",
@@ -23,7 +24,7 @@ const DRAFT_STATUS_TO_DB: Record<string, DbDraftStatus> = {
 const DB_TO_DRAFT_STATUS: Record<string, DraftStatus> = {
   DRAFT: "draft",
   APPROVED: "approved",
-  SENDING: "draft",
+  SENDING: "sending",
   SENT: "sent",
   FAILED: "failed",
 };
@@ -55,9 +56,9 @@ export async function getDrafts(status?: DraftStatus): Promise<EmailDraft[]> {
   }
 
   if (status) {
-    return draftsStore.filter((d) => d.status === status);
+    return draftsStoreRef.value.filter((d) => d.status === status);
   }
-  return [...draftsStore];
+  return [...draftsStoreRef.value];
 }
 
 export async function getDraftById(id: string): Promise<EmailDraft | null> {
@@ -84,7 +85,7 @@ export async function getDraftById(id: string): Promise<EmailDraft | null> {
     }
   }
 
-  const found = draftsStore.find((d) => d.id === id);
+  const found = draftsStoreRef.value.find((d) => d.id === id);
   return found || null;
 }
 
@@ -113,7 +114,7 @@ export async function getDraftsByCompanyId(companyId: string): Promise<EmailDraf
     }
   }
 
-  return draftsStore.filter((d) => d.companyId === companyId);
+  return draftsStoreRef.value.filter((d) => d.companyId === companyId);
 }
 
 export async function getDraftByCompanyId(companyId: string): Promise<EmailDraft | null> {
@@ -145,7 +146,8 @@ export async function saveDraft(
       overall: 87,
       suggestions: [],
     },
-    status: draft.status || "draft",
+    // New drafts always start unapproved; approval only happens via approveDraft.
+    status: "draft",
   });
 }
 
@@ -165,7 +167,7 @@ export async function createDraft(
           subject: draft.subject,
           body: draft.body,
           quality: draft.quality as any,
-          status: DRAFT_STATUS_TO_DB[draft.status] || "DRAFT",
+          status: "DRAFT", // new drafts are never pre-approved
         },
       });
       return {
@@ -186,10 +188,11 @@ export async function createDraft(
 
   const newDraft: EmailDraft = {
     ...draft,
-    id: `draft-${Date.now()}`,
+    status: "draft", // new drafts are never pre-approved
+    id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: new Date().toISOString(),
   };
-  draftsStore.unshift(newDraft);
+  draftsStoreRef.value.unshift(newDraft);
   return newDraft;
 }
 
@@ -197,6 +200,29 @@ export async function updateDraft(
   id: string,
   updates: Partial<EmailDraft>
 ): Promise<EmailDraft | null> {
+  // Human-in-the-loop rule: what gets sent must be exactly what was approved.
+  // Editing the subject/body of an approved draft sends it back for re-approval,
+  // and drafts that are sending/sent can no longer be edited at all.
+  const current = await getDraftById(id);
+  if (current) {
+    const contentChanged =
+      (updates.subject !== undefined && updates.subject !== current.subject) ||
+      (updates.body !== undefined && updates.body !== current.body);
+    if (contentChanged && (current.status === "sending" || current.status === "sent")) {
+      throw new Error("This email has already been sent and can no longer be edited.");
+    }
+    if (current.status === "sending" || current.status === "sent") {
+      // Never let a client move a sent draft back to draft/approved.
+      updates = { ...updates, status: current.status };
+    } else if (contentChanged && current.status === "approved") {
+      updates = { ...updates, status: "draft", approvedAt: undefined };
+    } else if (updates.status === "approved" && current.status !== "approved") {
+      // Approval only happens through approveDraft (the /api/outreach/approve route).
+      updates = { ...updates, status: current.status };
+    }
+  }
+  const clearApproval = !!current && current.status === "approved" && updates.status === "draft";
+
   if (isDatabaseConfigured()) {
     try {
       const dbStatus = updates.status ? DRAFT_STATUS_TO_DB[updates.status] : undefined;
@@ -207,7 +233,11 @@ export async function updateDraft(
           body: updates.body,
           quality: updates.quality ? (updates.quality as any) : undefined,
           status: dbStatus,
-          approvedAt: updates.approvedAt ? new Date(updates.approvedAt) : undefined,
+          approvedAt: clearApproval
+            ? null
+            : updates.approvedAt
+            ? new Date(updates.approvedAt)
+            : undefined,
         },
       });
       return {
@@ -226,16 +256,24 @@ export async function updateDraft(
     }
   }
 
-  const idx = draftsStore.findIndex((d) => d.id === id);
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
   if (idx === -1) return null;
-  draftsStore[idx] = {
-    ...draftsStore[idx],
+  draftsStoreRef.value[idx] = {
+    ...draftsStoreRef.value[idx],
     ...updates,
+    ...(clearApproval ? { approvedAt: undefined } : {}),
   };
-  return draftsStore[idx];
+  return draftsStoreRef.value[idx];
 }
 
 export async function approveDraft(id: string): Promise<EmailDraft | null> {
+  const current = await getDraftById(id);
+  if (!current) return null;
+  if (current.status === "approved") return current; // idempotent (double click)
+  if (current.status === "sending" || current.status === "sent") {
+    throw new Error("This email has already been sent; it cannot be approved again.");
+  }
+
   if (isDatabaseConfigured()) {
     try {
       const updated = await prisma.emailDraft.update({
@@ -262,18 +300,61 @@ export async function approveDraft(id: string): Promise<EmailDraft | null> {
     }
   }
 
-  const idx = draftsStore.findIndex((d) => d.id === id);
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
   if (idx === -1) return null;
 
-  draftsStore[idx] = {
-    ...draftsStore[idx],
+  draftsStoreRef.value[idx] = {
+    ...draftsStoreRef.value[idx],
     status: "approved",
     approvedAt: new Date().toISOString(),
   };
 
   // Move company to Approved stage
-  await updateSponsorStage(draftsStore[idx].companyId, "Approved");
-  return draftsStore[idx];
+  await updateSponsorStage(draftsStoreRef.value[idx].companyId, "Approved");
+  return draftsStoreRef.value[idx];
+}
+
+/**
+ * Atomically moves an APPROVED draft to SENDING. Returns false if someone else
+ * already claimed it (double click, two teammates) or it is not approved.
+ * Database errors are thrown, never silently replaced by the memory store,
+ * so a broken DB can never turn into an unguarded send.
+ */
+export async function claimDraftForSending(id: string): Promise<boolean> {
+  if (isDatabaseConfigured()) {
+    const res = await prisma.emailDraft.updateMany({
+      where: { id, status: "APPROVED" },
+      data: { status: "SENDING" },
+    });
+    return res.count === 1;
+  }
+
+  // Memory store: check-and-set with no await in between, so it is atomic in JS.
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
+  if (idx === -1 || draftsStoreRef.value[idx].status !== "approved") return false;
+  draftsStoreRef.value[idx] = { ...draftsStoreRef.value[idx], status: "sending" };
+  return true;
+}
+
+/** Puts a claimed draft back to APPROVED after a failed send so the organizer can retry. */
+export async function releaseDraftClaim(id: string): Promise<void> {
+  if (isDatabaseConfigured()) {
+    await prisma.emailDraft.updateMany({
+      where: { id, status: "SENDING" },
+      data: { status: "APPROVED" },
+    });
+    return;
+  }
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
+  if (idx !== -1 && draftsStoreRef.value[idx].status === "sending") {
+    draftsStoreRef.value[idx] = { ...draftsStoreRef.value[idx], status: "approved" };
+  }
+}
+
+/** Number of outbound emails the workspace sent since `since` (for the daily cap). */
+export async function countOutboundSince(since: Date): Promise<number> {
+  const all = await getMessages();
+  return all.filter((m) => m.direction === "outbound" && new Date(m.sentAt).getTime() >= since.getTime()).length;
 }
 
 export async function recordSentMessage(
@@ -331,7 +412,8 @@ export async function recordSentMessage(
     }
   }
 
-  draft.status = "sent";
+  const sentIdx = draftsStoreRef.value.findIndex((d) => d.id === draftId);
+  if (sentIdx !== -1) draftsStoreRef.value[sentIdx] = { ...draftsStoreRef.value[sentIdx], status: "sent" };
 
   const message: Message = {
     id: `msg-${Date.now()}`,
@@ -347,7 +429,7 @@ export async function recordSentMessage(
     sentAt: new Date().toISOString(),
   };
 
-  messagesStore.unshift(message);
+  messagesStoreRef.value.unshift(message);
   await updateSponsorStage(draft.companyId, "Contacted");
   return message;
 }
@@ -380,7 +462,7 @@ export async function getMessages(companyId?: string): Promise<Message[]> {
   }
 
   if (companyId) {
-    return messagesStore.filter((m) => m.companyId === companyId);
+    return messagesStoreRef.value.filter((m) => m.companyId === companyId);
   }
-  return [...messagesStore];
+  return [...messagesStoreRef.value];
 }

@@ -36,7 +36,7 @@ export type ReplySentiment = "positive" | "neutral" | "negative";
 export type UrgencyLevel = "high" | "medium" | "low";
 
 // Draft Status
-export type DraftStatus = "draft" | "approved" | "sent" | "failed";
+export type DraftStatus = "draft" | "approved" | "sending" | "sent" | "failed";
 
 // Followup Status
 export type FollowupStatus = "pending" | "completed" | "skipped" | "cancelled";

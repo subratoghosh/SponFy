@@ -120,15 +120,15 @@ export function SettingsTabs() {
                   <div>
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Full Name</label>
                     <Input
-                      value={profile.full_name}
-                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                      value={profile.fullName ?? ''}
+                      onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                       className="text-xs"
                     />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Organizer Title</label>
                     <Input
-                      value={profile.title}
+                      value={profile.title ?? ''}
                       onChange={(e) => setProfile({ ...profile, title: e.target.value })}
                       className="text-xs"
                     />
@@ -139,7 +139,7 @@ export function SettingsTabs() {
                   <div>
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Organization / College</label>
                     <Input
-                      value={profile.organization}
+                      value={profile.organization ?? ''}
                       onChange={(e) => setProfile({ ...profile, organization: e.target.value })}
                       className="text-xs"
                     />
@@ -147,7 +147,7 @@ export function SettingsTabs() {
                   <div>
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Sender Email (Gmail connected)</label>
                     <Input
-                      value={profile.email}
+                      value={profile.email ?? ''}
                       disabled
                       className="text-xs bg-[#FAF4E6]/50 opacity-80"
                     />
@@ -158,7 +158,7 @@ export function SettingsTabs() {
                   <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Custom Email Signature</label>
                   <Textarea
                     rows={4}
-                    value={profile.signature}
+                    value={profile.signature ?? ''}
                     onChange={(e) => setProfile({ ...profile, signature: e.target.value })}
                     className="text-xs font-mono"
                   />

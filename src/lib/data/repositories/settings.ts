@@ -1,7 +1,8 @@
 import { UserProfile, SuppressionEntry, GmailConnectionStatus } from "@/types";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { memoryStore } from "@/lib/data/memory-store";
 
-let profileStore: UserProfile = {
+const profileStoreRef = memoryStore<UserProfile>("profile", () => ({
   fullName: "SponFy Fest Lead",
   organization: "SponFy Hackathon 2026",
   email: "lead@sponfy.dev",
@@ -9,14 +10,14 @@ let profileStore: UserProfile = {
   title: "Head of Corporate Relations",
   signature: "Best regards,\nOrganizing Team, SponFy Hackathon 2026",
   dailySendLimit: 30,
-};
+}));
 
-let gmailStatusStore: GmailConnectionStatus = {
+const gmailStatusStoreRef = memoryStore<GmailConnectionStatus>("gmailStatus", () => ({
   connected: false,
   isMock: true,
-};
+}));
 
-let suppressionsStore: SuppressionEntry[] = [
+const suppressionsStoreRef = memoryStore<SuppressionEntry[]>("suppressions", () => [
   {
     id: "sup-1",
     email: "declined@algorand.foundation",
@@ -24,7 +25,7 @@ let suppressionsStore: SuppressionEntry[] = [
     reason: "not_interested",
     createdAt: "2026-08-25T16:00:00Z",
   },
-];
+]);
 
 export async function getUserProfile(): Promise<UserProfile> {
   if (isDatabaseConfigured()) {
@@ -32,12 +33,12 @@ export async function getUserProfile(): Promise<UserProfile> {
       const u = await prisma.user.findFirst();
       if (u) {
         return {
-          fullName: u.name || profileStore.fullName,
-          organization: u.orgName || profileStore.organization,
-          email: u.email || profileStore.email,
+          fullName: u.name || profileStoreRef.value.fullName,
+          organization: u.orgName || profileStoreRef.value.organization,
+          email: u.email || profileStoreRef.value.email,
           avatarUrl: u.image || "",
-          title: profileStore.title,
-          signature: profileStore.signature,
+          title: profileStoreRef.value.title,
+          signature: profileStoreRef.value.signature,
           dailySendLimit: u.dailySendCap || 30,
         };
       }
@@ -46,7 +47,7 @@ export async function getUserProfile(): Promise<UserProfile> {
     }
   }
 
-  return { ...profileStore };
+  return { ...profileStoreRef.value };
 }
 
 export async function updateUserProfile(updates: Partial<UserProfile>): Promise<UserProfile> {
@@ -69,8 +70,8 @@ export async function updateUserProfile(updates: Partial<UserProfile>): Promise<
     }
   }
 
-  profileStore = { ...profileStore, ...updates };
-  return { ...profileStore };
+  profileStoreRef.value = { ...profileStoreRef.value, ...updates };
+  return { ...profileStoreRef.value };
 }
 
 export async function getSuppressions(): Promise<SuppressionEntry[]> {
@@ -93,7 +94,7 @@ export async function getSuppressions(): Promise<SuppressionEntry[]> {
     }
   }
 
-  return [...suppressionsStore];
+  return [...suppressionsStoreRef.value];
 }
 
 export async function addSuppression(email: string, reason: string = "manual"): Promise<SuppressionEntry> {
@@ -130,7 +131,7 @@ export async function addSuppression(email: string, reason: string = "manual"): 
     reason,
     createdAt: new Date().toISOString(),
   };
-  suppressionsStore.unshift(entry);
+  suppressionsStoreRef.value.unshift(entry);
   return entry;
 }
 
@@ -144,7 +145,7 @@ export async function removeSuppression(id: string): Promise<boolean> {
     }
   }
 
-  suppressionsStore = suppressionsStore.filter((s) => s.id !== id);
+  suppressionsStoreRef.value = suppressionsStoreRef.value.filter((s) => s.id !== id);
   return true;
 }
 
@@ -165,12 +166,12 @@ export async function getGmailStatus(): Promise<GmailConnectionStatus> {
     }
   }
 
-  return { ...gmailStatusStore };
+  return { ...gmailStatusStoreRef.value };
 }
 
 export async function updateGmailStatus(status: Partial<GmailConnectionStatus>): Promise<GmailConnectionStatus> {
-  gmailStatusStore = { ...gmailStatusStore, ...status };
-  return { ...gmailStatusStore };
+  gmailStatusStoreRef.value = { ...gmailStatusStoreRef.value, ...status };
+  return { ...gmailStatusStoreRef.value };
 }
 
 export async function isSuppressed(email: string): Promise<boolean> {
@@ -190,7 +191,7 @@ export async function isSuppressed(email: string): Promise<boolean> {
     }
   }
 
-  return suppressionsStore.some(
+  return suppressionsStoreRef.value.some(
     (s) => s.email.toLowerCase() === normEmail || (s.domain && s.domain.toLowerCase() === domain)
   );
 }

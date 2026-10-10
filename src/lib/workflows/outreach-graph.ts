@@ -46,9 +46,10 @@ export async function executeApprovedSend(
     throw new Error(`Email ${toEmail} is on the suppression list (Not Interested / Bounced). Sending blocked.`);
   }
 
-  // Safety Rule: Must be explicitly approved
-  if (draft.status !== "approved" && draft.status !== "draft") {
-    // Note: in UI we approve then send
+  // Safety Rule: Must be explicitly approved by a human. "draft" is NOT allowed.
+  // (The send route also claims the draft first; this is defence in depth.)
+  if (draft.status !== "approved") {
+    throw new Error(`Blocked: draft ${draft.id} is "${draft.status}", not "approved". Nothing was sent.`);
   }
 
   const gmail = getGmailClient();

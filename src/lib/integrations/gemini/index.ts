@@ -96,10 +96,10 @@ Return strict JSON with:
 
       const text = response.text || "{}";
       return JSON.parse(text);
-    } catch (err) {
-      console.warn("Real Gemini call failed, falling back to mock:", err);
-      const mock = new MockGeminiClient();
-      return mock.scoreCompanyFit(companyName, industry, description, campaign);
+    } catch (err: any) {
+      // Do not substitute canned scores for a real company: report the failure instead.
+      console.error("Real Gemini fit scoring failed:", err);
+      throw new Error(`Gemini fit scoring failed: ${err?.message || err}`);
     }
   }
 
@@ -138,10 +138,9 @@ Return strict JSON:
 
       const text = response.text || "{}";
       return JSON.parse(text);
-    } catch (err) {
-      console.warn("Real Gemini drafting failed, using mock:", err);
-      const mock = new MockGeminiClient();
-      return mock.generateOutreachDraft(company, campaign, tone);
+    } catch (err: any) {
+      console.error("Real Gemini drafting failed:", err);
+      throw new Error(`Gemini drafting failed: ${err?.message || err}`);
     }
   }
 
@@ -186,10 +185,10 @@ Return strict JSON matching:
         ...parsed,
         createdAt: new Date().toISOString(),
       };
-    } catch (err) {
-      console.warn("Real Gemini reply classify failed, using mock:", err);
-      const mock = new MockGeminiClient();
-      return mock.classifyReply(emailSubject, emailBody, companyName);
+    } catch (err: any) {
+      // A real sponsor reply must never get a made-up intent label.
+      console.error("Real Gemini reply classification failed:", err);
+      throw new Error(`Gemini reply classification failed: ${err?.message || err}`);
     }
   }
 
