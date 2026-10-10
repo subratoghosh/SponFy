@@ -32,10 +32,10 @@ export function getAdminEmails(): string[] {
  * Never trusts client-supplied headers, client cookies, or mutable profile fields.
  */
 export async function verifyAdminSession(): Promise<AdminAuthResult> {
-  const isDemo =
-    process.env.NEXT_PUBLIC_DEMO_MODE === "true" ||
-    !process.env.DATABASE_URL ||
-    process.env.DATABASE_URL.includes("placeholder");
+  // The demo admin bypass is only allowed when there is NO real database.
+  // NEXT_PUBLIC_DEMO_MODE alone must never grant admin: .env.example ships with it
+  // set to "true", so a real deployment that kept it would hand admin to anyone.
+  const isDemo = !isDatabaseConfigured();
 
   let session: any = null;
   try {
