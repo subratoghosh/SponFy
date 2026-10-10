@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getDrafts, approveDraft, saveDraft } from "@/lib/data/repositories/outreach";
-import { getSponsors } from "@/lib/data/repositories/sponsors";
 import { EmailDraft, Company } from "@/types";
 import { DraftQueueList } from "@/components/outreach/DraftQueueList";
 import { EmailComposer } from "@/components/outreach/EmailComposer";
@@ -27,15 +25,17 @@ export default function OutreachPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [allDrafts, allCompanies] = await Promise.all([
-        getDrafts(),
-        getSponsors(),
-      ]);
+      const res = await fetch("/api/outreach/state", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load outreach data");
+      const allDrafts: EmailDraft[] = data.drafts;
       setDrafts(allDrafts);
-      setCompanies(allCompanies);
+      setCompanies(data.companies);
       if (allDrafts.length > 0 && !selectedDraftId) {
         setSelectedDraftId(allDrafts[0].id);
       }
+    } catch (err: any) {
+      toast(err.message || "Failed to load outreach data", "error");
     } finally {
       setLoading(false);
     }
@@ -50,14 +50,20 @@ export default function OutreachPage() {
 
   const handleSave = async (subject: string, body: string) => {
     if (!activeDraft) return;
-    await saveDraft({
-      id: activeDraft.id, // update this draft instead of creating a copy
-      companyId: activeDraft.companyId,
-      contactId: activeDraft.contactId,
-      subject,
-      body,
-      quality: activeDraft.quality,
-    });
+    try {
+      const res = await fetch("/api/outreach/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: activeDraft.id, subject, body }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      if (activeDraft.status === "approved") {
+        toast("Edited after approval: please approve the draft again.", "info");
+      }
+    } catch (err: any) {
+      toast(err.message || "Failed to save draft", "error");
+    }
     loadData();
   };
 

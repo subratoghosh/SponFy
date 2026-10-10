@@ -206,6 +206,34 @@ describe("outreach routes (demo store)", () => {
     expect(res.status).toBe(409);
   });
 
+  it("the Outreach page's data route shows approvals and sends (page and server agree)", async () => {
+    const { GET: state } = await import("@/app/api/outreach/state/route");
+    const { POST: approve } = await import("@/app/api/outreach/approve/route");
+    const { POST: save } = await import("@/app/api/outreach/save/route");
+    const { POST: send } = await import("@/app/api/outreach/send/route");
+    const { contact, draft } = await freshDraftForUncontactedCompany();
+
+    const statusOf = async () => {
+      const body = await (await state()).json();
+      return body.drafts.find((d: any) => d.id === draft.id)?.status;
+    };
+
+    expect(await statusOf()).toBe("draft");
+    expect((await approve(post({ draftId: draft.id }))).status).toBe(200);
+    expect(await statusOf()).toBe("approved");
+
+    // editing through the save route sends it back for re-approval
+    expect((await save(post({ id: draft.id, subject: "New subject", body: "New body" }))).status).toBe(200);
+    expect(await statusOf()).toBe("draft");
+
+    await approve(post({ draftId: draft.id }));
+    expect((await send(post({ draftId: draft.id, toEmail: contact.email }))).status).toBe(200);
+    expect(await statusOf()).toBe("sent");
+
+    // a sent draft can no longer be edited
+    expect((await save(post({ id: draft.id, subject: "x", body: "y" }))).status).toBe(409);
+  });
+
   it("blocks a second approved draft to a company that was just emailed", async () => {
     const { POST: send } = await import("@/app/api/outreach/send/route");
     const { POST: approve } = await import("@/app/api/outreach/approve/route");
