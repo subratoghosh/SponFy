@@ -28,6 +28,7 @@ interface Props {
   };
   activities: any[];
   insights: string[];
+  actionQueue?: any[];
 }
 
 type TabType = "all" | "queue" | "pipeline" | "insights";
@@ -36,6 +37,7 @@ export function CampaignDashboardView({
   analytics,
   activities,
   insights,
+  actionQueue,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [showKpis, setShowKpis] = useState(true);
@@ -106,8 +108,8 @@ export function CampaignDashboardView({
       </div>
 
       {/* Interactive Navigation Controller Bar */}
-      <div className="bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl border border-green-dark/10 shadow-xs flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <div className="bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl border border-green-dark/10 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap w-full sm:w-auto pb-1 sm:pb-0 touch-pan-x">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -161,7 +163,7 @@ export function CampaignDashboardView({
       {activeTab === "all" && (
         <div className="space-y-6 animate-fade-in">
           {/* Action Queue */}
-          <TodayActionQueue />
+          <TodayActionQueue items={actionQueue} />
 
           {/* Pipeline Distribution + AI Insights in side-by-side grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -178,7 +180,7 @@ export function CampaignDashboardView({
 
       {activeTab === "queue" && (
         <div className="space-y-6 animate-fade-in max-w-4xl">
-          <TodayActionQueue />
+          <TodayActionQueue items={actionQueue} />
           
           <div className="p-4 rounded-2xl bg-butter-warm/60 border border-green-dark/10 flex items-center justify-between">
             <p className="text-xs text-text-dim">
