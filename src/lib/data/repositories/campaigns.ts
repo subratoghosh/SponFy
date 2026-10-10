@@ -12,24 +12,23 @@ export async function getCampaigns(): Promise<Campaign[]> {
       const records = await prisma.campaign.findMany({
         orderBy: { createdAt: "desc" },
       });
-      if (records.length > 0) {
-        return records.map((r) => ({
-          id: r.id,
-          name: r.name,
-          eventType: r.eventType,
-          audienceSize: r.audienceSize,
-          location: r.location,
-          targetAmount: r.targetAmount,
-          preferredIndustries: r.preferredIndustries,
-          tiers: (r.tiers as any) || [],
-          deckUrl: r.deckUrl || undefined,
-          description: r.description || "",
-          status: r.archived ? "archived" : "active",
-          createdAt: r.createdAt.toISOString(),
-        }));
-      }
+      return records.map((r) => ({
+        id: r.id,
+        name: r.name,
+        eventType: r.eventType,
+        audienceSize: r.audienceSize,
+        location: r.location,
+        targetAmount: r.targetAmount,
+        preferredIndustries: r.preferredIndustries,
+        tiers: (r.tiers as any) || [],
+        deckUrl: r.deckUrl || undefined,
+        description: r.description || "",
+        status: r.archived ? "archived" : "active",
+        createdAt: r.createdAt.toISOString(),
+      }));
     } catch (err) {
-      console.warn("Prisma getCampaigns failed, falling back to memory store:", err);
+      console.warn("Prisma getCampaigns failed:", err);
+      return [];
     }
   }
 
@@ -42,29 +41,28 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
       const r = await prisma.campaign.findUnique({
         where: { id },
       });
-      if (r) {
-        return {
-          id: r.id,
-          name: r.name,
-          eventType: r.eventType,
-          audienceSize: r.audienceSize,
-          location: r.location,
-          targetAmount: r.targetAmount,
-          preferredIndustries: r.preferredIndustries,
-          tiers: (r.tiers as any) || [],
-          deckUrl: r.deckUrl || undefined,
-          description: r.description || "",
-          status: r.archived ? "archived" : "active",
-          createdAt: r.createdAt.toISOString(),
-        };
-      }
+      if (!r) return null;
+      return {
+        id: r.id,
+        name: r.name,
+        eventType: r.eventType,
+        audienceSize: r.audienceSize,
+        location: r.location,
+        targetAmount: r.targetAmount,
+        preferredIndustries: r.preferredIndustries,
+        tiers: (r.tiers as any) || [],
+        deckUrl: r.deckUrl || undefined,
+        description: r.description || "",
+        status: r.archived ? "archived" : "active",
+        createdAt: r.createdAt.toISOString(),
+      };
     } catch (err) {
-      console.warn("Prisma getCampaignById failed, falling back to memory store:", err);
+      console.warn("Prisma getCampaignById failed:", err);
+      return null;
     }
   }
 
-  const found = campaignsStoreRef.value.find((c) => c.id === id);
-  return found || campaignsStoreRef.value[0] || null;
+  return campaignsStoreRef.value.find((c) => c.id === id) || null;
 }
 
 export async function createCampaign(data: Omit<Campaign, "id" | "createdAt">): Promise<Campaign> {

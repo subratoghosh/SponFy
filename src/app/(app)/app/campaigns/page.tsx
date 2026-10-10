@@ -95,7 +95,7 @@ export default function CampaignsPage() {
       {/* Interactive Options Bar (Status Filter Buttons + View Toggles + Search) */}
       <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl border border-green-dark/10 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Left: Status and Category Filter Buttons */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap w-full md:w-auto pb-1 md:pb-0 touch-pan-x">
           <button
             onClick={() => setStatusFilter("all")}
             className={cn(

@@ -364,3 +364,21 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Mobile Responsiveness & Touch Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+
+.touch-pan-x {
+  -webkit-overflow-scrolling: touch;
+}
+

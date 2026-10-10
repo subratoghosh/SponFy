@@ -51,25 +51,24 @@ export async function getReplyAnalyses(companyId?: string): Promise<ReplyAnalysi
         orderBy: { createdAt: "desc" },
       });
 
-      if (records.length > 0) {
-        return records.map((r) => ({
-          id: r.id,
-          messageId: r.messageId,
-          companyId: r.message.companyId || "",
-          intent: DB_TO_INTENT[r.intent] || "Interested",
-          sentiment: r.sentiment as any,
-          confidence: r.confidence,
-          summary: r.summary,
-          questions: (r.questions as any) || [],
-          requestedInfo: r.requestedInfo ? [r.requestedInfo] : [],
-          nextAction: r.nextAction,
-          urgency: r.urgency as any,
-          meetingRequested: r.meetingRequested,
-          createdAt: r.createdAt.toISOString(),
-        }));
-      }
+      return records.map((r) => ({
+        id: r.id,
+        messageId: r.messageId,
+        companyId: r.message.companyId || "",
+        intent: DB_TO_INTENT[r.intent] || "Interested",
+        sentiment: r.sentiment as any,
+        confidence: r.confidence,
+        summary: r.summary,
+        questions: (r.questions as any) || [],
+        requestedInfo: r.requestedInfo ? [r.requestedInfo] : [],
+        nextAction: r.nextAction,
+        urgency: r.urgency as any,
+        meetingRequested: r.meetingRequested,
+        createdAt: r.createdAt.toISOString(),
+      }));
     } catch (err) {
-      console.warn("Prisma getReplyAnalyses failed, falling back to memory store:", err);
+      console.warn("Prisma getReplyAnalyses failed:", err);
+      return [];
     }
   }
 
@@ -90,42 +89,41 @@ export async function getInboundThreads(): Promise<{ message: Message; analysis?
         orderBy: { sentAt: "desc" },
       });
 
-      if (messages.length > 0) {
-        return messages.map((msg) => ({
-          message: {
-            id: msg.id,
-            draftId: msg.draftId || undefined,
-            companyId: msg.companyId || "",
-            gmailMessageId: msg.gmailMessageId || undefined,
-            gmailThreadId: msg.gmailThreadId || undefined,
-            direction: "inbound",
-            fromEmail: msg.fromEmail || "",
-            toEmail: msg.toEmail || "",
-            subject: msg.subject || "",
-            body: msg.body,
-            sentAt: msg.sentAt.toISOString(),
-          },
-          analysis: msg.analysis
-            ? {
-                id: msg.analysis.id,
-                messageId: msg.analysis.messageId,
-                companyId: msg.companyId || "",
-                intent: DB_TO_INTENT[msg.analysis.intent] || "Interested",
-                sentiment: msg.analysis.sentiment as any,
-                confidence: msg.analysis.confidence,
-                summary: msg.analysis.summary,
-                questions: (msg.analysis.questions as any) || [],
-                requestedInfo: msg.analysis.requestedInfo ? [msg.analysis.requestedInfo] : [],
-                nextAction: msg.analysis.nextAction,
-                urgency: msg.analysis.urgency as any,
-                meetingRequested: msg.analysis.meetingRequested,
-                createdAt: msg.analysis.createdAt.toISOString(),
-              }
-            : undefined,
-        }));
-      }
+      return messages.map((msg) => ({
+        message: {
+          id: msg.id,
+          draftId: msg.draftId || undefined,
+          companyId: msg.companyId || "",
+          gmailMessageId: msg.gmailMessageId || undefined,
+          gmailThreadId: msg.gmailThreadId || undefined,
+          direction: "inbound",
+          fromEmail: msg.fromEmail || "",
+          toEmail: msg.toEmail || "",
+          subject: msg.subject || "",
+          body: msg.body,
+          sentAt: msg.sentAt.toISOString(),
+        },
+        analysis: msg.analysis
+          ? {
+              id: msg.analysis.id,
+              messageId: msg.analysis.messageId,
+              companyId: msg.companyId || "",
+              intent: DB_TO_INTENT[msg.analysis.intent] || "Interested",
+              sentiment: msg.analysis.sentiment as any,
+              confidence: msg.analysis.confidence,
+              summary: msg.analysis.summary,
+              questions: (msg.analysis.questions as any) || [],
+              requestedInfo: msg.analysis.requestedInfo ? [msg.analysis.requestedInfo] : [],
+              nextAction: msg.analysis.nextAction,
+              urgency: msg.analysis.urgency as any,
+              meetingRequested: msg.analysis.meetingRequested,
+              createdAt: msg.analysis.createdAt.toISOString(),
+            }
+          : undefined,
+      }));
     } catch (err) {
-      console.warn("Prisma getInboundThreads failed, falling back to memory store:", err);
+      console.warn("Prisma getInboundThreads failed:", err);
+      return [];
     }
   }
 

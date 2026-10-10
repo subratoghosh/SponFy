@@ -23,6 +23,7 @@ export default function RepliesPage() {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [showIntelligence, setShowIntelligence] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
 
   useEffect(() => {
     loadData();
@@ -137,49 +138,88 @@ export default function RepliesPage() {
         </div>
       </div>
 
-      {/* Main Inbox Layout: Spacious & Uncongested */}
+      {/* Main Inbox Layout: Responsive & Spacious */}
       {loading ? (
         <InboxSkeleton />
       ) : (
-        <div className="flex-1 flex overflow-hidden">
-          {/* Column 1: Thread List */}
-          {isSidebarOpen && (
-            <div className="w-72 md:w-80 lg:w-84 border-r border-[#0C382E]/10 bg-[#FFFFFF] flex flex-col shrink-0 animate-fade-in">
-              <ThreadList
-                threads={filteredThreads}
-                companies={companies}
-                selectedMessageId={selectedMessageId}
-                onSelectThread={(id) => setSelectedMessageId(id)}
-              />
-            </div>
-          )}
-
-          {/* Column 2: Spacious Thread View */}
-          {selectedItem ? (
-            <ThreadView
-              message={selectedItem.message}
-              company={selectedCompany}
-              analysis={selectedItem.analysis}
-              showIntelligence={showIntelligence}
-              onToggleIntelligence={() => setShowIntelligence(!showIntelligence)}
-              onComposeReply={() => setIsComposerOpen(true)}
+        <div className="flex-1 flex overflow-hidden relative">
+          {/* Column 1: Thread List (Full width on mobile when in list view) */}
+          <div
+            className={`${
+              mobileView === 'thread' ? 'hidden md:flex' : 'flex'
+            } w-full md:w-80 lg:w-84 border-r border-[#0C382E]/10 bg-[#FFFFFF] flex-col shrink-0 animate-fade-in`}
+          >
+            <ThreadList
+              threads={filteredThreads}
+              companies={companies}
+              selectedMessageId={selectedMessageId}
+              onSelectThread={(id) => {
+                setSelectedMessageId(id);
+                setMobileView('thread');
+              }}
             />
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-center p-8 bg-[#FFFDF6]">
-              <div>
-                <Mail className="w-12 h-12 text-[#0C382E]/20 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-[#0C382E]/60">Select a message to view thread conversation</p>
+          </div>
+
+          {/* Column 2: Thread View (Full width on mobile when thread is opened) */}
+          <div
+            className={`${
+              mobileView === 'list' ? 'hidden md:flex' : 'flex'
+            } flex-1 flex-col overflow-hidden min-w-0`}
+          >
+            {/* Mobile Navigation Bar within Thread */}
+            <div className="md:hidden p-2.5 bg-[#FFFDF6] border-b border-[#0C382E]/10 flex items-center justify-between">
+              <button
+                onClick={() => setMobileView('list')}
+                className="text-xs font-bold text-[#0C382E] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#0C382E]/15 shadow-2xs hover:bg-[#FAF4E6]"
+              >
+                ← Back to Threads
+              </button>
+              <button
+                onClick={() => setShowIntelligence(!showIntelligence)}
+                className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors ${
+                  showIntelligence
+                    ? 'bg-[#0C382E] text-white border-[#0C382E]'
+                    : 'bg-white text-[#0C382E] border-[#0C382E]/15'
+                }`}
+              >
+                AI Intel {showIntelligence ? '✕' : '✨'}
+              </button>
+            </div>
+
+            {selectedItem ? (
+              <ThreadView
+                message={selectedItem.message}
+                company={selectedCompany}
+                analysis={selectedItem.analysis}
+                showIntelligence={showIntelligence}
+                onToggleIntelligence={() => setShowIntelligence(!showIntelligence)}
+                onComposeReply={() => setIsComposerOpen(true)}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-center p-8 bg-[#FFFDF6]">
+                <div>
+                  <Mail className="w-12 h-12 text-[#0C382E]/20 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-[#0C382E]/60">Select a message to view thread conversation</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Column 3: AI Intelligence Panel (Overlay on mobile, docked on desktop) */}
+          {showIntelligence && selectedItem && (
+            <div className="fixed inset-0 z-50 md:static flex md:block">
+              <div
+                className="fixed inset-0 bg-black/50 backdrop-blur-2xs md:hidden"
+                onClick={() => setShowIntelligence(false)}
+              />
+              <div className="relative ml-auto h-full w-full max-w-sm md:w-88 md:max-w-none md:static shadow-2xl md:shadow-none">
+                <ReplyAnalysisPanel
+                  analysis={selectedItem.analysis}
+                  onClose={() => setShowIntelligence(false)}
+                  onExecuteRecommendation={() => setIsComposerOpen(true)}
+                />
               </div>
             </div>
-          )}
-
-          {/* Column 3: AI Intelligence Panel (Revealed on-demand) */}
-          {showIntelligence && selectedItem && (
-            <ReplyAnalysisPanel
-              analysis={selectedItem.analysis}
-              onClose={() => setShowIntelligence(false)}
-              onExecuteRecommendation={() => setIsComposerOpen(true)}
-            />
           )}
         </div>
       )}

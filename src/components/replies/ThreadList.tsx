@@ -32,7 +32,16 @@ export const ThreadList: React.FC<ThreadListProps> = ({
       </div>
 
       <div className="space-y-2.5 overflow-y-auto flex-1 pr-1">
-        {threads.map(({ message, analysis }) => {
+        {threads.length === 0 ? (
+          <div className="p-6 text-center rounded-2xl bg-butter-bg/50 border border-green-dark/8 space-y-2 my-auto">
+            <Mail className="w-6 h-6 text-green-mid mx-auto opacity-70" />
+            <p className="text-xs font-bold text-green-dark">Inbox is clear</p>
+            <p className="text-[11px] text-text-muted">
+              Inbound emails and replies from sponsor reps will appear here.
+            </p>
+          </div>
+        ) : (
+          threads.map(({ message, analysis }) => {
           const comp = companies.find((c) => c.id === message.companyId);
           const isSelected = selectedMessageId === message.id;
           const intentConfig = analysis
@@ -87,7 +96,7 @@ export const ThreadList: React.FC<ThreadListProps> = ({
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
     </div>
   );

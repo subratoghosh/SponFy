@@ -131,14 +131,12 @@ export const ContactsTab: React.FC<{ company: Company; onUpdate: () => void }> =
         <form onSubmit={handleAdd} className="space-y-4">
           <Input
             label="Full Name"
-            placeholder="e.g. Ali Mustufa"
             value={newContact.name}
             onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
             required
           />
           <Input
             label="Role / Title"
-            placeholder="e.g. Student Community Manager"
             value={newContact.role}
             onChange={(e) => setNewContact({ ...newContact, role: e.target.value })}
             required
@@ -146,7 +144,6 @@ export const ContactsTab: React.FC<{ company: Company; onUpdate: () => void }> =
           <Input
             label="Email Address"
             type="email"
-            placeholder="contact@company.com"
             value={newContact.email}
             onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
             required
@@ -162,7 +159,6 @@ export const ContactsTab: React.FC<{ company: Company; onUpdate: () => void }> =
           </Select>
           <Input
             label="Source URL"
-            placeholder="https://company.com/team"
             value={newContact.sourceUrl}
             onChange={(e) => setNewContact({ ...newContact, sourceUrl: e.target.value })}
           />

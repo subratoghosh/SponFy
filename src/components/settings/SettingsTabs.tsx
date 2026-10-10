@@ -308,15 +308,15 @@ export function SettingsTabs() {
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
               {/* Add form */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 items-end">
                 <Input
-                  placeholder="contact@company.com or @domain.com"
+                  label="Block Email or Domain"
                   value={newSuppressionEmail}
                   onChange={(e) => setNewSuppressionEmail(e.target.value)}
                   className="text-xs"
                 />
                 <Input
-                  placeholder="Reason (e.g. Requested opt-out)"
+                  label="Suppression Reason"
                   value={newSuppressionReason}
                   onChange={(e) => setNewSuppressionReason(e.target.value)}
                   className="text-xs"

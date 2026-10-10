@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { KPISkeleton } from '@/components/skeletons/KPISkeleton';
 import { ChartSkeleton } from '@/components/skeletons/ChartSkeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
@@ -36,6 +37,8 @@ export default function AnalyticsPage() {
     }, 800);
   };
 
+  const isBlankWorkspace = data?.summary?.totalSponsors === 0;
+
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -59,9 +62,9 @@ export default function AnalyticsPage() {
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg uppercase transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
                   timeRange === range
-                    ? 'bg-[#0C382E] text-[#FFF0B3] shadow-sm'
+                    ? 'bg-[#0C382E] text-[#FFF0B3]'
                     : 'text-[#0C382E]/60 hover:text-[#0C382E]'
                 }`}
               >
@@ -89,12 +92,20 @@ export default function AnalyticsPage() {
         <KPIRow summary={data.summary} />
       ) : null}
 
-      {/* Analytics Charts and Data Tables or Skeleton */}
+      {/* Analytics Charts and Data Tables or Empty State */}
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ChartSkeleton title="Loading Sent vs Replies Velocity" height="h-72" />
           <ChartSkeleton title="Loading Pipeline Value by Stage" height="h-72" />
         </div>
+      ) : isBlankWorkspace ? (
+        <EmptyState
+          icon={BarChart2}
+          title="No analytics recorded yet"
+          description="Your intelligence dashboard and conversion charts will automatically populate once you begin finding sponsors and drafting outreach pitches."
+          actionLabel="Discover High-Fit Sponsors"
+          actionHref="/app/discover"
+        />
       ) : (
         <AnalyticsCharts />
       )}

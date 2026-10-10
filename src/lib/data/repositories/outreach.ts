@@ -37,21 +37,20 @@ export async function getDrafts(status?: DraftStatus): Promise<EmailDraft[]> {
         where: dbStatus ? { status: dbStatus } : undefined,
         orderBy: { createdAt: "desc" },
       });
-      if (records.length > 0) {
-        return records.map((r) => ({
-          id: r.id,
-          companyId: r.companyId,
-          contactId: r.contactId || undefined,
-          subject: r.subject,
-          body: r.body,
-          quality: (r.quality as any) || {},
-          status: DB_TO_DRAFT_STATUS[r.status] || "draft",
-          approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
-          createdAt: r.createdAt.toISOString(),
-        }));
-      }
+      return records.map((r) => ({
+        id: r.id,
+        companyId: r.companyId,
+        contactId: r.contactId || undefined,
+        subject: r.subject,
+        body: r.body,
+        quality: (r.quality as any) || {},
+        status: DB_TO_DRAFT_STATUS[r.status] || "draft",
+        approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
+        createdAt: r.createdAt.toISOString(),
+      }));
     } catch (err) {
-      console.warn("Prisma getDrafts failed, falling back to memory store:", err);
+      console.warn("Prisma getDrafts failed:", err);
+      return [];
     }
   }
 

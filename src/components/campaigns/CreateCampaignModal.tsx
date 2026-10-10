@@ -111,7 +111,6 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
           <div className="space-y-4 animate-fade-in">
             <Input
               label="Campaign / Event Name"
-              placeholder="e.g. HackGujarat 2026"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
@@ -129,7 +128,6 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             </Select>
             <Textarea
               label="Event Description"
-              placeholder="Describe your event format, themes, and what makes your cohort special..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
@@ -148,7 +146,6 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
               />
               <Input
                 label="Location (City, State)"
-                placeholder="e.g. Surat, Gujarat"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               />
@@ -161,7 +158,6 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             />
             <Input
               label="Sponsorship Deck / Brochure PDF Link"
-              placeholder="https://yourdrive.com/deck.pdf"
               value={formData.deckUrl}
               onChange={(e) => setFormData({ ...formData, deckUrl: e.target.value })}
             />

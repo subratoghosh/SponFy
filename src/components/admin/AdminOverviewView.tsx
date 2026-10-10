@@ -192,8 +192,8 @@ export function AdminOverviewView({
         {/* Top Controls Bar: Domain Navigation Tabs & Time Window Filter */}
         <div className="bg-white rounded-2xl border border-[#0C382E]/10 p-4 shadow-xs space-y-3">
           {/* Domain Category Selector Tabs */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 pb-3">
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap w-full sm:w-auto pb-1 sm:pb-0 touch-pan-x">
               {domainTabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = selectedDomain === tab.id;

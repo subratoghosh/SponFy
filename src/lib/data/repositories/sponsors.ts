@@ -62,48 +62,47 @@ export async function getSponsors(campaignId?: string): Promise<Company[]> {
         orderBy: { createdAt: "desc" },
       });
 
-      if (companies.length > 0) {
-        return companies.map((c) => ({
-          id: c.id,
-          name: c.name,
-          website: c.website || "",
-          industry: c.industry || "",
-          description: c.description || "",
-          campaignId: c.campaignId,
-          stage: PIPELINE_STAGE_MAP[c.stage] || "Discovered",
-          fitScore: c.fitScore ?? 0,
-          scoreBreakdown: (c.scoreBreakdown as any) || [],
-          pipelineValue: c.pipelineValue,
-          signals: (c.signals as any) || [],
-          confidence: c.confidence ?? 0,
-          researchStatus: (c.researchStatus === "DONE" ? "completed" : c.researchStatus === "FAILED" ? "failed" : "pending") as any,
-          contacts: c.contacts.map((con) => ({
-            id: con.id,
-            companyId: con.companyId,
-            name: con.name || "",
-            role: con.role || "",
-            email: con.email || "",
-            status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
-            sourceUrl: con.sourceUrl || undefined,
-            createdAt: con.createdAt.toISOString(),
-          })),
-          sources: c.sources.map((s) => ({
-            url: s.url,
-            title: s.title || "",
-            snippet: s.snippet || "",
-          })),
-          researchReport: c.report
-            ? {
-                sections: (c.report.sections as any) || {},
-                recommendedAngle: c.report.recommendedAngle || "",
-              }
-            : undefined,
-          createdAt: c.createdAt.toISOString(),
-          updatedAt: c.updatedAt.toISOString(),
-        }));
-      }
+      return companies.map((c) => ({
+        id: c.id,
+        name: c.name,
+        website: c.website || "",
+        industry: c.industry || "",
+        description: c.description || "",
+        campaignId: c.campaignId,
+        stage: PIPELINE_STAGE_MAP[c.stage] || "Discovered",
+        fitScore: c.fitScore ?? 0,
+        scoreBreakdown: (c.scoreBreakdown as any) || [],
+        pipelineValue: c.pipelineValue,
+        signals: (c.signals as any) || [],
+        confidence: c.confidence ?? 0,
+        researchStatus: (c.researchStatus === "DONE" ? "completed" : c.researchStatus === "FAILED" ? "failed" : "pending") as any,
+        contacts: c.contacts.map((con) => ({
+          id: con.id,
+          companyId: con.companyId,
+          name: con.name || "",
+          role: con.role || "",
+          email: con.email || "",
+          status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
+          sourceUrl: con.sourceUrl || undefined,
+          createdAt: con.createdAt.toISOString(),
+        })),
+        sources: c.sources.map((s) => ({
+          url: s.url,
+          title: s.title || "",
+          snippet: s.snippet || "",
+        })),
+        researchReport: c.report
+          ? {
+              sections: (c.report.sections as any) || {},
+              recommendedAngle: c.report.recommendedAngle || "",
+            }
+          : undefined,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+      }));
     } catch (err) {
-      console.warn("Prisma getSponsors failed, falling back to memory store:", err);
+      console.warn("Prisma getSponsors failed:", err);
+      return [];
     }
   }
 
