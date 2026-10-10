@@ -54,6 +54,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { AuthProvider } from "@/components/providers/AuthProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -65,7 +67,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${outfit.variable} ${jakarta.variable} ${space.variable}`}
     >
       <body className="min-h-screen bg-butter-bg text-text-main selection:bg-butter-cream selection:text-green-dark">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
