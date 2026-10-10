@@ -98,36 +98,51 @@ enum ResearchStatus {
   FAILED
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 // ---------- Auth.js (Standard Adapter Models) ----------
 
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?       @unique
   emailVerified DateTime?
   image         String?
   orgName       String?
   orgType       String?
-  onboarded     Boolean   @default(false)
-  dailySendCap  Int       @default(30)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  onboarded     Boolean       @default(false)
+  role          Role          @default(USER)
+  status        AccountStatus @default(ACTIVE)
+  lastActiveAt  DateTime?
+  dailySendCap  Int           @default(30)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  campaigns     Campaign[]
-  companies     Company[]
-  contacts      Contact[]
-  drafts        EmailDraft[]
-  messages      Message[]
-  analyses      ReplyAnalysis[]
-  sequences     FollowupSequence[]
-  tasks         FollowupTask[]
-  activities    Activity[]
-  jobs          AiJob[]
-  suppressions  Suppression[]
-  insights      Insight[]
-  gmailAccount  GmailAccount?
+  accounts       Account[]
+  sessions       Session[]
+  campaigns      Campaign[]
+  companies      Company[]
+  contacts       Contact[]
+  drafts         EmailDraft[]
+  messages       Message[]
+  analyses       ReplyAnalysis[]
+  sequences      FollowupSequence[]
+  tasks          FollowupTask[]
+  activities     Activity[]
+  jobs           AiJob[]
+  suppressions   Suppression[]
+  insights       Insight[]
+  gmailAccount   GmailAccount?
+  auditLogs      AuditLog[]
+  userActivities UserActivityLog[]
 
   @@map("users")
 }
@@ -475,3 +490,33 @@ model Insight {
   @@index([userId, campaignId])
   @@map("insights")
 }
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String   // user_suspended | user_restored | user_deleted | role_changed | campaign_archived | settings_updated
+  targetType String   // user | campaign | system
+  targetId   String?
+  details    Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model UserActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // login | heartbeat | page_view | campaign_created | email_sent
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("user_activity_logs")
+}
+
