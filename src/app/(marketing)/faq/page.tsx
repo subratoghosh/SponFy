@@ -1,8 +1,6 @@
 import React from "react";
-import { PageHero } from "@/components/landing/PageHero";
 import { FAQ } from "@/components/landing/FAQ";
-import { CTASection } from "@/components/landing/CTASection";
-import { HelpCircle, ShieldAlert, Sparkles, CheckCircle2, MessageCircleQuestion } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -13,18 +11,7 @@ export const metadata = {
 
 export default function FAQPage() {
   return (
-    <div className="flex flex-col">
-      <PageHero
-        breadcrumb="Knowledge Base & FAQ"
-        badge="FREQUENTLY ASKED QUESTIONS"
-        title="Everything you need to know about SponFy."
-        subtitle="Answers on Gmail security, AI drafting, pricing for college clubs, sponsor research methods, and student data safety."
-        primaryCtaText="Start a campaign free"
-        primaryCtaHref="/app"
-        secondaryCtaText="Explore workflow"
-        secondaryCtaHref="/workflow"
-      />
-
+    <div className="flex flex-col pt-16 md:pt-20">
       {/* Main Accordion FAQ Component */}
       <FAQ />
 
@@ -60,8 +47,6 @@ export default function FAQPage() {
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <CTASection />
     </div>
   );
 }

@@ -1,10 +1,6 @@
 import React from "react";
-import { PageHero } from "@/components/landing/PageHero";
 import { WorkflowStory } from "@/components/landing/WorkflowStory";
-import { CTASection } from "@/components/landing/CTASection";
-import { CheckCircle2, ShieldCheck, Zap, Sparkles, ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, ShieldCheck, Zap, Sparkles } from "lucide-react";
 
 export const metadata = {
   title: "Workflow Engine | SponFy",
@@ -13,18 +9,7 @@ export const metadata = {
 
 export default function WorkflowPage() {
   return (
-    <div className="flex flex-col">
-      <PageHero
-        breadcrumb="Workflow Engine"
-        badge="5-STEP SPONSORSHIP LIFECYCLE"
-        title="From campus pitch to signed check in 5 disciplined steps."
-        subtitle="See how SponFy orchestrates sponsor discovery, cited dossiers, tailored outreach, human approvals, and real-time reply intelligence for campus teams."
-        primaryCtaText="Start a campaign free"
-        primaryCtaHref="/app"
-        secondaryCtaText="View sponsor showcase"
-        secondaryCtaHref="/showcase"
-      />
-
+    <div className="flex flex-col pt-16 md:pt-20">
       {/* Main Interactive Workflow Story Component */}
       <WorkflowStory />
 
@@ -120,8 +105,6 @@ export default function WorkflowPage() {
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <CTASection />
     </div>
   );
 }

@@ -1,53 +1,20 @@
-"use client";
-
-import React, { useRef, useState, useCallback } from "react";
+import React from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 
 export const Footer: React.FC = () => {
-  const footerRef = useRef<HTMLElement>(null);
-  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    if (!footerRef.current) return;
-    const rect = footerRef.current.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setMousePos(null);
-  }, []);
-
   return (
-    <footer
-      ref={footerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative bg-butter-bg border-t border-green-dark/12 pt-16 pb-12 text-text-dim overflow-hidden"
-    >
-      {/* Ambient Mouse Spotlight Follower (Pure green radial glow fading out smoothly to edge) */}
-      {mousePos && (
-        <div
-          className="pointer-events-none absolute inset-0 transition-opacity duration-300 z-0"
-          style={{
-            background: `radial-gradient(220px circle at ${mousePos.x}px ${mousePos.y}px, rgba(42, 111, 90, 0.16) 0%, rgba(66, 142, 117, 0.08) 45%, transparent 75%)`,
-          }}
-        />
-      )}
-
-      <div className="relative z-10 max-w-[1240px] mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-green-dark/10">
+    <footer className="bg-green-dark border-t border-green-mid/40 pt-16 pb-12 text-text-onDarkSub">
+      <div className="max-w-[1240px] mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-green-mid/40">
           {/* Brand Column */}
           <div className="md:col-span-1 space-y-4">
             <div className="footer-link inline-block">
-              <SponfyBrand href="/" size="md" theme="light" />
+              <SponfyBrand href="/" size="md" theme="dark" />
             </div>
-            <p className="text-xs sm:text-sm text-text-dim leading-relaxed">
+            <p className="text-xs sm:text-sm text-text-onDarkSub/80 leading-relaxed">
               The AI sponsorship operating system for college fests, hackathons, and student communities.
             </p>
 
@@ -127,7 +94,7 @@ export const Footer: React.FC = () => {
 
           {/* Product Links */}
           <div className="space-y-3">
-            <h4 className="font-heading font-bold text-sm text-green-dark uppercase tracking-wider">
+            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
               Product
             </h4>
             <ul className="space-y-2 text-xs sm:text-sm">
@@ -156,7 +123,7 @@ export const Footer: React.FC = () => {
 
           {/* Event Formats */}
           <div className="space-y-3">
-            <h4 className="font-heading font-bold text-sm text-green-dark uppercase tracking-wider">
+            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
               Event Types
             </h4>
             <ul className="space-y-2 text-xs sm:text-sm">
@@ -185,7 +152,7 @@ export const Footer: React.FC = () => {
 
           {/* Trust & Safety */}
           <div className="space-y-3">
-            <h4 className="font-heading font-bold text-sm text-green-dark uppercase tracking-wider">
+            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
               Safety & Ethics
             </h4>
             <ul className="space-y-2 text-xs sm:text-sm">
@@ -214,15 +181,15 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Credits */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-muted">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-onDarkSub/70">
           <p>© 2026 SponFy. Built for student organizers across India.</p>
           <div className="flex items-center gap-3">
-            <Link href="/faq" className="footer-link">
+            <Link href="/faq" className="footer-link text-xs">
               Privacy & Security
             </Link>
-            <span className="text-green-dark/30 select-none">•</span>
+            <span className="text-butter-cream/30 select-none">•</span>
             <p className="flex items-center gap-1">
-              Crafted with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 hover:scale-125 transition-transform duration-200 cursor-pointer" /> for campus communities.
+              Crafted with <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 hover:scale-125 transition-transform duration-200 cursor-pointer" /> for campus communities.
             </p>
           </div>
         </div>

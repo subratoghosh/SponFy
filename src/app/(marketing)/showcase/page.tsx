@@ -1,8 +1,6 @@
 import React from "react";
-import { PageHero } from "@/components/landing/PageHero";
 import { ShowcaseCarousel } from "@/components/landing/ShowcaseCarousel";
-import { CTASection } from "@/components/landing/CTASection";
-import { CheckCircle2, Search, ExternalLink, Target, Sparkles, Building2 } from "lucide-react";
+import { Target } from "lucide-react";
 
 export const metadata = {
   title: "Sponsor Showcase | SponFy",
@@ -11,18 +9,7 @@ export const metadata = {
 
 export default function ShowcasePage() {
   return (
-    <div className="flex flex-col">
-      <PageHero
-        breadcrumb="Sponsor Showcase"
-        badge="AI SPONSOR DOSSIERS & FIT SCORES"
-        title="Real sponsor research, live cited evidence & fit scores."
-        subtitle="Explore verified company dossiers prepared for college hackathons and cultural fests — complete with cited CSR budgets, tech stack alignments, and decision-maker profiles."
-        primaryCtaText="Find sponsors for your fest"
-        primaryCtaHref="/app"
-        secondaryCtaText="Explore workflow engine"
-        secondaryCtaHref="/workflow"
-      />
-
+    <div className="flex flex-col pt-16 md:pt-20">
       {/* Showcase Carousel Component */}
       <ShowcaseCarousel />
 
@@ -86,8 +73,6 @@ export default function ShowcasePage() {
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <CTASection />
     </div>
   );
 }

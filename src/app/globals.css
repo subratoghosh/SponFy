@@ -292,10 +292,10 @@ body {
   box-shadow: 0 14px 32px -6px rgba(12, 56, 46, 0.14);
 }
 
-/* Footer interactive links & social buttons */
+/* Footer interactive links & social buttons (on Dark Green Footer) */
 .footer-link {
   display: inline-block;
-  color: var(--text-dim);
+  color: var(--text-hero-sub);
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
               color 0.2s ease,
               filter 0.2s ease;
@@ -303,9 +303,9 @@ body {
 }
 
 .footer-link:hover {
-  color: var(--green-dark) !important;
+  color: var(--butter-cream) !important;
   transform: translateY(-2px);
-  filter: drop-shadow(0 2px 4px rgba(12, 56, 46, 0.22));
+  filter: drop-shadow(0 2px 6px rgba(255, 240, 179, 0.4));
 }
 
 .footer-social-btn {
@@ -316,8 +316,8 @@ body {
   height: 38px;
   border-radius: 9999px;
   background-color: #FFFFFF;
-  border: 1px solid rgba(12, 56, 46, 0.12);
-  box-shadow: 0 2px 6px rgba(12, 56, 46, 0.05);
+  border: 1px solid rgba(255, 240, 179, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
               box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
               border-color 0.25s ease;
@@ -325,14 +325,14 @@ body {
 
 .footer-social-btn:hover {
   transform: translateY(-3px);
-  border-color: rgba(66, 142, 117, 0.45);
-  box-shadow: 0 8px 20px rgba(12, 56, 46, 0.12),
-              0 0 14px rgba(66, 142, 117, 0.35);
+  border-color: rgba(255, 240, 179, 0.6);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35),
+              0 0 16px rgba(255, 240, 179, 0.45);
 }
 
 .footer-link:focus-visible,
 .footer-social-btn:focus-visible {
-  outline: 2px solid var(--green-accent);
+  outline: 2px solid var(--butter-cream);
   outline-offset: 2px;
 }
 

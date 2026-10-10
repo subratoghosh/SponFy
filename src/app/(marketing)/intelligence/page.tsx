@@ -1,8 +1,6 @@
 import React from "react";
-import { PageHero } from "@/components/landing/PageHero";
 import { ApprovalPreview } from "@/components/landing/ApprovalPreview";
-import { CTASection } from "@/components/landing/CTASection";
-import { ShieldCheck, MessageSquare, MailCheck, UserCheck, Sparkles, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, MessageSquare, MailCheck, UserCheck, CheckCircle2 } from "lucide-react";
 
 export const metadata = {
   title: "Reply Intelligence & Safety | SponFy",
@@ -11,18 +9,7 @@ export const metadata = {
 
 export default function IntelligencePage() {
   return (
-    <div className="flex flex-col">
-      <PageHero
-        breadcrumb="Reply Intelligence"
-        badge="HUMAN APPROVAL GATE & REPLY AI"
-        title="AI that drafts, analyzes responses, and never sends without you."
-        subtitle="Every pitch is pre-vetted by your team. When corporate sponsors reply, SponFy categorizes intent, extracts objections, and suggests negotiation strategies."
-        primaryCtaText="Try reply intelligence"
-        primaryCtaHref="/app"
-        secondaryCtaText="Explore analytics"
-        secondaryCtaHref="/analytics"
-      />
-
+    <div className="flex flex-col pt-16 md:pt-20">
       {/* Main Interactive Approval Gate & Intelligence View */}
       <ApprovalPreview />
 
@@ -118,8 +105,6 @@ export default function IntelligencePage() {
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <CTASection />
     </div>
   );
 }

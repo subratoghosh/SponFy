@@ -1,8 +1,6 @@
 import React from "react";
-import { PageHero } from "@/components/landing/PageHero";
 import { AnalyticsPreview } from "@/components/landing/AnalyticsPreview";
-import { CTASection } from "@/components/landing/CTASection";
-import { TrendingUp, BarChart3, Users, DollarSign, Award, CheckCircle2 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
 export const metadata = {
   title: "Funnel Analytics | SponFy",
@@ -11,18 +9,7 @@ export const metadata = {
 
 export default function AnalyticsPage() {
   return (
-    <div className="flex flex-col">
-      <PageHero
-        breadcrumb="Funnel Analytics"
-        badge="PIPELINE & CONVERSION INTELLIGENCE"
-        title="Data-driven sponsorship pipelines for student teams."
-        subtitle="Track conversion rates, reply speeds, confirmed funds, and tier progress across your festival with institutional clarity."
-        primaryCtaText="Launch campaign analytics"
-        primaryCtaHref="/app"
-        secondaryCtaText="Frequently asked questions"
-        secondaryCtaHref="/faq"
-      />
-
+    <div className="flex flex-col pt-16 md:pt-20">
       {/* Main Interactive Analytics Component */}
       <AnalyticsPreview />
 
@@ -88,8 +75,6 @@ export default function AnalyticsPage() {
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <CTASection />
     </div>
   );
 }
