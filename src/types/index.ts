@@ -344,3 +344,66 @@ export interface GmailConnectionStatus {
   lastSyncAt?: string;
   isMock: boolean;
 }
+
+// ---------- Administrative Dashboard Types ----------
+
+export type UserRole = "USER" | "ADMIN";
+export type AccountStatus = "ACTIVE" | "SUSPENDED";
+
+export interface AdminUser {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  orgName: string | null;
+  orgType: string | null;
+  role: UserRole;
+  status: AccountStatus;
+  campaignsCount: number;
+  emailsSentCount: number;
+  lastActiveAt: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  adminId: string;
+  adminName?: string;
+  adminEmail?: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  details: Record<string, any>;
+  createdAt: string;
+}
+
+export interface AdminOverviewMetrics {
+  totalUsers: number;
+  newUsers: number;
+  activeUsers: number;
+  activeSessions: number;
+  totalCampaigns: number;
+  activeCampaigns: number;
+  completedCampaigns: number;
+  totalSponsorsDiscovered: number;
+  totalEmailsSent: number;
+  totalRepliesReceived: number;
+  positiveResponses: number;
+  confirmedSponsorships: number;
+  usersDelta?: number;
+  campaignsDelta?: number;
+  outreachDelta?: number;
+  committedRevenueTotal?: number;
+}
+
+export interface AdminAnalyticsData {
+  userGrowth: { date: string; users: number; active: number }[];
+  registrationsByDay: { date: string; count: number }[];
+  sessionTrends: { date: string; sessions: number; avgDurationMinutes: number }[];
+  campaignStatusBreakdown: { status: string; count: number }[];
+  campaignsByEventType: { type: string; count: number }[];
+  outreachFunnel: { stage: string; count: number; percentage: number }[];
+  industryPerformance: { industry: string; sponsorsCount: number; replyRate: number; conversionRate: number }[];
+  topCampaigns: { id: string; name: string; ownerName: string; sponsorsCount: number; committedAmount: number; status: string }[];
+}
+
