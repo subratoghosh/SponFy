@@ -8,12 +8,13 @@ import { Badge } from '@/components/ui/badge';
 interface ReplyAnalysisPanelProps {
   analysis?: ReplyAnalysis;
   onExecuteRecommendation?: () => void;
+  onClose?: () => void;
 }
 
-export function ReplyAnalysisPanel({ analysis, onExecuteRecommendation }: ReplyAnalysisPanelProps) {
+export function ReplyAnalysisPanel({ analysis, onExecuteRecommendation, onClose }: ReplyAnalysisPanelProps) {
   if (!analysis) {
     return (
-      <div className="w-80 border-l border-[#0C382E]/10 bg-[#FFFFFF] p-6 flex flex-col items-center justify-center text-center">
+      <div className="w-80 md:w-88 border-l border-[#0C382E]/10 bg-[#FFFFFF] p-6 flex flex-col items-center justify-center text-center shrink-0">
         <Brain className="w-8 h-8 text-[#0C382E]/30 mb-2 animate-pulse" />
         <p className="text-xs text-[#0C382E]/50 font-medium">No AI reply analysis available for this message yet.</p>
       </div>
@@ -37,14 +38,25 @@ export function ReplyAnalysisPanel({ analysis, onExecuteRecommendation }: ReplyA
   };
 
   return (
-    <div className="w-80 border-l border-[#0C382E]/10 bg-[#FFFFFF] flex flex-col h-full overflow-y-auto">
+    <div className="w-80 md:w-88 border-l border-[#0C382E]/10 bg-[#FFFFFF] flex flex-col h-full overflow-y-auto shrink-0 animate-fade-in shadow-xs">
       {/* Header */}
-      <div className="p-4 border-b border-[#0C382E]/10 bg-[#FFFDF6]">
-        <div className="flex items-center gap-2 mb-1 text-[#0C382E]">
-          <Brain className="w-4 h-4 text-[#0C382E]" />
-          <h3 className="font-heading font-bold text-sm">AI Reply Intelligence</h3>
+      <div className="p-4 border-b border-[#0C382E]/10 bg-[#FFFDF6] flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5 text-[#0C382E]">
+            <Brain className="w-4 h-4 text-[#0C382E]" />
+            <h3 className="font-heading font-bold text-sm">AI Reply Intelligence</h3>
+          </div>
+          <p className="text-[11px] text-[#0C382E]/60">Gemini intent & requirement extraction</p>
         </div>
-        <p className="text-[11px] text-[#0C382E]/60">Classified using Gemini with intent & requirement extraction</p>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-[#0C382E]/50 hover:text-[#0C382E] hover:bg-[#FAF4E6] transition-colors cursor-pointer"
+            title="Close AI panel"
+          >
+            <span className="text-sm font-bold">✕</span>
+          </button>
+        )}
       </div>
 
       <div className="p-4 space-y-5">

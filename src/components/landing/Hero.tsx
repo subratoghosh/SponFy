@@ -60,7 +60,7 @@ export const Hero: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative pt-32 pb-24 md:pt-40 md:pb-36 bg-green-hero text-text-onDark overflow-hidden rounded-b-[36px] shadow-2xl">
+    <section className="relative min-h-[100vh] flex flex-col justify-center items-center pt-28 pb-16 md:pt-32 md:pb-24 bg-green-hero text-text-onDark overflow-hidden rounded-b-[36px] shadow-2xl">
       {/* Background Organic Butter Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-butter-cream/10 blur-3xl pointer-events-none blob-float" />
       <div className="absolute top-[20%] right-[-5%] w-[600px] h-[600px] rounded-full bg-green-light/20 blur-3xl pointer-events-none" />

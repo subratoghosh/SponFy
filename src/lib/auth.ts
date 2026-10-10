@@ -38,6 +38,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
   },
-  secret: process.env.AUTH_SECRET || "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+  logger: {
+    error(error) {
+      const err = error as any;
+      const isJwtSessionError =
+        err?.name === "JWTSessionError" ||
+        err?.type === "JWTSessionError" ||
+        err?.message?.includes("JWTSessionError") ||
+        err?.message?.includes("no matching decryption secret") ||
+        err?.cause?.err?.message?.includes("no matching decryption secret") ||
+        err?.cause?.message?.includes("no matching decryption secret");
+
+      if (isJwtSessionError) {
+        // Stale, mismatched, or corrupted session cookie from previous secret/different port; suppress console noise
+        return;
+      }
+      console.error(error);
+    },
+    warn(code) {
+      if ((code as string) === "NEXTAUTH_URL") return;
+      console.warn(`[auth][warn] ${code}`);
+    },
+  },
+  secret: [
+    process.env.AUTH_SECRET || "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+    process.env.NEXTAUTH_SECRET || "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+    "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+  ].filter((s, idx, arr): s is string => Boolean(s) && arr.indexOf(s) === idx),
   trustHost: true,
 });

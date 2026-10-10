@@ -157,23 +157,23 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs sm:text-sm">
               <li>
+                <Link href="/privacy" className="footer-link">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="footer-link">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
                 <Link href="/faq" className="footer-link">
                   Human Approval Gate
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="footer-link">
-                  No Email Hallucinations
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="footer-link">
                   Gmail OAuth Security
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="footer-link">
-                  Do Not Contact List
                 </Link>
               </li>
             </ul>
@@ -183,9 +183,13 @@ export const Footer: React.FC = () => {
         {/* Bottom Credits */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-onDarkSub/70">
           <p>© 2026 SponFy. Built for student organizers across India.</p>
-          <div className="flex items-center gap-3">
-            <Link href="/faq" className="footer-link text-xs">
-              Privacy & Security
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link href="/privacy" className="footer-link text-xs">
+              Privacy Policy
+            </Link>
+            <span className="text-butter-cream/30 select-none">•</span>
+            <Link href="/terms" className="footer-link text-xs">
+              Terms of Service
             </Link>
             <span className="text-butter-cream/30 select-none">•</span>
             <p className="flex items-center gap-1">
