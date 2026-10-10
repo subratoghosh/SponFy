@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   Sparkles,
   LayoutDashboard,
@@ -15,6 +16,7 @@ import {
   Settings,
   ChevronRight,
   ShieldCheck,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +36,19 @@ import { SponfyBrand } from "@/components/ui/SponfyBrand";
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const user = session?.user;
+  const isDemo = !user || user.email === "demo@sponfy.dev";
+  const displayName = user?.name || (isDemo ? "Demo Organizer" : "Event Organizer");
+  const displayEmail = user?.email || (isDemo ? "demo@sponfy.dev" : "");
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "OR";
 
   return (
     <aside className="hidden lg:flex w-64 bg-green-dark text-text-onDarkSub flex-col justify-between shrink-0 h-screen sticky top-0 border-r border-green-mid/40 selection:bg-butter-cream selection:text-green-dark">
@@ -80,21 +95,46 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Bottom Safety & Demo Status Card */}
-      <div className="p-4 border-t border-green-mid/40">
-        <div className="p-3.5 bg-green-deep/80 rounded-xl border border-green-mid/50 space-y-2">
+      {/* Bottom User Profile & Sign Out Bar */}
+      <div className="p-4 border-t border-green-mid/40 space-y-3">
+        {/* Safety Gate Indicator */}
+        <div className="p-3 bg-green-deep/80 rounded-xl border border-green-mid/50 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-butter-cream flex items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-butter-cream flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
-              Safety Active
+              Safety Gate
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-butter-cream text-green-dark">
-              Demo
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-butter-cream text-green-dark">
+              {isDemo ? "Demo" : "Live DB"}
             </span>
           </div>
-          <p className="text-[11px] text-text-onDarkSub leading-snug">
-            Human approval gate active on all outbound emails.
+          <p className="text-[10px] text-text-onDarkSub/80 leading-snug">
+            All AI pitches require manual organizer approval.
           </p>
+        </div>
+
+        {/* User Profile Card with Sign Out Button */}
+        <div className="flex items-center justify-between p-2 rounded-xl bg-green-deep/50 border border-green-mid/30">
+          <div className="flex items-center gap-2.5 min-w-0 pr-1">
+            <div className="w-7 h-7 rounded-lg bg-butter-cream text-green-dark font-black text-xs flex items-center justify-center shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white truncate leading-tight">
+                {displayName}
+              </div>
+              <div className="text-[10px] text-text-onDarkSub/70 truncate">
+                {displayEmail || "Organizer"}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            title="Log out of account"
+            className="p-1.5 rounded-lg text-text-onDarkSub/80 hover:text-red-300 hover:bg-green-mid/60 transition-colors shrink-0 cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>
