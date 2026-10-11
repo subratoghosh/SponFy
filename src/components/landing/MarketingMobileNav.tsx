@@ -93,14 +93,9 @@ export const MarketingMobileNav: React.FC = () => {
             {/* Quick Action Buttons */}
             <div className="pt-2 flex flex-col gap-2.5">
               <Link href="/login" onClick={() => setMoreOpen(false)}>
-                <Button variant="hero-ghost" className="w-full justify-center text-sm font-bold">
+                <Button variant="butter" className="w-full justify-center text-sm font-extrabold shadow-md">
                   <LogIn className="w-4 h-4 mr-2" />
                   Log in to Workspace
-                </Button>
-              </Link>
-              <Link href="/app" onClick={() => setMoreOpen(false)}>
-                <Button variant="butter" className="w-full justify-center text-sm font-extrabold shadow-md">
-                  Launch Free Campaign
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>

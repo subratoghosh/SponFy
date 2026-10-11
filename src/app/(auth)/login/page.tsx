@@ -13,7 +13,6 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  Building2,
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -103,71 +102,21 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen bg-butter-bg flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 text-green-dark selection:bg-butter-cream">
-      {/* Landscape Container Card */}
-      <div className="w-full max-w-5xl bg-white rounded-3xl border border-green-dark/15 shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[580px]">
-        {/* Left Side: Brand Narrative & Fest Highlights (Landscape Accent Pane) */}
-        <div className="md:col-span-5 bg-green-dark text-butter-cream p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden">
-          {/* Subtle Background Glow Blobs */}
-          <div className="absolute top-[-20%] left-[-20%] w-[260px] h-[260px] rounded-full bg-butter-cream/10 blur-2xl pointer-events-none" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[260px] h-[260px] rounded-full bg-green-light/20 blur-2xl pointer-events-none" />
-
-          {/* Top Brand Header */}
-          <div className="relative z-10 space-y-6">
-            <SponfyBrand href="/" size="md" theme="dark" />
-
-            <div className="space-y-3 pt-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-butter-cream/15 text-butter-cream text-[11px] font-bold tracking-wider uppercase border border-butter-cream/25">
-                <Sparkles className="w-3.5 h-3.5 text-butter-gold" />
-                Campus Sponsorship OS
-              </div>
-              <h1 className="display-font text-2xl sm:text-3xl font-extrabold text-butter-cream leading-tight">
-                Land high-value sponsors for your fest.
-              </h1>
-              <p className="text-xs sm:text-sm text-text-onDarkSub/80 leading-relaxed">
-                Automate brand discovery, verify CSR grants, and dispatch human-approved pitches via your official college Gmail.
-              </p>
-            </div>
-
-            {/* Feature Checkpoints */}
-            <div className="space-y-2.5 pt-2 text-xs text-text-onDarkSub/90">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Zero hallucinated company contact emails</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Strict Human Approval Gate before every send</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Realtime thread reply sentiment parser</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Demo Tip Banner */}
-          <div className="relative z-10 pt-8 mt-6 border-t border-green-mid/40">
-            <div className="p-3.5 rounded-2xl bg-green-deep/70 border border-green-mid/50 text-[11px] text-text-onDarkSub/80 space-y-1">
-              <div className="font-bold text-butter-cream flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-butter-gold" />
-                Organizer Test Credentials:
-              </div>
-              <div>Email: <code className="text-butter-cream font-mono">admin@sponfy.dev</code></div>
-              <div>Password: <code className="text-butter-cream font-mono">admin123</code></div>
-            </div>
-          </div>
+      {/* Centered Single Column Auth Card */}
+      <div className="w-full max-w-md bg-white rounded-3xl border border-green-dark/15 shadow-2xl overflow-hidden flex flex-col p-8 sm:p-10 space-y-6">
+        {/* Brand Logo Centered */}
+        <div className="flex justify-center">
+          <SponfyBrand href="/" size="md" theme="light" />
         </div>
 
-        {/* Right Side: Authentication Form Card */}
-        <div className="md:col-span-7 bg-white p-8 sm:p-10 flex flex-col justify-center space-y-6">
-          <div>
-            <h2 className="heading-font font-black text-2xl sm:text-3xl text-green-dark">
-              Sign In to SponFy
-            </h2>
-            <p className="text-xs sm:text-sm text-text-dim mt-1">
-              Access your college festival workspace, dossiers, and outreach queues.
-            </p>
-          </div>
+        <div className="text-center">
+          <h2 className="heading-font font-black text-2xl sm:text-3xl text-green-dark">
+            Sign In to SponFy
+          </h2>
+          <p className="text-xs sm:text-sm text-text-dim mt-1">
+            Access your college festival workspace, dossiers, and outreach queues.
+          </p>
+        </div>
 
           {/* Registration Success Banner */}
           {registered && !errorMsg && (
@@ -319,7 +268,6 @@ function LoginForm() {
               Register your Fest Workspace <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-        </div>
       </div>
     </div>
   );
