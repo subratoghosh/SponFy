@@ -137,12 +137,23 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
+      // Batch 1: User and campaign metrics (5 queries)
       const [
         totalUsers,
         newUsers,
         totalCampaigns,
         activeCampaigns,
         completedCampaigns,
+      ] = await Promise.all([
+        p.user.count(),
+        p.user.count({ where: { createdAt: { gte: cutoff } } }),
+        p.campaign.count(),
+        p.campaign.count({ where: { archived: false } }),
+        p.campaign.count({ where: { archived: true } }),
+      ]);
+
+      // Batch 2: Company, message, and session metrics (6 queries)
+      const [
         totalCompanies,
         totalSent,
         totalReplies,
@@ -150,11 +161,6 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
         committedCompanies,
         activeSessionsCount,
       ] = await Promise.all([
-        p.user.count(),
-        p.user.count({ where: { createdAt: { gte: cutoff } } }),
-        p.campaign.count(),
-        p.campaign.count({ where: { archived: false } }),
-        p.campaign.count({ where: { archived: true } }),
         p.company.count(),
         p.message.count({ where: { direction: "OUTBOUND" } }),
         p.message.count({ where: { direction: "INBOUND" } }),
@@ -485,20 +491,22 @@ export async function updateUserRole(
   newRole: UserRole,
   adminId: string
 ): Promise<{ success: boolean; error?: string }> {
-  // Prevent demoting the last active administrator
-  const currentAdmins = inMemoryUsers.filter(
-    (u) => u.role === "ADMIN" && u.status === "ACTIVE"
-  );
-  if (newRole === "USER" && currentAdmins.length === 1 && currentAdmins[0].id === userId) {
-    return {
-      success: false,
-      error: "Cannot demote the sole active platform administrator.",
-    };
-  }
-
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
+      if (newRole === "USER") {
+        const dbAdmins = await p.user.findMany({
+          where: { role: "ADMIN", status: "ACTIVE" },
+          select: { id: true },
+        });
+        if (dbAdmins.length === 1 && dbAdmins[0].id === userId) {
+          return {
+            success: false,
+            error: "Cannot demote the sole active platform administrator.",
+          };
+        }
+      }
+
       await p.user.update({
         where: { id: userId },
         data: { role: newRole },
@@ -509,6 +517,17 @@ export async function updateUserRole(
       console.error("Prisma updateUserRole failed:", err);
       return { success: false, error: "Database update error." };
     }
+  }
+
+  // Prevent demoting the last active administrator in in-memory fallback
+  const currentAdmins = inMemoryUsers.filter(
+    (u) => u.role === "ADMIN" && u.status === "ACTIVE"
+  );
+  if (newRole === "USER" && currentAdmins.length === 1 && currentAdmins[0].id === userId) {
+    return {
+      success: false,
+      error: "Cannot demote the sole active platform administrator.",
+    };
   }
 
   const u = inMemoryUsers.find((user) => user.id === userId);
@@ -525,18 +544,20 @@ export async function deleteUserAccount(
   adminId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
-  // Prevent deleting the last administrator
-  const currentAdmins = inMemoryUsers.filter((u) => u.role === "ADMIN");
-  if (currentAdmins.length === 1 && currentAdmins[0].id === userId) {
-    return {
-      success: false,
-      error: "Cannot delete the sole platform administrator account.",
-    };
-  }
-
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
+      const dbAdmins = await p.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+      if (dbAdmins.length === 1 && dbAdmins[0].id === userId) {
+        return {
+          success: false,
+          error: "Cannot delete the sole platform administrator account.",
+        };
+      }
+
       await p.user.delete({
         where: { id: userId },
       });
@@ -546,8 +567,17 @@ export async function deleteUserAccount(
       return { success: true };
     } catch (err) {
       console.error("Prisma deleteUserAccount failed:", err);
-      return { success: false, error: "Failed to delete user." };
+      return { success: false, error: "Database deletion error." };
     }
+  }
+
+  // In-memory fallback
+  const currentAdmins = inMemoryUsers.filter((u) => u.role === "ADMIN");
+  if (currentAdmins.length === 1 && currentAdmins[0].id === userId) {
+    return {
+      success: false,
+      error: "Cannot delete the sole platform administrator account.",
+    };
   }
 
   const idx = inMemoryUsers.findIndex((u) => u.id === userId);
@@ -641,16 +671,33 @@ export async function recordAuditLog(
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
-      await p.auditLog.create({
-        data: {
-          adminId,
-          action,
-          targetType,
-          targetId,
-          details,
-        },
+      let validAdminId = adminId;
+      const adminExists = await p.user.findUnique({
+        where: { id: adminId },
+        select: { id: true },
       });
-      return;
+      if (!adminExists) {
+        const fallbackAdmin = await p.user.findFirst({
+          where: { role: "ADMIN" },
+          select: { id: true },
+        });
+        if (fallbackAdmin) {
+          validAdminId = fallbackAdmin.id;
+        }
+      }
+
+      if (validAdminId && (adminExists || validAdminId !== adminId)) {
+        await p.auditLog.create({
+          data: {
+            adminId: validAdminId,
+            action,
+            targetType,
+            targetId,
+            details,
+          },
+        });
+        return;
+      }
     } catch (err) {
       console.error("Prisma recordAuditLog failed:", err);
     }

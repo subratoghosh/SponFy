@@ -149,10 +149,13 @@ export async function removeSuppression(id: string): Promise<boolean> {
   return true;
 }
 
-export async function getGmailStatus(): Promise<GmailConnectionStatus> {
+export async function getGmailStatus(userId?: string): Promise<GmailConnectionStatus> {
   if (isDatabaseConfigured()) {
     try {
-      const acc = await prisma.gmailAccount.findFirst();
+      const acc = await prisma.gmailAccount.findFirst({
+        where: userId ? { userId } : undefined,
+        orderBy: { createdAt: "desc" },
+      });
       if (acc) {
         return {
           connected: acc.status === "ACTIVE",
@@ -167,6 +170,29 @@ export async function getGmailStatus(): Promise<GmailConnectionStatus> {
   }
 
   return { ...gmailStatusStoreRef.value };
+}
+
+export async function disconnectGmailAccount(userId?: string): Promise<boolean> {
+  if (isDatabaseConfigured()) {
+    try {
+      if (userId) {
+        await prisma.gmailAccount.deleteMany({
+          where: { userId },
+        });
+      } else {
+        await prisma.gmailAccount.deleteMany({});
+      }
+    } catch (err) {
+      console.warn("Prisma disconnectGmailAccount failed:", err);
+    }
+  }
+  gmailStatusStoreRef.value = {
+    connected: false,
+    email: undefined,
+    lastSyncAt: undefined,
+    isMock: false,
+  };
+  return true;
 }
 
 export async function updateGmailStatus(status: Partial<GmailConnectionStatus>): Promise<GmailConnectionStatus> {
@@ -207,5 +233,6 @@ export const settingsRepository = {
   removeSuppression,
   getGmailStatus,
   updateGmailStatus,
+  disconnectGmail: disconnectGmailAccount,
   isSuppressed,
 };

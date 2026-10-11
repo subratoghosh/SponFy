@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { getCampaigns } from "@/lib/data/repositories/campaigns";
 import { Campaign } from "@/types";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
+import { cn } from "@/lib/utils";
 
 export const TopBar: React.FC = () => {
   const { data: session } = useSession();
@@ -58,6 +59,11 @@ export const TopBar: React.FC = () => {
 
   const user = session?.user;
   const isDemo = !user || user.email === "demo@sponfy.dev";
+  const isAdmin =
+    (user as any)?.role === "ADMIN" ||
+    user?.email === "admin@sponfy.dev" ||
+    user?.email === "subratog840@gmail.com" ||
+    user?.email === "subratoghosh@gmail.com";
   const displayName = user?.name || (isDemo ? "Demo Organizer" : "Event Organizer");
   const displayEmail = user?.email || (isDemo ? "demo@sponfy.dev" : "");
   const initials = displayName
@@ -147,8 +153,21 @@ export const TopBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Right: Mode Badge & Interactive User Profile Menu */}
+        {/* Right: Mode Badge & Interactive User Profile Menu */}
       <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Admin Console Quick Button */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5 transition-all"
+            title="Open Admin Console"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
+            <span className="hidden sm:inline">Admin Console</span>
+            <span className="sm:hidden">Admin</span>
+          </Link>
+        )}
+
         {/* Workspace Mode Badge */}
         {isDemo ? (
           <span className="px-2.5 py-1 rounded-full bg-butter-cream text-green-dark border border-butter-gold text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1">
@@ -201,8 +220,15 @@ export const TopBar: React.FC = () => {
                     {displayEmail || "demo@sponfy.dev"}
                   </div>
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-green-dark/10 text-green-dark">
-                      {(user as any)?.role || (isDemo ? "DEMO" : "ORGANIZER")}
+                    <span
+                      className={cn(
+                        "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
+                        isAdmin
+                          ? "bg-amber-100 text-amber-900 border border-amber-300"
+                          : "bg-green-dark/10 text-green-dark"
+                      )}
+                    >
+                      {isAdmin ? "ADMIN" : (user as any)?.role || (isDemo ? "DEMO" : "ORGANIZER")}
                     </span>
                     {(user as any)?.orgName && (
                       <span className="text-[10px] text-text-dim truncate font-medium">
@@ -215,6 +241,21 @@ export const TopBar: React.FC = () => {
 
               {/* Navigation Links */}
               <div className="space-y-1 pt-1 text-xs font-bold text-green-dark">
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300/60 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-amber-600" />
+                      <span>Admin Console</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-amber-200 text-amber-800">
+                      Admin
+                    </span>
+                  </Link>
+                )}
                 <Link
                   href="/app/campaigns"
                   onClick={() => setProfileDropdownOpen(false)}

@@ -76,9 +76,18 @@ export async function POST(req: Request) {
       );
     }
 
+    let activeUserId = draft.userId;
+    try {
+      const { auth } = await import("@/lib/auth");
+      const session = await auth();
+      if (session?.user?.id) activeUserId = session.user.id;
+    } catch {
+      // Running in unit test environment
+    }
+
     let sendResult: { messageId: string; threadId: string };
     try {
-      sendResult = await executeApprovedSend(draft, recipient.recipient);
+      sendResult = await executeApprovedSend(draft, recipient.recipient, activeUserId);
     } catch (err: any) {
       // Nothing went out: give the approval back so the organizer can retry.
       await releaseDraftClaim(draft.id);
