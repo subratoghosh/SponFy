@@ -3,7 +3,6 @@
 import React, { useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import {
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
@@ -72,7 +71,7 @@ export const Hero: React.FC = () => {
       <div className="relative max-w-[1240px] mx-auto px-2 sm:px-6 text-center flex flex-col items-center z-10 w-full">
         {/* Pill Tag */}
         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-butter-cream/15 border border-butter-cream/30 text-butter-cream text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-5 sm:mb-6 hover:bg-butter-cream/25 hover:border-butter-cream/60 hover:shadow-[0_0_20px_rgba(255,240,179,0.35)] hover:scale-105 transition-all duration-300 cursor-default max-w-full">
-          <Sparkles className="w-3.5 h-3.5 fill-butter-cream animate-pulse shrink-0" />
+          <Zap className="w-3.5 h-3.5 fill-butter-cream text-butter-cream shrink-0" />
           <span className="truncate">The AI Sponsorship OS for College Fests & Hackathons</span>
         </div>
 

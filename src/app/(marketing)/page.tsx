@@ -10,7 +10,6 @@ import {
   BarChart3,
   HelpCircle,
   ArrowRight,
-  Sparkles,
 } from "lucide-react";
 
 export const metadata = {
@@ -76,7 +75,7 @@ export default function LandingPage() {
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-green-dark/5 border border-green-dark/15 text-green-dark text-xs font-bold uppercase tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-green-mid" />
+              <Target className="w-3.5 h-3.5 text-green-mid" />
               EXPLORE PLATFORM MODULES
             </div>
             <h2 className="heading-font text-3xl sm:text-4xl font-extrabold text-green-dark tracking-tight mb-3">

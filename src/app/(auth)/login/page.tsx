@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import {
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Lock,
@@ -252,7 +251,7 @@ function LoginForm() {
               onClick={handleDemoBypass}
               className="w-full py-2.5 px-4 rounded-xl bg-butter-panel border border-butter-gold/80 hover:bg-butter-warm/80 text-green-dark text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-2xs group cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-green-mid" />
+              <Building2 className="w-3.5 h-3.5 text-green-mid" />
               <span>Instant Demo Mode (Preloaded 24 Sponsors)</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
             </button>

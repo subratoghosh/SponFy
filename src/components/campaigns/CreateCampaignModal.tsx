@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { TARGET_INDUSTRIES } from "@/lib/config/constants";
 import { createCampaign } from "@/lib/data/repositories/campaigns";
 import { useToast } from "@/components/ui/toast";
-import { Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -225,7 +225,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
               onClick={handleSubmit}
               className="font-bold shadow-md"
             >
-              <Sparkles className="w-3.5 h-3.5 mr-1" /> Create Campaign
+              Create Campaign
             </Button>
           )}
         </div>

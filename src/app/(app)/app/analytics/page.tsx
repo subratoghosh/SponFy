@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
           actionHref="/app/discover"
         />
       ) : (
-        <AnalyticsCharts />
+        <AnalyticsCharts data={data} />
       )}
     </div>
   );

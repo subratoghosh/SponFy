@@ -3,7 +3,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   Send,
-  Sparkles,
   Inbox,
   Clock,
   ArrowRight,

@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { verifyAdminSession } from "@/lib/admin/auth";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminMobileTabBar } from "@/components/admin/AdminMobileTabBar";
@@ -18,8 +19,11 @@ export default async function AdminLayout({
 }) {
   const adminAuth = await verifyAdminSession();
 
-  // Strict server-side access enforcement - no admin UI or data ever rendered for unauthorized users
+  // Strict server-side access enforcement - typing /admin redirects to login
   if (!adminAuth.authorized) {
+    if (adminAuth.reason === "UNAUTHENTICATED" || !adminAuth.user) {
+      redirect("/login?callbackUrl=/admin");
+    }
     return (
       <div className="min-h-screen bg-[#FAF4E6] flex flex-col items-center justify-center p-6 text-center selection:bg-[#FFF0B3] selection:text-[#0C382E]">
         <div className="max-w-md w-full bg-white rounded-3xl border-2 border-[#0C382E]/10 p-8 shadow-2xl space-y-6">

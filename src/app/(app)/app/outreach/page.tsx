@@ -8,7 +8,7 @@ import { QualityScorePanel } from "@/components/outreach/QualityScorePanel";
 import { SafetyChecklist } from "@/components/outreach/SafetyChecklist";
 import { SendConfirmationDialog } from "@/components/outreach/SendConfirmationDialog";
 import { useToast } from "@/components/ui/toast";
-import { Send, Sparkles } from "lucide-react";
+import { Send } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OutreachSkeleton } from "@/components/skeletons/OutreachSkeleton";
 

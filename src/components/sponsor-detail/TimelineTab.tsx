@@ -3,7 +3,7 @@
 import React from "react";
 import { Company, Activity } from "@/types";
 import { formatTimeAgo } from "@/lib/utils";
-import { CheckCircle2, TrendingUp, Mail, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, TrendingUp, Mail, Send } from "lucide-react";
 
 export const TimelineTab: React.FC<{ company: Company }> = ({ company }) => {
   const events = [
@@ -17,7 +17,7 @@ export const TimelineTab: React.FC<{ company: Company }> = ({ company }) => {
       title: "AI 7-Factor Fit Scoring Completed",
       desc: `Scored ${company.fitScore}% match with 94% confidence`,
       time: company.createdAt,
-      icon: Sparkles,
+      icon: CheckCircle2,
     },
     {
       title: "Company Discovered & Profile Sourced",

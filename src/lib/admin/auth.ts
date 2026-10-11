@@ -47,21 +47,22 @@ export async function verifyAdminSession(): Promise<AdminAuthResult> {
     session = null;
   }
 
-  // 1. Check if authenticated
+  // If there is NO database configured at all (local zero-config test environment), allow demo admin
+  if (isDemo && !session?.user?.id && !session?.user?.email) {
+    return {
+      authorized: true,
+      isDemo: true,
+      user: {
+        id: "demo-admin-id",
+        email: "demo@sponfy.dev",
+        name: "Demo Admin",
+        role: "ADMIN",
+      },
+    };
+  }
+
+  // 1. Check if authenticated - always require an active logged in session when database is configured
   if (!session?.user?.id && !session?.user?.email) {
-    if (isDemo) {
-      // In local demo mode with no DB, provide a controlled demo admin context
-      return {
-        authorized: true,
-        user: {
-          id: "usr-admin-1",
-          email: "admin@sponfy.dev",
-          name: "Subrato Ghosh (Platform Lead)",
-          role: "ADMIN",
-        },
-        isDemo: true,
-      };
-    }
     return { authorized: false, reason: "UNAUTHENTICATED" };
   }
 

@@ -5,7 +5,7 @@ import {
   LayoutDashboard,
   CheckSquare,
   BarChart3,
-  Sparkles,
+  Activity,
   Eye,
   EyeOff,
   Maximize2,
@@ -26,6 +26,7 @@ interface Props {
     summary: any;
     pipelineValueByStage: any[];
   };
+  campaignName?: string;
   activities: any[];
   insights: string[];
   actionQueue?: any[];
@@ -35,6 +36,7 @@ type TabType = "all" | "queue" | "pipeline" | "insights";
 
 export function CampaignDashboardView({
   analytics,
+  campaignName,
   activities,
   insights,
   actionQueue,
@@ -47,7 +49,7 @@ export function CampaignDashboardView({
     { id: "all", label: "Overview", icon: LayoutDashboard },
     { id: "queue", label: "Action Queue", icon: CheckSquare, count: 3 },
     { id: "pipeline", label: "Pipeline & Stages", icon: BarChart3 },
-    { id: "insights", label: "Live Intel & Feed", icon: Sparkles, count: insights.length },
+    { id: "insights", label: "Live Intel & Feed", icon: Activity, count: insights.length },
   ];
 
   return (
@@ -59,7 +61,7 @@ export function CampaignDashboardView({
             Campaign Overview
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Realtime metrics and action queue for <strong>SponFy Hackathon 2026</strong>
+            Realtime metrics and action queue for <strong>{campaignName || "Active Workspace"}</strong>
           </p>
         </div>
 

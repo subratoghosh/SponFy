@@ -33,12 +33,12 @@ export async function getUserProfile(): Promise<UserProfile> {
       const u = await prisma.user.findFirst();
       if (u) {
         return {
-          fullName: u.name || profileStoreRef.value.fullName,
-          organization: u.orgName || profileStoreRef.value.organization,
-          email: u.email || profileStoreRef.value.email,
+          fullName: u.name || "",
+          organization: u.orgName || "",
+          email: u.email || "",
           avatarUrl: u.image || "",
-          title: profileStoreRef.value.title,
-          signature: profileStoreRef.value.signature,
+          title: "Sponsorship Lead",
+          signature: u.name ? `Best regards,\n${u.name}` : "Best regards,\nSponsorship Lead",
           dailySendLimit: u.dailySendCap || 30,
         };
       }

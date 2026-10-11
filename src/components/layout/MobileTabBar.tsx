@@ -10,7 +10,7 @@ import {
   Send,
   Inbox,
   FolderKanban,
-  Sparkles,
+  Compass,
   Clock,
   BarChart3,
   Settings,
@@ -33,7 +33,7 @@ const MOBILE_TABS = [
 ];
 
 const MORE_APP_ITEMS = [
-  { label: "AI Discover", href: "/app/discover", icon: Sparkles, desc: "Search and discover high-fit sponsors" },
+  { label: "Discover", href: "/app/discover", icon: Compass, desc: "Search and discover high-fit sponsors" },
   { label: "Follow-ups", href: "/app/followups", icon: Clock, desc: "Automated sequence reminders" },
   { label: "Analytics", href: "/app/analytics", icon: BarChart3, desc: "Campaign conversions & metrics" },
   { label: "Settings", href: "/app/settings", icon: Settings, desc: "Gmail connection & fest preferences" },

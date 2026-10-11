@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Send, Sparkles, ShieldCheck } from 'lucide-react';
+import { Send, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Message, Company, ReplyAnalysis } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -28,7 +28,7 @@ export function ReplyComposerModal({
   const defaultSubject = message?.subject?.startsWith('Re:') ? message.subject : `Re: ${message?.subject || ''}`;
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(
-    `Hi,\n\nThank you for getting back to us regarding ${company?.name || 'your'} sponsorship at SponFy Hackathon 2026.\n\nWe have attached our comprehensive Tier Deck and developer track guidelines. We'd love to schedule a brief 15-minute sync with your team this Thursday at 4 PM IST.\n\nLooking forward to partnering together!\n\nBest regards,\nSubrato Ghosh\nLead Organizer, SponFy Hackathon`
+    `Hi,\n\nThank you for getting back to us regarding ${company?.name || 'your'} sponsorship partnership.\n\nWe have attached our comprehensive Tier Deck and partnership guidelines. We'd love to schedule a brief 15-minute sync with your team this Thursday at 4 PM IST.\n\nLooking forward to partnering together!\n\nBest regards,\nSponsorship Lead`
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -40,11 +40,11 @@ export function ReplyComposerModal({
     setTimeout(() => {
       if (analysis?.meetingRequested) {
         setBody(
-          `Hi,\n\nDelighted to jump on a quick call! Here is our team calendar link to pick any 15-min slot that suits your schedule: cal.com/sponfy-fest/sponsor-sync\n\nAlternatively, does tomorrow (Friday) at 3:30 PM IST work for you?\n\nWarm regards,\nSubrato Ghosh\nSponFy Hackathon Lead`
+          `Hi,\n\nDelighted to jump on a quick call! Here is our team calendar link to pick any 15-min slot that suits your schedule: cal.com/sponsor-sync\n\nAlternatively, does tomorrow (Friday) at 3:30 PM IST work for you?\n\nWarm regards,\nSponsorship Lead`
         );
       } else {
         setBody(
-          `Hi,\n\nThank you for the follow up! In response to your question: our track allows both physical and virtual mentors, and our estimated attendance is 1,200 verified builder teams.\n\nI've also attached the breakdown of the Title & Gold tracks for ${company?.name || 'your company'}.\n\nBest regards,\nSubrato Ghosh`
+          `Hi,\n\nThank you for the follow up! In response to your question: our team welcomes both onsite and virtual mentors, and we provide dedicated track guidelines for ${company?.name || 'your company'}.\n\nBest regards,\nSponsorship Lead`
         );
       }
       setIsGenerating(false);
@@ -85,7 +85,7 @@ export function ReplyComposerModal({
               disabled={isGenerating}
               className="px-2.5 py-1 rounded-lg bg-[#0C382E] text-[#FFF0B3] text-xs font-semibold flex items-center gap-1.5 hover:bg-[#0C382E]/90 disabled:opacity-50"
             >
-              <Sparkles className="w-3 h-3 text-[#FEE790]" />
+              <RefreshCw className={`w-3 h-3 text-[#FEE790] ${isGenerating ? 'animate-spin' : ''}`} />
               {isGenerating ? 'Drafting...' : 'AI Re-Draft'}
             </button>
           </div>

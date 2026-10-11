@@ -1,15 +1,20 @@
 import React from "react";
 import { getAnalyticsData } from "@/lib/data/repositories/analytics";
+import { getCampaigns } from "@/lib/data/repositories/campaigns";
 import { DEMO_ACTIVITIES } from "@/lib/data/seed-data";
 import { CampaignDashboardView } from "@/components/dashboard/CampaignDashboardView";
 import { auth } from "@/lib/auth";
 
 export default async function OverviewPage() {
   const session = await auth();
-  const analytics = await getAnalyticsData();
+  const [analytics, campaigns] = await Promise.all([
+    getAnalyticsData(),
+    getCampaigns(),
+  ]);
 
   const isDemoUser = session?.user?.email === "demo@sponfy.dev";
-  const hasData = analytics.summary.totalSponsors > 0;
+  const activeCampaign = campaigns[0] || null;
+  const campaignName = activeCampaign?.name || (isDemoUser ? "SponFy Hackathon 2026" : "Your Workspace");
 
   const demoInsights = [
     "Developer Tools and Cloud companies in your pipeline have an 82% positive reply rate — 2.4x higher than FMCG brands.",
@@ -20,9 +25,10 @@ export default async function OverviewPage() {
   return (
     <CampaignDashboardView
       analytics={analytics}
-      activities={hasData ? DEMO_ACTIVITIES : []}
-      insights={hasData ? demoInsights : []}
-      actionQueue={hasData ? undefined : []}
+      campaignName={campaignName}
+      activities={isDemoUser ? DEMO_ACTIVITIES : []}
+      insights={isDemoUser ? demoInsights : []}
+      actionQueue={analytics.summary.totalSponsors > 0 ? undefined : []}
     />
   );
 }

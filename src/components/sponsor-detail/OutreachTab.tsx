@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Company, EmailDraft } from "@/types";
 import { getDraftByCompanyId } from "@/lib/data/repositories/outreach";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Send, CheckCircle2, ShieldCheck, ArrowRight, RefreshCw } from "lucide-react";
+import { Send, CheckCircle2, ShieldCheck, ArrowRight, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import Link from "next/link";
 
@@ -73,7 +73,7 @@ export const OutreachTab: React.FC<{ company: Company }> = ({ company }) => {
             onClick={handleGenerate}
             className="text-xs font-bold shadow-sm"
           >
-            <Sparkles className="w-3.5 h-3.5 mr-1" /> {draft ? "Regenerate" : "Generate Draft"}
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${generating ? 'animate-spin' : ''}`} /> {draft ? "Regenerate" : "Generate Draft"}
           </Button>
         </div>
       </div>
@@ -190,7 +190,7 @@ export const OutreachTab: React.FC<{ company: Company }> = ({ company }) => {
         </div>
       ) : (
         <div className="p-12 text-center bg-white rounded-3xl border border-green-dark/10 space-y-3">
-          <Sparkles className="w-8 h-8 text-butter-gold mx-auto" />
+          <Send className="w-8 h-8 text-butter-gold mx-auto" />
           <h4 className="font-heading font-bold text-base text-green-dark">
             No Draft Generated Yet
           </h4>

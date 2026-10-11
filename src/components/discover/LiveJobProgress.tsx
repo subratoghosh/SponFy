@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Loader2, Sparkles, Globe, Search, BrainCircuit, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2, Database, Globe, Search, BrainCircuit, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LiveJobProgressProps {
@@ -17,15 +17,15 @@ export const LiveJobProgress: React.FC<LiveJobProgressProps> = ({ active, step }
     { label: "Extracting official student and developer track initiatives", icon: Globe },
     { label: "Filtering non-public contacts and suppressing blacklisted domains", icon: ShieldCheck },
     { label: "Calculating 7-factor explainable relevance fit scores", icon: BrainCircuit },
-    { label: "Persisting cited sponsor dossiers to campaign pipeline", icon: Sparkles },
+    { label: "Persisting cited sponsor dossiers to campaign pipeline", icon: Database },
   ];
 
   return (
     <div className="bg-green-dark text-butter-cream rounded-3xl p-6 sm:p-7 border border-green-mid shadow-xl space-y-4 animate-fade-in">
       <div className="flex items-center justify-between border-b border-green-mid/50 pb-3">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-butter-gold">
-          <Sparkles className="w-4 h-4 fill-butter-gold animate-spin" />
-          Live AI Discovery Job Stream
+          <Loader2 className="w-4 h-4 text-butter-gold animate-spin" />
+          Live Discovery Job Stream
         </div>
         <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-butter-cream text-green-dark">
           {Math.min(100, (step + 1) * 20)}% Complete

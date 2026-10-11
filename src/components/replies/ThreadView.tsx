@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Clock, Send, User, Sparkles, MessageSquare, Brain, HelpCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, Clock, Send, User, MessageSquare, Brain, HelpCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { Message, Company, ReplyAnalysis } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -82,8 +82,8 @@ export function ThreadView({
               )}
               title="Toggle AI Intelligence side panel"
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>{showIntelligence ? 'Hide Intel' : 'AI Intel'}</span>
+              <Brain className="w-3.5 h-3.5 shrink-0" />
+              <span>{showIntelligence ? 'Hide Intel' : 'Intel'}</span>
             </Button>
           )}
         </div>

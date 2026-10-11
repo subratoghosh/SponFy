@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Company } from "@/types";
-import { Sparkles, Globe, ExternalLink, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Globe, ExternalLink, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -61,7 +61,7 @@ export const ResearchTab: React.FC<{ company: Company; onRefresh: () => void }> 
       {/* Recommended Pitch Angle Banner */}
       <div className="bg-green-dark text-butter-cream rounded-2xl p-5 border border-green-mid shadow-md space-y-1.5">
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-butter-gold">
-          <Sparkles className="w-4 h-4 fill-butter-gold" />
+          <CheckCircle2 className="w-4 h-4 text-butter-gold" />
           Recommended Pitch Angle
         </div>
         <p className="text-sm font-medium text-text-onDark leading-relaxed">

@@ -11,7 +11,8 @@ export function middleware(request: NextRequest) {
 
   // Protect /app, /onboarding, and /admin
   if (pathname.startsWith("/app") || pathname.startsWith("/onboarding") || pathname.startsWith("/admin")) {
-    if (isDemo) {
+    // In Demo Mode with no DB, only allow /app and /onboarding without auth. Never /admin!
+    if (isDemo && !pathname.startsWith("/admin")) {
       return NextResponse.next();
     }
 

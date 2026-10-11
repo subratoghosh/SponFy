@@ -16,7 +16,6 @@ import {
   TrendingUp,
   ExternalLink,
   ArrowLeft,
-  Sparkles,
   FileText,
   UserCheck,
   Send,

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { CheckCircle, Clock, Send, Sparkles, User, ShieldCheck } from 'lucide-react';
+import { CheckCircle, Clock, Send, User, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
@@ -232,7 +232,7 @@ function AttentionCard({ item, onChanged }: { item: FollowupItem; onChanged: () 
             No reply after {Math.floor(item.daysSinceLast)} days. Last email: <em>{item.lastSubject}</em>
           </div>
           <Button size="sm" variant="green" disabled={busy} onClick={createDraft} className="gap-1.5 font-bold text-xs">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Send className="w-3.5 h-3.5" />
             Draft follow-up
           </Button>
         </div>

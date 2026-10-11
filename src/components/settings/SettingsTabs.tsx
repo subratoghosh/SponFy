@@ -13,7 +13,7 @@ import {
   Plus,
   Trash2,
   Lock,
-  Sparkles,
+  Cpu,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -314,7 +314,7 @@ export function SettingsTabs() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#0C382E]" />
+                      <Cpu className="w-4 h-4 text-[#0C382E]" />
                       <span className="text-xs font-bold text-[#0C382E]">Google Gemini 2.5 Flash</span>
                     </div>
                     <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Fallback Mock Ready</Badge>

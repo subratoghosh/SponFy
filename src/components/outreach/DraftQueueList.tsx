@@ -2,7 +2,7 @@
 
 import React from "react";
 import { EmailDraft, Company } from "@/types";
-import { Send, CheckCircle2, Clock, Sparkles } from "lucide-react";
+import { Send, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DraftQueueListProps {

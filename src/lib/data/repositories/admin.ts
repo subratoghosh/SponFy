@@ -137,22 +137,24 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
-      // Batch 1: User and campaign metrics (5 queries)
+      // Batch 1: User and campaign metrics
       const [
         totalUsers,
         newUsers,
+        activeUsers,
         totalCampaigns,
         activeCampaigns,
         completedCampaigns,
       ] = await Promise.all([
         p.user.count(),
         p.user.count({ where: { createdAt: { gte: cutoff } } }),
+        p.user.count({ where: { status: "ACTIVE" } }),
         p.campaign.count(),
         p.campaign.count({ where: { archived: false } }),
         p.campaign.count({ where: { archived: true } }),
       ]);
 
-      // Batch 2: Company, message, and session metrics (6 queries)
+      // Batch 2: Company, message, and session metrics
       const [
         totalCompanies,
         totalSent,
@@ -181,8 +183,8 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
       return {
         totalUsers,
         newUsers,
-        activeUsers: Math.max(newUsers, Math.min(totalUsers, totalUsers - 1)),
-        activeSessions: activeSessionsCount || Math.min(totalUsers, 4),
+        activeUsers,
+        activeSessions: activeSessionsCount,
         totalCampaigns,
         activeCampaigns,
         completedCampaigns,
@@ -192,9 +194,9 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
         positiveResponses: positiveReplies,
         confirmedSponsorships: committedCompanies,
         committedRevenueTotal: committedRevenue._sum.pipelineValue || 0,
-        usersDelta: 14.5,
-        campaignsDelta: 22.0,
-        outreachDelta: 18.2,
+        usersDelta: 0,
+        campaignsDelta: 0,
+        outreachDelta: 0,
       };
     } catch (err) {
       console.warn("Prisma getAdminOverviewMetrics failed, using repository aggregations:", err);
@@ -225,21 +227,21 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
 
   return {
     totalUsers,
-    newUsers: newUsers || 3,
-    activeUsers: activeUsers || 4,
-    activeSessions: 3,
+    newUsers,
+    activeUsers,
+    activeSessions: 0,
     totalCampaigns: campaigns.length,
     activeCampaigns,
     completedCampaigns,
     totalSponsorsDiscovered: sponsors.length,
-    totalEmailsSent: totalSentAcrossUsers || 125,
-    totalRepliesReceived: replies.length || 14,
-    positiveResponses: positiveCount || 9,
-    confirmedSponsorships: confirmedSponsors.length || 3,
-    committedRevenueTotal: committedRevenueTotal || 350000,
-    usersDelta: 12.8,
-    campaignsDelta: 20.4,
-    outreachDelta: 15.6,
+    totalEmailsSent: totalSentAcrossUsers,
+    totalRepliesReceived: replies.length,
+    positiveResponses: positiveCount,
+    confirmedSponsorships: confirmedSponsors.length,
+    committedRevenueTotal,
+    usersDelta: 0,
+    campaignsDelta: 0,
+    outreachDelta: 0,
   };
 }
 
@@ -247,84 +249,251 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
  * 2. Deep Admin Analytics
  */
 export async function getAdminAnalytics(timeRange = "30d"): Promise<AdminAnalyticsData> {
+  if (isDatabaseConfigured()) {
+    try {
+      const p = prisma as any;
+      const days = timeRange === "7d" ? 7 : timeRange === "60d" ? 60 : 30;
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      const [users, campaigns, companies, messages, analyses] = await Promise.all([
+        p.user.findMany({
+          select: { id: true, name: true, createdAt: true, status: true },
+          orderBy: { createdAt: "asc" },
+        }),
+        p.campaign.findMany({
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+            companies: { select: { id: true, stage: true, pipelineValue: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+        p.company.findMany({
+          select: { id: true, stage: true, industry: true, pipelineValue: true, campaignId: true },
+        }),
+        p.message.findMany({
+          select: { id: true, direction: true, createdAt: true },
+        }),
+        p.replyAnalysis.findMany({
+          select: { id: true, intent: true },
+        }),
+      ]);
+
+      // 1. userGrowth: group by month
+      const monthsMap = new Map<string, { users: number; active: number }>();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+        monthsMap.set(key, { users: 0, active: 0 });
+      }
+
+      let cumulative = 0;
+      for (const u of users) {
+        const d = new Date(u.createdAt);
+        const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+        cumulative++;
+        const curr = monthsMap.get(key) || { users: 0, active: 0 };
+        curr.users = cumulative;
+        if (u.status === "ACTIVE") curr.active++;
+        monthsMap.set(key, curr);
+      }
+
+      let runningUsers = 0;
+      let runningActive = 0;
+      const userGrowth = Array.from(monthsMap.entries()).map(([date, val]) => {
+        if (val.users > 0) runningUsers = val.users;
+        if (val.active > 0) runningActive = val.active;
+        return {
+          date,
+          users: runningUsers,
+          active: runningActive,
+        };
+      });
+
+      // 2. registrationsByDay
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const dayCounts = { Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
+      users
+        .filter((u: any) => new Date(u.createdAt) >= cutoff)
+        .forEach((u: any) => {
+          const d = dayNames[new Date(u.createdAt).getDay()];
+          dayCounts[d as keyof typeof dayCounts]++;
+        });
+      const registrationsByDay = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => ({
+        date: d,
+        count: dayCounts[d as keyof typeof dayCounts],
+      }));
+
+      // 3. sessionTrends
+      const sessionTrends = [
+        { date: "Day 1-5", sessions: 0, avgDurationMinutes: 0 },
+        { date: "Day 6-10", sessions: 0, avgDurationMinutes: 0 },
+        { date: "Day 11-15", sessions: 0, avgDurationMinutes: 0 },
+        { date: "Day 16-20", sessions: 0, avgDurationMinutes: 0 },
+        { date: "Day 21-25", sessions: 0, avgDurationMinutes: 0 },
+        { date: "Day 26-30", sessions: 0, avgDurationMinutes: 0 },
+      ];
+
+      // 4. campaignStatusBreakdown
+      const campaignStatusBreakdown = [
+        { status: "Active Pipeline", count: campaigns.filter((c: any) => !c.archived).length },
+        { status: "Archived", count: campaigns.filter((c: any) => c.archived).length },
+      ];
+
+      // 5. campaignsByEventType
+      const eventTypeMap = new Map<string, number>();
+      campaigns.forEach((c: any) => {
+        const type = c.eventType || "General";
+        eventTypeMap.set(type, (eventTypeMap.get(type) || 0) + 1);
+      });
+      const campaignsByEventType = Array.from(eventTypeMap.entries()).map(([type, count]) => ({
+        type,
+        count,
+      }));
+      if (campaignsByEventType.length === 0) {
+        campaignsByEventType.push({ type: "General", count: 0 });
+      }
+
+      // 6. outreachFunnel
+      const totalSponsors = companies.length;
+      const contacted = companies.filter((s: any) =>
+        ["CONTACTED", "REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"].includes(s.stage)
+      ).length;
+      const replied = companies.filter((s: any) =>
+        ["REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"].includes(s.stage)
+      ).length;
+      const interested = companies.filter((s: any) =>
+        ["INTERESTED", "NEGOTIATION", "COMMITTED"].includes(s.stage)
+      ).length;
+      const committed = companies.filter((s: any) => s.stage === "COMMITTED").length;
+
+      const outreachFunnel = [
+        { stage: "Discovered", count: totalSponsors, percentage: totalSponsors > 0 ? 100 : 0 },
+        { stage: "Contacted", count: contacted, percentage: totalSponsors > 0 ? Math.round((contacted / totalSponsors) * 100) : 0 },
+        { stage: "Replied", count: replied, percentage: totalSponsors > 0 ? Math.round((replied / totalSponsors) * 100) : 0 },
+        { stage: "Interested", count: interested, percentage: totalSponsors > 0 ? Math.round((interested / totalSponsors) * 100) : 0 },
+        { stage: "Committed", count: committed, percentage: totalSponsors > 0 ? Math.round((committed / totalSponsors) * 100) : 0 },
+      ];
+
+      // 7. industryPerformance
+      const indMap = new Map<string, { count: number; replies: number; committed: number }>();
+      companies.forEach((c: any) => {
+        const ind = c.industry || "General";
+        const cur = indMap.get(ind) || { count: 0, replies: 0, committed: 0 };
+        cur.count++;
+        if (["REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"].includes(c.stage)) {
+          cur.replies++;
+        }
+        if (c.stage === "COMMITTED") {
+          cur.committed++;
+        }
+        indMap.set(ind, cur);
+      });
+
+      const industryPerformance = Array.from(indMap.entries()).map(([industry, stats]) => ({
+        industry,
+        sponsorsCount: stats.count,
+        replyRate: stats.count > 0 ? Math.round((stats.replies / stats.count) * 100) : 0,
+        conversionRate: stats.count > 0 ? Math.round((stats.committed / stats.count) * 100) : 0,
+      }));
+      if (industryPerformance.length === 0) {
+        industryPerformance.push({ industry: "Technology", sponsorsCount: 0, replyRate: 0, conversionRate: 0 });
+      }
+
+      // 8. topCampaigns
+      const topCampaigns = campaigns.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        ownerName: c.user?.name || "Campus Organizer",
+        sponsorsCount: c.companies?.length || 0,
+        committedAmount: (c.companies || [])
+          .filter((cmp: any) => cmp.stage === "COMMITTED")
+          .reduce((sum: number, cmp: any) => sum + (cmp.pipelineValue || 0), 0),
+        status: c.archived ? "archived" : "active",
+      }));
+
+      return {
+        userGrowth,
+        registrationsByDay,
+        sessionTrends,
+        campaignStatusBreakdown,
+        campaignsByEventType,
+        outreachFunnel,
+        industryPerformance,
+        topCampaigns,
+      };
+    } catch (err) {
+      console.warn("Prisma getAdminAnalytics failed, falling back to memory:", err);
+    }
+  }
+
+  // Fallback (when database is not configured)
   const campaigns = await getCampaigns();
   const sponsors = await getSponsors();
 
   const userGrowth = [
-    { date: "May 2026", users: 1, active: 1 },
-    { date: "Jun 2026", users: 2, active: 2 },
-    { date: "Jul 2026", users: 3, active: 3 },
-    { date: "Aug 2026", users: 4, active: 4 },
-    { date: "Sep 2026", users: 5, active: 4 },
-    { date: "Oct 2026", users: 5, active: 5 },
+    { date: "Oct 2026", users: inMemoryUsers.length, active: inMemoryUsers.filter((u) => u.status === "ACTIVE").length },
   ];
 
   const registrationsByDay = [
-    { date: "Mon", count: 2 },
-    { date: "Tue", count: 4 },
-    { date: "Wed", count: 3 },
-    { date: "Thu", count: 6 },
-    { date: "Fri", count: 5 },
-    { date: "Sat", count: 1 },
-    { date: "Sun", count: 2 },
+    { date: "Mon", count: 0 },
+    { date: "Tue", count: 0 },
+    { date: "Wed", count: 0 },
+    { date: "Thu", count: 0 },
+    { date: "Fri", count: 0 },
+    { date: "Sat", count: 0 },
+    { date: "Sun", count: 0 },
   ];
 
   const sessionTrends = [
-    { date: "Day 1-5", sessions: 18, avgDurationMinutes: 14.5 },
-    { date: "Day 6-10", sessions: 24, avgDurationMinutes: 16.2 },
-    { date: "Day 11-15", sessions: 32, avgDurationMinutes: 18.0 },
-    { date: "Day 16-20", sessions: 41, avgDurationMinutes: 21.4 },
-    { date: "Day 21-25", sessions: 38, avgDurationMinutes: 19.8 },
-    { date: "Day 26-30", sessions: 46, avgDurationMinutes: 23.5 },
+    { date: "Day 1-5", sessions: 0, avgDurationMinutes: 0 },
+    { date: "Day 6-10", sessions: 0, avgDurationMinutes: 0 },
+    { date: "Day 11-15", sessions: 0, avgDurationMinutes: 0 },
+    { date: "Day 16-20", sessions: 0, avgDurationMinutes: 0 },
+    { date: "Day 21-25", sessions: 0, avgDurationMinutes: 0 },
+    { date: "Day 26-30", sessions: 0, avgDurationMinutes: 0 },
   ];
 
   const campaignStatusBreakdown = [
     { status: "Active Pipeline", count: campaigns.filter((c) => c.status !== "archived").length },
-    { status: "Completed / Goal Met", count: 2 },
     { status: "Archived", count: campaigns.filter((c) => c.status === "archived").length },
   ];
 
   const campaignsByEventType = [
-    { type: "Hackathons", count: 3 },
-    { type: "Technical Fests", count: 2 },
-    { type: "Cultural Fests", count: 1 },
-    { type: "Developer Summits", count: 1 },
+    { type: "Hackathons", count: campaigns.length },
   ];
 
-  const totalSponsors = sponsors.length || 18;
+  const totalSponsors = sponsors.length;
   const contacted = sponsors.filter((s) =>
     ["Contacted", "Replied", "Interested", "Negotiation", "Committed"].includes(s.stage)
-  ).length || 14;
+  ).length;
   const replied = sponsors.filter((s) =>
     ["Replied", "Interested", "Negotiation", "Committed"].includes(s.stage)
-  ).length || 10;
+  ).length;
   const interested = sponsors.filter((s) =>
     ["Interested", "Negotiation", "Committed"].includes(s.stage)
-  ).length || 7;
-  const committed = sponsors.filter((s) => s.stage === "Committed").length || 3;
+  ).length;
+  const committed = sponsors.filter((s) => s.stage === "Committed").length;
 
   const outreachFunnel = [
-    { stage: "Discovered", count: totalSponsors, percentage: 100 },
-    { stage: "Contacted", count: contacted, percentage: Math.round((contacted / totalSponsors) * 100) },
-    { stage: "Replied", count: replied, percentage: Math.round((replied / totalSponsors) * 100) },
-    { stage: "Interested", count: interested, percentage: Math.round((interested / totalSponsors) * 100) },
-    { stage: "Committed", count: committed, percentage: Math.round((committed / totalSponsors) * 100) },
+    { stage: "Discovered", count: totalSponsors, percentage: totalSponsors > 0 ? 100 : 0 },
+    { stage: "Contacted", count: contacted, percentage: totalSponsors > 0 ? Math.round((contacted / totalSponsors) * 100) : 0 },
+    { stage: "Replied", count: replied, percentage: totalSponsors > 0 ? Math.round((replied / totalSponsors) * 100) : 0 },
+    { stage: "Interested", count: interested, percentage: totalSponsors > 0 ? Math.round((interested / totalSponsors) * 100) : 0 },
+    { stage: "Committed", count: committed, percentage: totalSponsors > 0 ? Math.round((committed / totalSponsors) * 100) : 0 },
   ];
 
   const industryPerformance = [
-    { industry: "Developer Tools", sponsorsCount: 7, replyRate: 78, conversionRate: 42 },
-    { industry: "Cloud & Infrastructure", sponsorsCount: 5, replyRate: 72, conversionRate: 35 },
-    { industry: "Fintech & Payments", sponsorsCount: 4, replyRate: 64, conversionRate: 28 },
-    { industry: "Web3 & Blockchain", sponsorsCount: 3, replyRate: 58, conversionRate: 20 },
-    { industry: "EdTech & Learning", sponsorsCount: 2, replyRate: 44, conversionRate: 15 },
+    { industry: "Technology", sponsorsCount: sponsors.length, replyRate: 0, conversionRate: 0 },
   ];
 
   const topCampaigns = campaigns.map((c) => ({
     id: c.id,
     name: c.name,
     ownerName: "Campus Organizer",
-    sponsorsCount: sponsors.filter((s) => s.campaignId === c.id).length || 8,
-    committedAmount: c.targetAmount ? Math.round(c.targetAmount * 0.45) : 150000,
+    sponsorsCount: sponsors.filter((s) => s.campaignId === c.id).length,
+    committedAmount: sponsors.filter((s) => s.campaignId === c.id && s.stage === "Committed").reduce((sum, s) => sum + (s.pipelineValue || 0), 0),
     status: c.status || "active",
   }));
 
@@ -499,7 +668,7 @@ export async function updateUserRole(
           where: { role: "ADMIN", status: "ACTIVE" },
           select: { id: true },
         });
-        if (dbAdmins.length === 1 && dbAdmins[0].id === userId) {
+        if (dbAdmins.length <= 1) {
           return {
             success: false,
             error: "Cannot demote the sole active platform administrator.",

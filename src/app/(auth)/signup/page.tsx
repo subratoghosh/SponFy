@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import {
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Lock,
@@ -97,7 +96,7 @@ export default function SignupPage() {
 
             <div className="space-y-3 pt-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-butter-cream/15 text-butter-cream text-[11px] font-bold tracking-wider uppercase border border-butter-cream/25">
-                <Sparkles className="w-3.5 h-3.5 text-butter-gold" />
+                <Award className="w-3.5 h-3.5 text-butter-gold" />
                 Join 1,200+ Campus Organizers
               </div>
               <h1 className="display-font text-2xl sm:text-3xl font-extrabold text-butter-cream leading-tight">

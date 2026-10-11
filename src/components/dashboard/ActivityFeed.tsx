@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Mail,
   Send,
-  Sparkles,
   TrendingUp,
   Clock,
   Activity as ActivityIcon,
@@ -25,7 +24,7 @@ export const ActivityFeed: React.FC<{ activities: Activity[] }> = ({ activities 
       case "draft_approved":
         return <Send className="w-4 h-4 text-amber-700" />;
       default:
-        return <Sparkles className="w-4 h-4 text-purple-700" />;
+        return <ActivityIcon className="w-4 h-4 text-purple-700" />;
     }
   };
 

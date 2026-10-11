@@ -8,7 +8,7 @@ export const DEFAULT_DAILY_SEND_CAP = 30;
 export const NAV_ITEMS = [
   { label: "Overview", href: "/app", icon: "LayoutDashboard" },
   { label: "Campaigns", href: "/app/campaigns", icon: "FolderKanban" },
-  { label: "Discover", href: "/app/discover", icon: "Sparkles" },
+  { label: "Discover", href: "/app/discover", icon: "Compass" },
   { label: "Sponsors", href: "/app/sponsors", icon: "Building2" },
   { label: "Outreach", href: "/app/outreach", icon: "Send" },
   { label: "Replies", href: "/app/replies", icon: "Inbox" },

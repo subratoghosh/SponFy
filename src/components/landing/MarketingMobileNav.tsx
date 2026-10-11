@@ -8,7 +8,7 @@ import {
   GitBranch,
   Layers,
   BarChart3,
-  Sparkles,
+  Activity,
   HelpCircle,
   ShieldCheck,
   FileText,
@@ -28,7 +28,7 @@ const PRIMARY_TABS = [
 ];
 
 const MORE_LINKS = [
-  { label: "Reply Intelligence", href: "/intelligence", icon: Sparkles, desc: "Sentiment analysis & AI drafts" },
+  { label: "Reply Intelligence", href: "/intelligence", icon: Activity, desc: "Sentiment analysis & AI drafts" },
   { label: "Knowledge Base & FAQ", href: "/faq", icon: HelpCircle, desc: "Safety, Gmail OAuth & answers" },
   { label: "Privacy Policy", href: "/privacy", icon: ShieldCheck, desc: "Data protection & zero LLM training" },
   { label: "Terms of Service", href: "/terms", icon: FileText, desc: "Organizer rules & anti-spam policy" },

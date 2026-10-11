@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { formatCurrencyINR } from "@/lib/utils";
-import { ArrowRight, Building2, Sparkles } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PipelineSummaryProps {
@@ -51,7 +51,7 @@ export const PipelineSummary: React.FC<PipelineSummaryProps> = ({ stagesData }) 
           </div>
           <Link href="/app/discover" className="inline-block pt-1">
             <Button variant="green" size="sm" className="text-xs font-bold shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Start Discovering Sponsors
+              <Building2 className="w-3.5 h-3.5 mr-1.5" /> Start Discovering Sponsors
             </Button>
           </Link>
         </div>

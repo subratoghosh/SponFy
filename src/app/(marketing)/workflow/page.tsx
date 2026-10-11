@@ -1,6 +1,6 @@
 import React from "react";
 import { WorkflowStory } from "@/components/landing/WorkflowStory";
-import { CheckCircle2, ShieldCheck, Zap, Sparkles } from "lucide-react";
+import { CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 
 export const metadata = {
   title: "Workflow Engine | SponFy",
@@ -18,7 +18,7 @@ export default function WorkflowPage() {
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-green-dark/5 border border-green-dark/15 text-green-dark text-xs font-bold uppercase tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-green-accent" />
+              <Zap className="w-3.5 h-3.5 text-green-accent" />
               ENGINEERED FOR CAMPUS CONVENERS
             </div>
             <h2 className="display-font text-3xl sm:text-4xl font-extrabold text-green-dark tracking-tight mb-4">
@@ -81,7 +81,7 @@ export default function WorkflowPage() {
             <div className="feature-card-interactive p-8 bg-white rounded-2xl border border-green-dark/10 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-xl bg-butter-gold/40 flex items-center justify-center text-green-dark mb-6">
-                  <Sparkles className="w-6 h-6" />
+                  <Zap className="w-6 h-6" />
                 </div>
                 <h3 className="heading-font text-xl font-bold text-green-dark mb-3">
                   Intent-Aware Replies

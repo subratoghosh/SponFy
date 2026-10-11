@@ -6,7 +6,6 @@ import {
   Calendar,
   Send,
   Clock,
-  Sparkles,
   ArrowRight,
   CheckCircle2,
   Inbox,
@@ -72,7 +71,7 @@ export const TodayActionQueue: React.FC<TodayActionQueueProps> = ({ items }) => 
       <div className="flex items-center justify-between border-b border-green-dark/10 pb-4">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-butter-cream flex items-center justify-center text-green-dark font-bold">
-            <Sparkles className="w-4 h-4" />
+            <Clock className="w-4 h-4" />
           </div>
           <div>
             <h3 className="font-heading font-extrabold text-lg text-green-dark">

@@ -1,12 +1,12 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 export const CandidateListSkeleton: React.FC = () => {
   return (
     <div className="space-y-4 animate-fade-in" aria-busy="true">
       <div className="flex items-center gap-2 text-xs font-semibold text-[#0C382E] p-3 rounded-xl bg-[#FAF4E6] border border-[#0C382E]/10">
-        <Sparkles className="w-4 h-4 text-emerald-600 animate-spin" />
+        <RefreshCw className="w-4 h-4 text-emerald-600 animate-spin" />
         <span>Researching companies with campus & hackathon sponsorship budgets...</span>
       </div>
 

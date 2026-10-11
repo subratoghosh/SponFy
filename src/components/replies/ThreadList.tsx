@@ -4,7 +4,7 @@ import React from "react";
 import { Message, ReplyAnalysis, Company } from "@/types";
 import { INTENT_CONFIG } from "@/lib/config/constants";
 import { formatTimeAgo } from "@/lib/utils";
-import { Mail, Calendar, Sparkles } from "lucide-react";
+import { Mail, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ThreadListProps {

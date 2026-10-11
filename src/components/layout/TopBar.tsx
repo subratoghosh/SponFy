@@ -12,7 +12,6 @@ import {
   Plus,
   LogOut,
   Settings,
-  Sparkles,
   ShieldCheck,
   Database,
 } from "lucide-react";
@@ -170,8 +169,8 @@ export const TopBar: React.FC = () => {
 
         {/* Workspace Mode Badge */}
         {isDemo ? (
-          <span className="px-2.5 py-1 rounded-full bg-butter-cream text-green-dark border border-butter-gold text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-600" />
+          <span className="px-2.5 py-1 rounded-full bg-butter-cream text-green-dark border border-butter-gold text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
             <span className="hidden xs:inline">Demo Mode</span>
             <span className="xs:hidden">Demo</span>
           </span>

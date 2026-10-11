@@ -93,11 +93,13 @@ export async function getAnalyticsData(campaignId?: string) {
   const industries = Array.from(new Set(sponsors.map((s) => s.industry).filter(Boolean)));
   const industryStats = industries.map((ind) => {
     const indSponsors = sponsors.filter((s) => s.industry === ind);
+    const committedVal = indSponsors.filter((s) => s.stage === "Committed").reduce((sum, s) => sum + (s.pipelineValue || 0), 0);
     return {
       industry: ind,
       sent: indSponsors.length,
       replies: indSponsors.filter((s) => ["Replied", "Interested", "Negotiation", "Committed"].includes(s.stage)).length,
       rate: indSponsors.length > 0 ? Math.round((indSponsors.filter((s) => ["Replied", "Interested", "Negotiation", "Committed"].includes(s.stage)).length / indSponsors.length) * 100) : 0,
+      committedValue: committedVal,
     };
   });
 

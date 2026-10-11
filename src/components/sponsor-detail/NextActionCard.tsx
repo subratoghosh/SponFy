@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Company } from "@/types";
-import { Sparkles, ArrowRight, Calendar, Send, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Calendar, Send, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -46,7 +46,7 @@ export const NextActionCard: React.FC<{ company: Company }> = ({ company }) => {
     <div className="bg-butter-panel rounded-3xl p-5 sm:p-6 border border-butter-gold/60 shadow-md space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-wider text-green-dark flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-green-mid" /> AI Next Best Action
+          <ArrowRight className="w-4 h-4 text-green-mid" /> Next Best Action
         </span>
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">
           Recommended

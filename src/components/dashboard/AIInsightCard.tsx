@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, ArrowRight, Zap, Target } from "lucide-react";
+import { ArrowRight, Zap, Target } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +15,7 @@ export const AIInsightCard: React.FC<{ insights: string[] }> = ({ insights }) =>
 
       <div className="flex items-center justify-between border-b border-green-mid/50 pb-3 relative z-10">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-butter-gold">
-          <Sparkles className="w-4 h-4 fill-butter-gold" />
+          <Target className="w-4 h-4 text-butter-gold" />
           Campaign Tactical Recommendations
         </div>
         <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-butter-cream text-green-dark">

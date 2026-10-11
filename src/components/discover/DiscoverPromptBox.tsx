@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sparkles, Search, ArrowRight } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DiscoverPromptBoxProps {
@@ -33,7 +33,7 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
   return (
     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/12 shadow-sm space-y-4">
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-green-dark">
-        <Sparkles className="w-4 h-4 text-green-mid" />
+        <Search className="w-4 h-4 text-green-mid" />
         Natural Language Sponsor Discovery
       </div>
 

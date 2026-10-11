@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import {
-  Sparkles,
+  Compass,
   Search,
   CheckCircle2,
   Send,
@@ -30,7 +30,7 @@ export const WorkflowStory: React.FC = () => {
       title: "Cited Multi-Source Research",
       shortDesc: "Gathers company products, campus programs, past hackathon sponsorships, and verified contact pages.",
       details: "Every fact extracted by Tavily + Gemini stores its source URL so your team never pitches based on hallucinated data.",
-      icon: Sparkles,
+      icon: Compass,
       uiType: "research",
     },
     {
@@ -117,7 +117,7 @@ export const WorkflowStory: React.FC = () => {
             <div>
               <div className="flex items-center justify-between border-b border-green-dark/10 pb-4 mb-6">
                 <div className="flex items-center gap-2 text-xs font-bold text-green-dark uppercase tracking-wider">
-                  <Sparkles className="w-4 h-4 text-green-mid" />
+                  <Compass className="w-4 h-4 text-green-mid" />
                   Step {steps[activeStep].step} — {steps[activeStep].title}
                 </div>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-butter-cream text-green-dark hover:scale-105 transition-transform cursor-default">

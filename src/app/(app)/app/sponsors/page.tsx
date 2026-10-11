@@ -7,7 +7,7 @@ import { KanbanBoard } from "@/components/sponsors/KanbanBoard";
 import { SponsorTableView } from "@/components/sponsors/SponsorTableView";
 import { SponsorFilters } from "@/components/sponsors/SponsorFilters";
 import { useToast } from "@/components/ui/toast";
-import { Building2, Sparkles, Plus } from "lucide-react";
+import { Building2, Compass, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
@@ -74,14 +74,14 @@ export default function SponsorsPipelinePage() {
             Sponsors Pipeline
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Manage 24 active target companies across 12 relationship stages.
+            Manage {sponsors.length} target companies across relationship stages.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Link href="/app/discover">
             <Button variant="butter" size="sm" className="font-bold shadow-md">
-              <Sparkles className="w-4 h-4 mr-1" /> Discover New
+              <Compass className="w-4 h-4 mr-1" /> Discover New
             </Button>
           </Link>
         </div>

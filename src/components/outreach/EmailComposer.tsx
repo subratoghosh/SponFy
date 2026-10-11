@@ -5,7 +5,7 @@ import { EmailDraft, Company } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Save, CheckCircle2, ShieldCheck, Send } from "lucide-react";
+import { RefreshCw, Save, CheckCircle2, ShieldCheck, Send } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 interface EmailComposerProps {
@@ -92,7 +92,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
             onClick={handleRegenerate}
             className="text-xs font-bold"
           >
-            <Sparkles className="w-3.5 h-3.5 mr-1" /> Regenerate
+            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${regenerating ? 'animate-spin' : ''}`} /> Regenerate
           </Button>
         </div>
       </div>

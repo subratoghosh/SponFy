@@ -7,7 +7,6 @@ import {
   AlertTriangle, 
   Users, 
   ShieldAlert, 
-  Sparkles,
   HelpCircle,
   ArrowRight
 } from "lucide-react";
@@ -78,7 +77,7 @@ export default function TermsOfServicePage() {
 
             <div className="p-5 rounded-2xl bg-white border border-green-dark/10 shadow-sm space-y-2">
               <div className="w-10 h-10 rounded-xl bg-green-dark/5 flex items-center justify-center text-green-accent">
-                <Sparkles className="w-5 h-5" />
+                <Scale className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-sm text-green-dark">Fair Use Engine</h3>
               <p className="text-xs text-text-dim leading-relaxed">
