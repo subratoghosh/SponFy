@@ -5,6 +5,7 @@ interface SponfyLogoProps {
   size?: number | string;
   variant?: "cream" | "green" | "gold" | "monochrome";
   withSparkle?: boolean;
+  animated?: boolean;
 }
 
 export const SponfyLogo: React.FC<SponfyLogoProps> = ({
@@ -12,6 +13,7 @@ export const SponfyLogo: React.FC<SponfyLogoProps> = ({
   size = 36,
   variant = "cream",
   withSparkle = false,
+  animated = false,
 }) => {
   // Color tokens based on variant
   const isGreen = variant === "green";
@@ -43,7 +45,14 @@ export const SponfyLogo: React.FC<SponfyLogoProps> = ({
         className="w-full h-full drop-shadow-sm select-none"
       >
         {/* Antenna */}
-        <circle cx="50" cy="12" r="4.5" fill={bodyFill} />
+        <circle
+          cx="50"
+          cy="12"
+          r="4.5"
+          fill={bodyFill}
+          className={animated ? "sponfy-logo-antenna-tip" : undefined}
+          style={animated ? { transformOrigin: "50px 12px" } : undefined}
+        />
         <path
           d="M50 16.5V23"
           stroke={bodyFill}
@@ -78,18 +87,23 @@ export const SponfyLogo: React.FC<SponfyLogoProps> = ({
         />
 
         {/* Happy Smiling Eyes: ^ ^ */}
-        <path
-          d="M34 43C36 38.5 40 38.5 42 43"
-          stroke={strokeColor}
-          strokeWidth="3.2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M58 43C60 38.5 64 38.5 66 43"
-          stroke={strokeColor}
-          strokeWidth="3.2"
-          strokeLinecap="round"
-        />
+        <g
+          className={animated ? "sponfy-logo-eyes" : undefined}
+          style={animated ? { transformOrigin: "50px 43px" } : undefined}
+        >
+          <path
+            d="M34 43C36 38.5 40 38.5 42 43"
+            stroke={strokeColor}
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M58 43C60 38.5 64 38.5 66 43"
+            stroke={strokeColor}
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          />
+        </g>
 
         {/* Happy Smile Mouth */}
         <path
@@ -115,6 +129,8 @@ export const SponfyLogo: React.FC<SponfyLogoProps> = ({
         <path
           d="M66 68C72 65 83 58 85 49.5C86.5 46.5 83.5 45.5 81 48C76 53 68 62 65 71Z"
           fill={bodyFill}
+          className={animated ? "sponfy-logo-waving-arm" : undefined}
+          style={animated ? { transformOrigin: "66px 68px" } : undefined}
         />
 
         {/* Chest Emblem: Handshake Badge */}
