@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import Link from "next/link";
 import { RefreshCw, Home } from "lucide-react";
 
 export default function RootGlobalError({
@@ -42,13 +43,13 @@ export default function RootGlobalError({
               <RefreshCw className="w-4 h-4 mr-2" />
               Reload Application
             </button>
-            <a
+            <Link
               href="/"
               className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-[#0C382E]/20 text-[#0C382E] font-semibold text-sm hover:bg-[#FFF0B3]/30 transition-colors"
             >
               <Home className="w-4 h-4 mr-2" />
               Return Home
-            </a>
+            </Link>
           </div>
         </div>
       </body>
