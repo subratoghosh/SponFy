@@ -6,8 +6,9 @@ import { Company, PipelineStage } from "@/types";
 import { KanbanBoard } from "@/components/sponsors/KanbanBoard";
 import { SponsorTableView } from "@/components/sponsors/SponsorTableView";
 import { SponsorFilters } from "@/components/sponsors/SponsorFilters";
+import { CSVImportModal } from "@/components/sponsors/CSVImportModal";
 import { useToast } from "@/components/ui/toast";
-import { Building2, Compass, Plus } from "lucide-react";
+import { Building2, Compass, FileSpreadsheet, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
@@ -23,6 +24,7 @@ export default function SponsorsPipelinePage() {
   const [selectedIndustry, setSelectedIndustry] = useState("all");
   const [selectedStage, setSelectedStage] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
   const loadSponsors = () => {
     setLoading(true);
@@ -78,9 +80,19 @@ export default function SponsorsPipelinePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCsvModalOpen(true)}
+            className="font-bold border-[#0C382E]/20 text-[#0C382E] hover:bg-[#FAF4E6] gap-1.5 shadow-xs cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-[#2D6A4F]" />
+            Import CSV
+          </Button>
+
           <Link href="/app/discover">
-            <Button variant="butter" size="sm" className="font-bold shadow-md">
+            <Button variant="butter" size="sm" className="font-bold shadow-md cursor-pointer">
               <Compass className="w-4 h-4 mr-1" /> Discover New
             </Button>
           </Link>
@@ -108,13 +120,26 @@ export default function SponsorsPipelinePage() {
         )
       ) : filteredSponsors.length === 0 ? (
         sponsors.length === 0 ? (
-          <EmptyState
-            icon={Building2}
-            title="No sponsors discovered yet"
-            description="Use SponFy's AI discovery engine to find active companies with campus and hackathon sponsorship budgets."
-            actionLabel="Discover Sponsors with AI"
-            actionHref="/app/discover"
-          />
+          <div className="space-y-4">
+            <EmptyState
+              icon={Building2}
+              title="No sponsors discovered yet"
+              description="Use SponFy's AI discovery engine or upload an existing spreadsheet of target brand leads directly into your workspace."
+              actionLabel="Discover Sponsors with AI"
+              actionHref="/app/discover"
+            />
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCsvModalOpen(true)}
+                className="text-xs font-bold border-[#0C382E]/20 text-[#0C382E] hover:bg-[#FAF4E6] gap-1.5"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-[#2D6A4F]" />
+                Or Upload Company CSV File
+              </Button>
+            </div>
+          </div>
         ) : (
           <EmptyState
             icon={Building2}
@@ -136,6 +161,13 @@ export default function SponsorsPipelinePage() {
       ) : (
         <SponsorTableView sponsors={filteredSponsors} />
       )}
+
+      {/* CSV Import Modal */}
+      <CSVImportModal
+        isOpen={isCsvModalOpen}
+        onClose={() => setIsCsvModalOpen(false)}
+        onSuccess={loadSponsors}
+      />
     </div>
   );
 }

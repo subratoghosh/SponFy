@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import {
   ArrowRight,
   ShieldCheck,
+  Building2,
   Lock,
   Mail,
   Eye,
