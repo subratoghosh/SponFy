@@ -13,7 +13,7 @@ export interface IGmailClient {
     sentAt: string;
   }>;
   pollReplies(lastSyncedAt?: string): Promise<Message[]>;
-  getAuthUrl(): string;
+  getAuthUrl(state?: string, redirectUriOverride?: string): string;
 }
 
 export class RealGmailClient implements IGmailClient {
@@ -33,22 +33,52 @@ export class RealGmailClient implements IGmailClient {
     return !!this.clientId && !!this.clientSecret && !!this.tokens;
   }
 
-  getAuthUrl(): string {
+  getAuthUrl(state?: string, redirectUriOverride?: string): string {
     const scopes = [
       "https://www.googleapis.com/auth/gmail.send",
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/userinfo.email",
     ];
     const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+    const redirect = redirectUriOverride || this.redirectUri;
     const params = new URLSearchParams({
       client_id: this.clientId,
-      redirect_uri: this.redirectUri,
+      redirect_uri: redirect,
       response_type: "code",
       scope: scopes.join(" "),
       access_type: "offline",
       prompt: "consent",
+      ...(state ? { state } : {}),
     });
     return `${rootUrl}?${params.toString()}`;
+  }
+
+  async exchangeCodeForTokens(
+    code: string,
+    redirectUriOverride?: string
+  ): Promise<{ tokens: any; email: string }> {
+    const { google } = await import("googleapis");
+    const redirect = redirectUriOverride || this.redirectUri;
+    const oauth2Client = new google.auth.OAuth2(this.clientId, this.clientSecret, redirect);
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    let email = "";
+    try {
+      const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+      const profile = await gmail.users.getProfile({ userId: "me" });
+      email = profile.data.emailAddress || "";
+    } catch {
+      try {
+        const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+        const userInfo = await oauth2.userinfo.get();
+        email = userInfo.data.email || "";
+      } catch (err) {
+        console.warn("Could not retrieve user email from Google profile:", err);
+      }
+    }
+
+    return { tokens, email };
   }
 
   async sendEmail(to: string, subject: string, body: string, threadId?: string) {

@@ -31,11 +31,12 @@ export function getTavilyClient(): ITavilyClient {
   return new MockTavilyClient();
 }
 
-export function getGmailClient(tokens?: any): IGmailClient {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/api/auth/callback/google";
+export function getGmailClient(tokens?: any, redirectUriOverride?: string): IGmailClient {
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const defaultRedirect = `${baseUrl}/api/integrations/gmail/callback`;
+  const redirectUri = redirectUriOverride || process.env.GMAIL_REDIRECT_URI || defaultRedirect;
 
   if (
     clientId &&

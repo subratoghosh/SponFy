@@ -98,6 +98,7 @@ export interface EmailQuality {
 // Email Draft
 export interface EmailDraft {
   id: string;
+  userId?: string;
   companyId: string;
   contactId?: string;
   subject: string;

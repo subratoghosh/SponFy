@@ -1,6 +1,8 @@
 import { getGeminiClient, getGmailClient } from "../integrations/factory";
 import { Company, Campaign, EmailDraft, EmailQuality } from "@/types";
 import { isSuppressed } from "../data/repositories/settings";
+import { prisma, isDatabaseConfigured } from "../prisma";
+import { decrypt } from "../crypto";
 
 export async function runOutreachWorkflow(
   company: Company,
@@ -38,7 +40,8 @@ export async function runOutreachWorkflow(
 
 export async function executeApprovedSend(
   draft: EmailDraft,
-  toEmail: string
+  toEmail: string,
+  userId?: string
 ) {
   // Safety Rule: Never send to suppressed emails
   const suppressed = await isSuppressed(toEmail);
@@ -52,7 +55,26 @@ export async function executeApprovedSend(
     throw new Error(`Blocked: draft ${draft.id} is "${draft.status}", not "approved". Nothing was sent.`);
   }
 
-  const gmail = getGmailClient();
+  let tokens: any = undefined;
+  const targetUserId = userId || draft.userId;
+  if (isDatabaseConfigured() && targetUserId) {
+    try {
+      const acc = await prisma.gmailAccount.findFirst({
+        where: { userId: targetUserId, status: "ACTIVE" },
+        orderBy: { createdAt: "desc" },
+      });
+      if (acc?.refreshTokenEnc) {
+        tokens = {
+          refresh_token: decrypt(acc.refreshTokenEnc),
+          access_token: acc.accessTokenEnc ? decrypt(acc.accessTokenEnc) : undefined,
+        };
+      }
+    } catch (err) {
+      console.warn("Could not load user Gmail tokens, using fallback:", err);
+    }
+  }
+
+  const gmail = getGmailClient(tokens);
   const sendRes = await gmail.sendEmail(toEmail, draft.subject, draft.body);
 
   return sendRes;

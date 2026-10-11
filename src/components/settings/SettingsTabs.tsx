@@ -30,9 +30,24 @@ export function SettingsTabs() {
   const [newSuppressionEmail, setNewSuppressionEmail] = useState('');
   const [newSuppressionReason, setNewSuppressionReason] = useState('');
   const [dailyLimit, setDailyLimit] = useState(30);
+  const [gmailStatus, setGmailStatus] = useState<any>({ connected: false });
+  const [gmailLoading, setGmailLoading] = useState(false);
 
   useEffect(() => {
     loadSettings();
+
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      if (tab === 'gmail') setActiveTab('gmail');
+      if (urlParams.get('connected') === 'success') {
+        toast('Gmail inbox successfully connected! Outreach will send from your email.', 'success');
+      } else if (urlParams.get('connected') === 'mock') {
+        toast('Demo Gmail simulation mode active.', 'info');
+      } else if (urlParams.get('error')) {
+        toast(`Connection failed: ${urlParams.get('error')}`, 'error');
+      }
+    }
   }, []);
 
   const loadSettings = async () => {
@@ -40,6 +55,33 @@ export function SettingsTabs() {
     setProfile(p);
     const supp = await settingsRepository.getSuppressionList();
     setSuppressionList(supp);
+    try {
+      const res = await fetch('/api/integrations/gmail/status');
+      if (res.ok) {
+        const g = await res.json();
+        setGmailStatus(g);
+      }
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleConnectGmail = () => {
+    setGmailLoading(true);
+    window.location.href = '/api/integrations/gmail/auth';
+  };
+
+  const handleDisconnectGmail = async () => {
+    setGmailLoading(true);
+    try {
+      await fetch('/api/integrations/gmail/disconnect', { method: 'POST' });
+      setGmailStatus({ connected: false, email: '' });
+      toast('Gmail inbox disconnected. Outreach will use simulation mode.', 'info');
+    } catch {
+      toast('Failed to disconnect Gmail', 'error');
+    } finally {
+      setGmailLoading(false);
+    }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -183,32 +225,81 @@ export function SettingsTabs() {
                   <CardTitle className="text-base font-heading font-bold text-[#0C382E]">
                     Gmail OAuth Integration
                   </CardTitle>
-                  <Badge variant="success" className="text-xs font-bold">Connected (Demo Account)</Badge>
+                  {gmailStatus?.connected ? (
+                    <Badge variant="success" className="text-xs font-bold">
+                      {gmailStatus.isMock ? "Connected (Demo Mode)" : "Connected"}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs font-bold text-[#0C382E]/60 border-[#0C382E]/20">
+                      Not Connected
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-[#0C382E]/60">
-                  Sends verified emails directly from your real inbox without spoofing or third-party relay flags.
+                  Sends verified outreach emails directly from your own email address without relay or spoofing flags.
                 </p>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <div className="p-4 bg-[#FAF4E6] rounded-xl border border-[#0C382E]/10 flex items-start gap-3">
                   <Lock className="w-5 h-5 text-[#0C382E] shrink-0 mt-0.5" />
                   <div className="text-xs text-[#0C382E] space-y-1">
-                    <p className="font-bold">Honest Google Cloud OAuth Notice:</p>
+                    <p className="font-bold">Multi-User Inbox Privacy:</p>
                     <p className="text-[#0C382E]/80 leading-relaxed">
-                      While in Google OAuth &quot;Testing&quot; mode, users must be explicitly added to the Google Cloud Console &quot;Test Users&quot; list to grant scopes, or enter custom client credentials. SponFy comes with built-in zero-auth simulation so you can explore all features safely.
+                      Each organizer connects their own personal or team Gmail account. All sponsor outreach messages are sent directly from your connected inbox. SponFy stores your tokens with AES-256-GCM encryption.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-[#FFFDF6] rounded-xl border border-[#0C382E]/10">
-                  <div>
-                    <div className="text-xs font-bold text-[#0C382E]">Connected Account: lead@sponfy.dev</div>
-                    <div className="text-[11px] text-[#0C382E]/60">Scopes: gmail.send, gmail.readonly, gmail.modify</div>
+                {gmailStatus?.connected ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#FFFDF6] rounded-xl border border-[#0C382E]/10 gap-3">
+                    <div>
+                      <div className="text-xs font-bold text-[#0C382E]">
+                        Connected Account: {gmailStatus.email || "Active User Inbox"}
+                      </div>
+                      <div className="text-[11px] text-[#0C382E]/60">
+                        Scopes: gmail.send, gmail.readonly {gmailStatus.lastSyncAt ? `• Last synced: ${new Date(gmailStatus.lastSyncAt).toLocaleDateString()}` : ""}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDisconnectGmail}
+                        disabled={gmailLoading}
+                        className="text-xs border-red-500/30 text-red-600 hover:bg-red-50"
+                      >
+                        Disconnect
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleConnectGmail}
+                        disabled={gmailLoading}
+                        className="text-xs border-[#0C382E]/20 text-[#0C382E]"
+                      >
+                        Re-connect
+                      </Button>
+                    </div>
                   </div>
-                  <Button variant="outline" size="sm" className="text-xs border-[#0C382E]/20 text-[#0C382E]">
-                    Re-authenticate
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#FFFDF6] rounded-xl border border-[#0C382E]/10 gap-3">
+                    <div>
+                      <div className="text-xs font-bold text-[#0C382E]">No Inbox Connected</div>
+                      <div className="text-[11px] text-[#0C382E]/60">
+                        Connect your Gmail to send real outreach emails directly to company sponsors.
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleConnectGmail}
+                      disabled={gmailLoading}
+                      className="bg-[#0C382E] text-[#FFF0B3] hover:bg-[#0C382E]/90 text-xs font-bold shrink-0"
+                    >
+                      <Mail className="w-3.5 h-3.5 mr-1.5" />
+                      Connect Gmail Inbox
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
