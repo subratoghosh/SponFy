@@ -22,10 +22,10 @@ export default function AnalyticsPage() {
               CAMPUS SPONSORSHIP BENCHMARKS
             </div>
             <h2 className="display-font text-3xl sm:text-4xl font-extrabold text-green-dark tracking-tight mb-4">
-              Real metrics from top collegiate events
+              Campus Sponsorship Performance
             </h2>
             <p className="text-text-dim text-sm sm:text-base leading-relaxed">
-              Based on campaigns run across Indian hackathons and fests, here is how structured pipeline analytics changes organizer outcomes.
+              Performance benchmarks will be calculated and declared directly from live campaigns and outreach activity on the platform. All baselines start at zero.
             </p>
           </div>
 
@@ -33,42 +33,42 @@ export default function AnalyticsPage() {
             <div className="p-8 bg-white rounded-2xl border border-green-dark/10 shadow-sm feature-card-interactive">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold uppercase text-text-muted">Reply Conversion</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-green-mid/10 text-green-mid font-bold text-xs">+340%</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-green-dark/5 text-green-dark/60 font-bold text-xs">+0%</span>
               </div>
-              <div className="text-4xl font-black stat-font text-green-dark mb-2">31.4%</div>
+              <div className="text-4xl font-black stat-font text-green-dark mb-2">0%</div>
               <p className="text-text-dim text-sm leading-relaxed mb-4">
-                Average reply rate when using SponFy cited dossiers vs standard 7.2% with generic cold email blasts.
+                Verified reply rate across outreach campaigns. Will be calculated and declared once campaigns conduct outreach.
               </p>
               <div className="text-xs text-text-muted border-t border-green-dark/8 pt-3">
-                Cited evidence gives busy VPs a reason to respond.
+                Awaiting initial campaign outreach data.
               </div>
             </div>
 
             <div className="p-8 bg-white rounded-2xl border border-green-dark/10 shadow-sm feature-card-interactive">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold uppercase text-text-muted">Pipeline Velocity</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-green-mid/10 text-green-mid font-bold text-xs">-65% Time</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-green-dark/5 text-green-dark/60 font-bold text-xs">0 Days</span>
               </div>
-              <div className="text-4xl font-black stat-font text-green-dark mb-2">4.2 Days</div>
+              <div className="text-4xl font-black stat-font text-green-dark mb-2">0 Days</div>
               <p className="text-text-dim text-sm leading-relaxed mb-4">
-                Median days from initial outreach to confirmed prospectus meeting with corporate sponsorships teams.
+                Median days from initial outreach to confirmed prospectus meeting. Will be tracked automatically from live thread chains.
               </p>
               <div className="text-xs text-text-muted border-t border-green-dark/8 pt-3">
-                No more two-week email silence or lost thread chains.
+                Awaiting initial meeting scheduling data.
               </div>
             </div>
 
             <div className="p-8 bg-white rounded-2xl border border-green-dark/10 shadow-sm feature-card-interactive">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold uppercase text-text-muted">Fund Realization</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-green-mid/10 text-green-mid font-bold text-xs">₹4.8L Avg</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-green-dark/5 text-green-dark/60 font-bold text-xs">₹0 Avg</span>
               </div>
-              <div className="text-4xl font-black stat-font text-green-dark mb-2">89%</div>
+              <div className="text-4xl font-black stat-font text-green-dark mb-2">0%</div>
               <p className="text-text-dim text-sm leading-relaxed mb-4">
-                Sponsor retention rate into year 2 when organizers use transparent SponFy dossier post-event summaries.
+                Sponsor retention and funded realization percentage. Measured and updated as campus campaigns close deals.
               </p>
               <div className="text-xs text-text-muted border-t border-green-dark/8 pt-3">
-                Build institutional memory for future student teams.
+                Awaiting confirmed sponsorship closures.
               </div>
             </div>
           </div>

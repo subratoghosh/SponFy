@@ -142,7 +142,7 @@ export const Hero: React.FC = () => {
                 <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-green-400" />
               </div>
               <span className="text-[11px] sm:text-xs font-bold text-text-dim ml-1 sm:ml-2 uppercase tracking-wider">
-                SponFy Hackathon 2026 — Live Pipeline
+                Campaign Pipeline — Example Preview
               </span>
             </div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-green-dark/5 text-[11px] sm:text-xs font-semibold text-green-dark border border-green-dark/10 self-start sm:self-auto">
@@ -165,17 +165,17 @@ export const Hero: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-lg text-green-dark group-hover/card:text-green-mid transition-colors">Postman</h3>
+                      <h3 className="font-bold text-lg text-green-dark group-hover/card:text-green-mid transition-colors">Acme Cloud</h3>
                       <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-800 border border-green-300 hover:scale-105 transition-transform cursor-default">
                         Interested
                       </span>
                     </div>
-                    <p className="text-xs text-text-dim">Developer Tools & API Platform</p>
+                    <p className="text-xs text-text-dim">Cloud Platform & Developer APIs</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-semibold text-text-muted">Target Tier</span>
-                  <p className="font-mono text-base font-extrabold text-green-dark">₹75,000</p>
+                  <p className="font-mono text-base font-extrabold text-green-dark">Gold Tier</p>
                 </div>
               </div>
 
@@ -183,22 +183,22 @@ export const Hero: React.FC = () => {
                 <div className="flex items-center justify-between text-text-dim font-medium">
                   <span>Verified Contact:</span>
                   <span className="font-semibold text-green-dark flex items-center gap-1">
-                    <UserCheck className="w-3.5 h-3.5 text-green-600" /> Ali Mustufa (Student Lead)
+                    <UserCheck className="w-3.5 h-3.5 text-green-600" /> Campus DevRel Lead
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-text-dim font-medium">
                   <span>Angle:</span>
-                  <span className="text-green-dark font-semibold">Postman Student Expert Track</span>
+                  <span className="text-green-dark font-semibold">Cloud API Challenge Track</span>
                 </div>
                 <div className="flex items-center justify-between text-text-dim font-medium">
                   <span>Cited Source:</span>
                   <a
-                    href="https://postman.com/student-program"
+                    href="https://example.com/student-program"
                     target="_blank"
                     rel="noreferrer"
                     className="text-blue-700 underline flex items-center gap-1 hover:text-blue-900 group/link"
                   >
-                    postman.com/student-program <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                    example.com/student-program <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                   </a>
                 </div>
               </div>
@@ -207,7 +207,7 @@ export const Hero: React.FC = () => {
               <div className="bg-green-dark text-butter-cream p-3 rounded-lg flex items-center justify-between text-xs font-medium hover:bg-green-mid transition-colors shadow-sm">
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-butter-gold animate-pulse" />
-                  <span>Draft Ready: 95% Quality Score</span>
+                  <span>Example Draft: High Quality Score</span>
                 </div>
                 <span className="bg-butter-cream text-green-dark px-2.5 py-0.5 rounded-full font-bold text-[11px] hover:bg-butter-gold hover:scale-105 transition-all cursor-pointer shadow-sm">
                   Review & Approve
@@ -223,7 +223,7 @@ export const Hero: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
-                    AI Fit Score
+                    AI Fit Score (Example)
                   </span>
                   <h4 className="font-heading font-extrabold text-2xl text-green-dark flex items-baseline gap-1 group-hover/score:text-green-mid transition-colors">
                     94 <span className="text-xs font-semibold text-text-muted">/ 100</span>
@@ -235,26 +235,26 @@ export const Hero: React.FC = () => {
               </div>
 
               <p className="text-xs font-bold text-green-dark pb-1 border-b border-green-dark/10">
-                Why this scored 94:
+                Why this scored 94 (Example):
               </p>
 
               <div className="space-y-2 text-xs">
                 <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
                   <div>
-                    <span className="font-bold">+20 pts:</span> High industry synergy with 800 CS student builders.
+                    <span className="font-bold">+20 pts:</span> High industry synergy with student builder tracks.
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
                   <div>
-                    <span className="font-bold">+15 pts:</span> Active Postman Student Expert program in India.
+                    <span className="font-bold">+15 pts:</span> Active campus developer grants and student programs.
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
                   <div>
-                    <span className="font-bold">+15 pts:</span> Standard ₹75k track sponsorship history.
+                    <span className="font-bold">+15 pts:</span> Established history of hackathon track sponsorships.
                   </div>
                 </div>
               </div>

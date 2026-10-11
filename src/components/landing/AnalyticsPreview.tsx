@@ -1,15 +1,101 @@
 import React from "react";
-import { BarChart3, TrendingUp, DollarSign, Users, Mail, ArrowUpRight } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Mail, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getAnalyticsData } from "@/lib/data/repositories/analytics";
+import { getCampaigns } from "@/lib/data/repositories/campaigns";
+import { formatCurrencyINR, formatNumber } from "@/lib/utils";
 
-export const AnalyticsPreview: React.FC = () => {
+export const AnalyticsPreview = async () => {
+  // Query real data from repository/database layer.
+  // When DATABASE_URL is connected, this queries Prisma PostgreSQL live.
+  // When no database is configured yet, it reads from the seed/in-memory store.
+  let analyticsData: Awaited<ReturnType<typeof getAnalyticsData>> | null = null;
+  let activeCampaign = null;
+
+  try {
+    const [analytics, campaigns] = await Promise.all([
+      getAnalyticsData(),
+      getCampaigns(),
+    ]);
+    analyticsData = analytics;
+    activeCampaign = campaigns && campaigns.length > 0 ? campaigns[0] : null;
+  } catch (err) {
+    console.error("Error loading database analytics in AnalyticsPreview:", err);
+  }
+
+  const summary = analyticsData?.summary;
+  const targetGoalVal = activeCampaign?.targetAmount ?? summary?.targetAmount ?? 0;
+  const committedVal = summary?.committedAmount ?? 0;
+  const pipelineVal = summary?.pipelineAmount ?? 0;
+  const replyRateVal = summary?.positiveReplyRate ?? 0;
+  const totalSponsors = summary?.totalSponsors ?? 0;
+  const audienceCount = activeCampaign?.audienceSize ?? 0;
+
+  const committedPercent = targetGoalVal > 0 
+    ? Math.min(100, Math.round((committedVal / targetGoalVal) * 100))
+    : 0;
+
   const metrics = [
-    { label: "Target Goal", value: "₹5,00,000", change: "800 Students", icon: DollarSign },
-    { label: "Total Committed", value: "₹2,50,000", change: "50% of Target Achieved", icon: TrendingUp },
-    { label: "Active Pipeline", value: "₹9,85,000", change: "24 Scored Sponsors", icon: BarChart3 },
-    { label: "Positive Reply Rate", value: "86%", change: "Industry Avg: 18%", icon: Mail },
+    {
+      label: "Target Goal",
+      value: targetGoalVal > 0 ? formatCurrencyINR(targetGoalVal) : "₹0",
+      change: audienceCount > 0 ? `${formatNumber(audienceCount)} Participants` : "0 Participants",
+      icon: DollarSign,
+    },
+    {
+      label: "Total Committed",
+      value: formatCurrencyINR(committedVal),
+      change: `${committedPercent}% of Target Achieved`,
+      icon: TrendingUp,
+    },
+    {
+      label: "Active Pipeline",
+      value: formatCurrencyINR(pipelineVal),
+      change: `${totalSponsors} Scored Sponsors`,
+      icon: BarChart3,
+    },
+    {
+      label: "Positive Reply Rate",
+      value: `${replyRateVal}%`,
+      change: replyRateVal > 0 ? "Industry Avg: 18%" : "No replies yet",
+      icon: Mail,
+    },
   ];
+
+  // Dynamic funnel stages from database
+  const totalBase = totalSponsors > 0 ? totalSponsors : 1;
+
+  const stageDisplayMap: Record<string, { label: string; color: string }> = {
+    Discovered: { label: "Discovered", color: "bg-green-dark" },
+    Qualified: { label: "Qualified (Fit >= 70)", color: "bg-green-mid" },
+    Contacted: { label: "Contacted via Gmail", color: "bg-green-light" },
+    Replied: { label: "Replied", color: "bg-sky-600" },
+    Interested: { label: "Interested & Negotiating", color: "bg-amber-600" },
+    Committed: { label: "Committed Sponsors 🎉", color: "bg-green-600" },
+  };
+
+  const rawFunnel = analyticsData?.funnel && analyticsData.funnel.length > 0
+    ? analyticsData.funnel
+    : [
+        { stage: "Discovered", count: totalSponsors },
+        { stage: "Qualified", count: summary?.qualifiedCount ?? 0 },
+        { stage: "Contacted", count: summary?.sentEmails ?? 0 },
+        { stage: "Replied", count: summary?.repliesCount ?? 0 },
+        { stage: "Interested", count: summary?.negotiationsCount ?? 0 },
+        { stage: "Committed", count: summary?.committedCount ?? 0 },
+      ];
+
+  const funnelStages = rawFunnel.map((f) => {
+    const meta = stageDisplayMap[f.stage] || { label: f.stage, color: "bg-green-dark" };
+    const pct = Math.min(100, Math.round((f.count / totalBase) * 100));
+    return {
+      stage: meta.label,
+      count: f.count,
+      percent: `${pct}%`,
+      color: meta.color,
+    };
+  });
 
   return (
     <section id="analytics" className="py-24 bg-butter-bg border-b border-green-dark/10">
@@ -51,7 +137,7 @@ export const AnalyticsPreview: React.FC = () => {
           ))}
         </div>
 
-        {/* Funnel Visual Mock */}
+        {/* Funnel Visual */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/15 shadow-md hover:shadow-2xl hover:border-green-dark/25 transition-all duration-300">
           <div className="flex items-center justify-between border-b border-green-dark/10 pb-4 mb-6">
             <div>
@@ -68,14 +154,7 @@ export const AnalyticsPreview: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {[
-              { stage: "Discovered", count: 24, percent: "100%", color: "bg-green-dark" },
-              { stage: "Qualified (Fit >= 70)", count: 21, percent: "87.5%", color: "bg-green-mid" },
-              { stage: "Contacted via Gmail", count: 18, percent: "75.0%", color: "bg-green-light" },
-              { stage: "Replied", count: 12, percent: "50.0%", color: "bg-sky-600" },
-              { stage: "Interested & Negotiating", count: 8, percent: "33.3%", color: "bg-amber-600" },
-              { stage: "Committed Sponsors 🎉", count: 3, percent: "12.5%", color: "bg-green-600" },
-            ].map((f, i) => (
+            {funnelStages.map((f, i) => (
               <div key={i} className="space-y-1 p-2 -mx-2 rounded-xl hover:bg-butter-warm/40 hover:scale-[1.01] transition-all cursor-pointer group/row">
                 <div className="flex justify-between text-xs font-bold text-green-dark group-hover/row:text-green-mid transition-colors">
                   <span>{f.stage}</span>
