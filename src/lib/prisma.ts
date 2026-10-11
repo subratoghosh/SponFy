@@ -2,9 +2,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
   const client = new PrismaClient({
-    datasources: process.env.DATABASE_URL
-      ? { db: { url: process.env.DATABASE_URL } }
-      : undefined,
     log: [
       { emit: "event", level: "error" },
       { emit: "event", level: "warn" },

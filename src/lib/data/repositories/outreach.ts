@@ -29,12 +29,15 @@ const DB_TO_DRAFT_STATUS: Record<string, DraftStatus> = {
   FAILED: "failed",
 };
 
-export async function getDrafts(status?: DraftStatus): Promise<EmailDraft[]> {
+export async function getDrafts(status?: DraftStatus, userId?: string): Promise<EmailDraft[]> {
   if (isDatabaseConfigured()) {
     try {
       const dbStatus = status ? DRAFT_STATUS_TO_DB[status] : undefined;
       const records = await prisma.emailDraft.findMany({
-        where: dbStatus ? { status: dbStatus } : undefined,
+        where: {
+          ...(dbStatus ? { status: dbStatus } : {}),
+          ...(userId ? { userId } : {}),
+        },
         orderBy: { createdAt: "desc" },
       });
       return records.map((r) => ({
@@ -60,11 +63,11 @@ export async function getDrafts(status?: DraftStatus): Promise<EmailDraft[]> {
   return [...draftsStoreRef.value];
 }
 
-export async function getDraftById(id: string): Promise<EmailDraft | null> {
+export async function getDraftById(id: string, userId?: string): Promise<EmailDraft | null> {
   if (isDatabaseConfigured()) {
     try {
-      const r = await prisma.emailDraft.findUnique({
-        where: { id },
+      const r = await prisma.emailDraft.findFirst({
+        where: userId ? { id, userId } : { id },
       });
       if (r) {
         return {
@@ -85,6 +88,7 @@ export async function getDraftById(id: string): Promise<EmailDraft | null> {
   }
 
   const found = draftsStoreRef.value.find((d) => d.id === id);
+  if (!found || (userId && (found as any).userId && (found as any).userId !== userId)) return null;
   return found || null;
 }
 
@@ -151,16 +155,18 @@ export async function saveDraft(
 }
 
 export async function createDraft(
-  draft: Omit<EmailDraft, "id" | "createdAt" | "approvedAt">
+  draft: Omit<EmailDraft, "id" | "createdAt" | "approvedAt"> & { userId?: string },
+  userId?: string
 ): Promise<EmailDraft> {
+  const effectiveUserId = userId || draft.userId;
   if (isDatabaseConfigured()) {
     try {
       const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      const activeUserId = effectiveUserId || user?.id || "usr-demo-lead";
 
       const created = await prisma.emailDraft.create({
         data: {
-          userId,
+          userId: activeUserId,
           companyId: draft.companyId,
           contactId: draft.contactId,
           subject: draft.subject,
@@ -191,6 +197,9 @@ export async function createDraft(
     id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: new Date().toISOString(),
   };
+  if (effectiveUserId) {
+    (newDraft as any).userId = effectiveUserId;
+  }
   draftsStoreRef.value.unshift(newDraft);
   return newDraft;
 }
@@ -265,8 +274,8 @@ export async function updateDraft(
   return draftsStoreRef.value[idx];
 }
 
-export async function approveDraft(id: string): Promise<EmailDraft | null> {
-  const current = await getDraftById(id);
+export async function approveDraft(id: string, userId?: string): Promise<EmailDraft | null> {
+  const current = await getDraftById(id, userId);
   if (!current) return null;
   if (current.status === "approved") return current; // idempotent (double click)
   if (current.status === "sending" || current.status === "sent") {
@@ -319,10 +328,10 @@ export async function approveDraft(id: string): Promise<EmailDraft | null> {
  * Database errors are thrown, never silently replaced by the memory store,
  * so a broken DB can never turn into an unguarded send.
  */
-export async function claimDraftForSending(id: string): Promise<boolean> {
+export async function claimDraftForSending(id: string, userId?: string): Promise<boolean> {
   if (isDatabaseConfigured()) {
     const res = await prisma.emailDraft.updateMany({
-      where: { id, status: "APPROVED" },
+      where: userId ? { id, userId, status: "APPROVED" } : { id, status: "APPROVED" },
       data: { status: "SENDING" },
     });
     return res.count === 1;
@@ -331,21 +340,27 @@ export async function claimDraftForSending(id: string): Promise<boolean> {
   // Memory store: check-and-set with no await in between, so it is atomic in JS.
   const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
   if (idx === -1 || draftsStoreRef.value[idx].status !== "approved") return false;
+  if (userId && (draftsStoreRef.value[idx] as any).userId && (draftsStoreRef.value[idx] as any).userId !== userId) {
+    return false;
+  }
   draftsStoreRef.value[idx] = { ...draftsStoreRef.value[idx], status: "sending" };
   return true;
 }
 
 /** Puts a claimed draft back to APPROVED after a failed send so the organizer can retry. */
-export async function releaseDraftClaim(id: string): Promise<void> {
+export async function releaseDraftClaim(id: string, userId?: string): Promise<void> {
   if (isDatabaseConfigured()) {
     await prisma.emailDraft.updateMany({
-      where: { id, status: "SENDING" },
+      where: userId ? { id, userId, status: "SENDING" } : { id, status: "SENDING" },
       data: { status: "APPROVED" },
     });
     return;
   }
   const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
   if (idx !== -1 && draftsStoreRef.value[idx].status === "sending") {
+    if (userId && (draftsStoreRef.value[idx] as any).userId && (draftsStoreRef.value[idx] as any).userId !== userId) {
+      return;
+    }
     draftsStoreRef.value[idx] = { ...draftsStoreRef.value[idx], status: "approved" };
   }
 }
@@ -360,24 +375,24 @@ export async function recordSentMessage(
   draftId: string,
   toEmail: string,
   gmailMessageId?: string,
-  threadId?: string
+  threadId?: string,
+  userId?: string
 ): Promise<Message | null> {
-  const draft = await getDraftById(draftId);
+  const draft = await getDraftById(draftId, userId);
   if (!draft) return null;
 
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      const activeUserId = userId || (await prisma.user.findFirst())?.id || "usr-demo-lead";
 
-      await prisma.emailDraft.update({
-        where: { id: draftId },
+      await prisma.emailDraft.updateMany({
+        where: userId ? { id: draftId, userId } : { id: draftId },
         data: { status: "SENT" },
       });
 
       const msg = await prisma.message.create({
         data: {
-          userId,
+          userId: activeUserId,
           draftId,
           companyId: draft.companyId,
           gmailMessageId: gmailMessageId || `gmail-${Date.now()}`,

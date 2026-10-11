@@ -1,20 +1,58 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
 import { addSponsor } from "@/lib/data/repositories/sponsors";
 import { DuplicateCompanyError } from "@/lib/outreach/duplicates";
-import { getGeminiClient } from "@/lib/integrations/factory";
+import { checkRateLimit, createRateLimitResponse, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
+
+const discoverRequestSchema = z.object({
+  campaignId: z.string().min(1).max(100),
+  prompt: z.string().max(500).optional(),
+  targetCount: z.number().int().min(1).max(50).default(5), // Capped at 50 per security specs
+}).strict();
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { campaignId, prompt, targetCount = 5 } = body;
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const campaign = await getCampaignById(campaignId || "camp-sponfy-2026");
+    const userId = session.user.id;
+
+    const rl = checkRateLimit(
+      `discover:${userId}`,
+      RATE_LIMIT_CONFIGS.discover.limit,
+      RATE_LIMIT_CONFIGS.discover.windowSeconds
+    );
+    if (!rl.allowed) {
+      return createRateLimitResponse(rl.reset);
+    }
+
+    let bodyJson: unknown;
+    try {
+      bodyJson = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const parsed = discoverRequestSchema.safeParse(bodyJson);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation error", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { campaignId, targetCount } = parsed.data;
+
+    const campaign = await getCampaignById(campaignId, userId);
     if (!campaign) {
       return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
     }
 
-    // Dynamic candidate generation
+    // Dynamic candidate generation pool
     const candidates = [
       {
         name: "Anthropic",
@@ -89,7 +127,7 @@ export async function POST(req: Request) {
           signals: c.signals,
           confidence: 90,
           researchStatus: "pending",
-        });
+        }, userId);
       } catch (err) {
         if (err instanceof DuplicateCompanyError) {
           skipped.push({ name: c.name, reason: "Already in this campaign's pipeline" });

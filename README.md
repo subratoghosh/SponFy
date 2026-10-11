@@ -124,12 +124,29 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🔒 Security & Privacy
+## 🔒 Security, Privacy & Database Isolation
 
-- Tokens are encrypted at rest with AES-256-GCM.
-- Parameterized PostgreSQL queries with strict Prisma ORM schema modeling and type safety.
-- Non-bypassable Human Approval Gate on every outbound message.
+- Zero Supabase dependency: tenant isolation enforced rigorously at repository and database query level with `userId` scoping on all reads and writes.
+- Non-bypassable Human Approval Gate on every outbound message with atomic state transition (`DRAFT` -> `APPROVED` -> `SENDING` -> `SENT`).
+- Gmail OAuth tokens encrypted at rest with AES-256-GCM and decrypted strictly server-side.
+- Rate limiting on AI, auth, and outbound send routes; strict Zod schema validation on all inputs and LLM outputs.
 - Full respect of suppression lists and instant unsubscribe handling.
+
+---
+
+## 💾 Neon Database Backup & Restore Runbook
+
+SponFy runs on Neon Serverless PostgreSQL, which continuously streams Write-Ahead Logs (WAL) for automated point-in-time recovery (PITR) and instant zero-copy branching.
+
+- **Instant PITR Branching:** Create an isolated restore branch from any timestamp without affecting production:
+  ```bash
+  neonctl branches create --name test-restore --parent main --timestamp "2026-10-12T00:00:00Z"
+  ```
+- **Physical Logical Backups:** Run manual point-in-time database dumps:
+  ```bash
+  pg_dump "$DATABASE_URL" --format=custom --file=sponfy_backup_$(date +%Y%m%d).dump
+  ```
+- Detailed step-by-step restore verification procedures are documented in [docs/RESTORE_RUNBOOK.md](file:///c:/Users/Subrato%20Ghosh/OneDrive/Desktop/SponFy/docs/RESTORE_RUNBOOK.md).
 
 ---
 

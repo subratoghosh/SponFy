@@ -30,3 +30,27 @@
 - **Not verified / blocked**: Live remote Neon migration and live Google OAuth flow (requires external credentials; verified in Demo Mode).
 - **Decisions**: Adopted prd.md §10 decisions: Google OAuth + instant Demo session; Vercel serverless assumption; dynamic `GEMINI_MODEL`. Used database status gate for draft approval.
 - **Next**: Milestone M2 — Landing Website (all sections per `design_system.md` §6, responsive, animated per §9, hero with real product-UI preview from seed data, real copy).
+
+---
+
+## [2026-10-12 00:20] Security Hardening Pass Complete
+- **Done**:
+  - Enforced `import "server-only";` module boundary across all secret-handling libraries (`env.ts`, `encryption.ts`, `crypto.ts`, `auth.ts`, `admin/auth.ts`, `integrations/factory.ts`, `integrations/gemini`, `integrations/tavily`, `integrations/gmail`, `oauth-state.ts`, `rate-limit.ts`).
+  - Audited client bundles: purged client reference to `NEXT_PUBLIC_ADMIN_EMAIL`. Verified only `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_DEMO_MODE` exist. Automated bundle scan verified zero secrets in `.next/static`.
+  - Audited full git commit history (`git log -S`): verified zero secrets or private keys were ever committed.
+  - Configured comprehensive security headers in `next.config.ts` (CSP without `unsafe-eval`, HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy).
+  - Implemented in-memory sliding-window rate limiter in `src/lib/rate-limit.ts` guarding auth, research, discovery, drafting, email sending, and Gmail syncing.
+  - Implemented HMAC-SHA256 signed OAuth state tokens in `src/lib/oauth-state.ts` tied to user sessions with 15-minute expiry.
+  - Hardened cron synchronization route with `crypto.timingSafeEqual` constant-time `CRON_SECRET` validation.
+  - Validated all API routes and input parameters with strict Zod schemas; wrapped Gemini responses in strict Zod schemas with untrusted input delimiter protection.
+  - Enforced strict repository-level tenant isolation with `userId` scoping across campaigns, sponsors, contacts, drafts, and settings.
+  - Documented Neon Continuous WAL, Branching & PITR in `README.md` and created `docs/RESTORE_RUNBOOK.md`.
+  - Created automated test suite `tests/security-isolation.test.ts` (14 tests).
+  - Authored comprehensive `SECURITY_AUDIT.md`.
+- **Verified**:
+  - `npm run typecheck`: Passed with 0 errors (`tsc --noEmit`).
+  - `npm run lint`: Passed with 0 errors (`next lint`).
+  - `npm test`: Passed 77/77 tests across 7 test files (`vitest run`).
+  - `npm run build`: Passed (all 48 static and dynamic routes compiled successfully in Next.js 15).
+  - Client static bundle secret scan (`scratch/check-secrets.js`): Passed with 0 secret leaks.
+

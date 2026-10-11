@@ -1,3 +1,4 @@
+import "server-only";
 import { Message } from "@/types";
 
 export interface IGmailClient {

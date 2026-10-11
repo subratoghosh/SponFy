@@ -9,6 +9,10 @@ import { PipelineStage } from "@/types";
 export async function POST(req: Request) {
   try {
     const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
     const contentType = req.headers.get("content-type") || "";
 
     let companyInputs: ParsedCompanyInput[] = [];
@@ -49,11 +53,6 @@ export async function POST(req: Request) {
     let targetCampaignId = campaignId;
 
     if (isDatabaseConfigured()) {
-      const user = session?.user?.id
-        ? await prisma.user.findUnique({ where: { id: session.user.id } })
-        : await prisma.user.findFirst();
-
-      const userId = user?.id || "usr-demo-lead";
 
       if (!targetCampaignId) {
         const existingCampaign = await prisma.campaign.findFirst({
@@ -68,7 +67,7 @@ export async function POST(req: Request) {
           const newCampaign = await prisma.campaign.create({
             data: {
               userId,
-              name: `${user?.name || "Active"} Sponsorship Campaign`,
+              name: `${session.user?.name || "Active"} Sponsorship Campaign`,
               eventType: "Technical Hackathon & Fest",
               audienceSize: 1500,
               location: "Campus Auditorium",

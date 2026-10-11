@@ -5,6 +5,9 @@ vi.mock("@/lib/prisma", () => ({
   default: {},
   isDatabaseConfigured: () => false,
 }));
+vi.mock("@/lib/auth", () => ({
+  auth: async () => ({ user: { id: "usr-demo-lead", email: "demo@sponfy.dev" } }),
+}));
 
 import { computeFollowups, buildFollowupDraft, delayForNextTouch, MAX_TOUCHES } from "@/lib/outreach/followups";
 import { SYSTEM_LIMITS } from "@/lib/config/limits";

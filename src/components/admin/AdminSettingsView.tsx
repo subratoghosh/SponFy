@@ -99,7 +99,7 @@ export function AdminSettingsView({ adminUser }: Props) {
                   Configured via server environment <code className="bg-neutral-200 px-1 py-0.5 rounded font-mono">ADMIN_EMAILS</code>. Accounts matching these emails receive administrator authorization upon session validation.
                 </p>
                 <div className="font-mono text-[11px] text-[#0C382E] bg-white p-2.5 rounded-lg border border-neutral-200">
-                  {process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@sponfy.dev, subrato@sponfy.dev"}
+                  Configured via server environment (ADMIN_EMAILS)
                 </div>
               </div>
             </div>

@@ -1,3 +1,4 @@
+import "server-only";
 import {
   Company,
   Campaign,
@@ -6,6 +7,12 @@ import {
   ScoreFactor,
   ReplyAnalysis,
 } from "@/types";
+import {
+  geminiFitScoreSchema,
+  geminiDraftSchema,
+  geminiReplyAnalysisSchema,
+  delimitUntrustedContent,
+} from "./schemas";
 
 export interface IGeminiClient {
   isConfigured(): boolean;
@@ -69,7 +76,21 @@ export class RealGeminiClient implements IGeminiClient {
     try {
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: this.apiKey });
-      const prompt = `You are a sponsorship analytics expert. Evaluate the sponsorship fit between company "${companyName}" (${industry}: ${description}) and event "${campaign.name}" (Type: ${campaign.eventType}, Audience: ${campaign.audienceSize} students in ${campaign.location}, Target: ₹${campaign.targetAmount}).
+      const safeCompany = delimitUntrustedContent(companyName, 200);
+      const safeIndustry = delimitUntrustedContent(industry, 200);
+      const safeDesc = delimitUntrustedContent(description, 1000);
+      const safeCampaign = delimitUntrustedContent(campaign.name, 200);
+
+      const prompt = `You are a sponsorship analytics expert. Evaluate the sponsorship fit between company and event based strictly on the delimited data below.
+Company Name:
+${safeCompany}
+Industry:
+${safeIndustry}
+Description:
+${safeDesc}
+Event:
+${safeCampaign}
+(Type: ${campaign.eventType}, Audience: ${campaign.audienceSize} students in ${campaign.location}, Target: ₹${campaign.targetAmount}).
 Return strict JSON with:
 {
   "fitScore": <number 0-100>,
@@ -95,7 +116,8 @@ Return strict JSON with:
       });
 
       const text = response.text || "{}";
-      return JSON.parse(text);
+      const raw = JSON.parse(text);
+      return geminiFitScoreSchema.parse(raw);
     } catch (err: any) {
       // Do not substitute canned scores for a real company: report the failure instead.
       console.error("Real Gemini fit scoring failed:", err);
@@ -111,7 +133,15 @@ Return strict JSON with:
     try {
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: this.apiKey });
-      const prompt = `Draft a personalized sponsorship pitch email for company "${company.name}" regarding our event "${campaign.name}" (${campaign.audienceSize} students in ${campaign.location}).
+      const safeCompany = delimitUntrustedContent(company.name, 200);
+      const safeCampaign = delimitUntrustedContent(campaign.name, 200);
+
+      const prompt = `Draft a personalized sponsorship pitch email for company based on the delimited data below:
+Company:
+${safeCompany}
+Event:
+${safeCampaign}
+(${campaign.audienceSize} students in ${campaign.location}).
 Tone: ${tone}.
 Return strict JSON:
 {
@@ -137,7 +167,8 @@ Return strict JSON:
       });
 
       const text = response.text || "{}";
-      return JSON.parse(text);
+      const raw = JSON.parse(text);
+      return geminiDraftSchema.parse(raw);
     } catch (err: any) {
       console.error("Real Gemini drafting failed:", err);
       throw new Error(`Gemini drafting failed: ${err?.message || err}`);
@@ -152,9 +183,18 @@ Return strict JSON:
     try {
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: this.apiKey });
-      const prompt = `Classify this inbound email reply from "${companyName}".
-Subject: ${emailSubject}
-Body: ${emailBody}
+      const safeCompany = delimitUntrustedContent(companyName, 200);
+      const safeSubject = delimitUntrustedContent(emailSubject, 300);
+      const safeBody = delimitUntrustedContent(emailBody, 3000);
+
+      const prompt = `Classify this inbound email reply from company based strictly on delimited content:
+Company:
+${safeCompany}
+Subject:
+${safeSubject}
+Body:
+${safeBody}
+
 Return strict JSON matching:
 {
   "intent": "Interested" | "Positive" | "Needs Info" | "Negotiating" | "Not Interested" | "Maybe Later" | "Out of Office" | "Unclear",
@@ -177,12 +217,13 @@ Return strict JSON matching:
       });
 
       const text = response.text || "{}";
-      const parsed = JSON.parse(text);
+      const raw = JSON.parse(text);
+      const validated = geminiReplyAnalysisSchema.parse(raw);
       return {
         id: `rep-${Date.now()}`,
         messageId: `msg-${Date.now()}`,
         companyId: "",
-        ...parsed,
+        ...validated,
         createdAt: new Date().toISOString(),
       };
     } catch (err: any) {

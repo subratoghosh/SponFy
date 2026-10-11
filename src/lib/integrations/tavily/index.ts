@@ -1,3 +1,4 @@
+import "server-only";
 import { SourceItem, ResearchSections } from "@/types";
 
 export interface ITavilyClient {
