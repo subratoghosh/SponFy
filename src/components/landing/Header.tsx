@@ -7,6 +7,7 @@ import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
+import { LogoIntro } from "./LogoIntro";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -21,6 +22,7 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolledPast, setIsScrolledPast] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [introActive, setIntroActive] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
@@ -167,6 +169,62 @@ export const Header: React.FC = () => {
     setIsExpanded((prev) => !prev);
   };
 
+  // Logo intro animation lifecycle (only on "/", sm+, non-reduced-motion, once per session)
+  useEffect(() => {
+    if (pathname !== "/") {
+      setIntroActive(false);
+      return;
+    }
+
+    if (typeof window === "undefined") return;
+
+    // Respect prefers-reduced-motion
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    // Hide intro below "sm" breakpoint (static logo on mobile)
+    if (window.innerWidth < 640) {
+      return;
+    }
+
+    // If already scrolled down at load time, skip
+    if (window.scrollY > 20) {
+      return;
+    }
+
+    // Play once per browser session
+    try {
+      if (sessionStorage.getItem("sponfy_logo_intro_played") === "true") {
+        return;
+      }
+      sessionStorage.setItem("sponfy_logo_intro_played", "true");
+    } catch {
+      // Storage blocked or unavailable
+    }
+
+    setIntroActive(true);
+  }, [pathname]);
+
+  // Cancel intro immediately if user scrolls or if navbar collapses
+  useEffect(() => {
+    if (!introActive) return;
+
+    if (isCollapsed) {
+      setIntroActive(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      if (window.scrollY > 15) {
+        setIntroActive(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [introActive, isCollapsed]);
+
   return (
     <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
       <div className="w-full max-w-[1240px] flex justify-end">
@@ -176,10 +234,10 @@ export const Header: React.FC = () => {
           onMouseLeave={handleMouseLeave}
           onBlur={handleBlur}
           className={cn(
-            "relative pointer-events-auto bg-green-dark border-2 border-butter-cream/85 hover:border-butter-cream ring-1 ring-butter-cream/30 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex items-center overflow-hidden transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+            "relative pointer-events-auto bg-green-dark border-2 border-butter-cream/85 hover:border-butter-cream ring-1 ring-butter-cream/30 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex items-center transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
             isCollapsed
-              ? "w-full sm:max-w-[48px] sm:w-[48px] sm:h-[48px] sm:p-0 sm:justify-center px-6 py-2.5 justify-between"
-              : "w-full max-w-[1240px] sm:max-w-[1240px] sm:h-[52px] px-6 py-2.5 justify-between"
+              ? "w-full sm:max-w-[48px] sm:w-[48px] sm:h-[48px] sm:p-0 sm:justify-center px-6 py-2.5 justify-between overflow-hidden"
+              : "w-full max-w-[1240px] sm:max-w-[1240px] sm:h-[52px] px-6 py-2.5 justify-between overflow-visible"
           )}
         >
           {/* Collapsed state 48px hamburger trigger on sm+ when past trigger threshold */}
@@ -212,8 +270,18 @@ export const Header: React.FC = () => {
             )}
           >
             {/* Logo Wordmark */}
-            <div className="hover:scale-105 transition-transform duration-200 shrink-0">
-              <SponfyBrand href={isCollapsed ? undefined : "/"} size="md" theme="dark" />
+            <div className="relative hover:scale-105 transition-transform duration-200 shrink-0">
+              <div
+                className={cn(
+                  "transition-opacity duration-300",
+                  introActive ? "opacity-0" : "opacity-100"
+                )}
+              >
+                <SponfyBrand href={isCollapsed ? undefined : "/"} size="md" theme="dark" />
+              </div>
+              {introActive && (
+                <LogoIntro onComplete={() => setIntroActive(false)} />
+              )}
             </div>
 
             {/* Desktop Navigation Links */}
