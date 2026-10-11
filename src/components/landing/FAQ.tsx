@@ -23,7 +23,7 @@ const faqs: FAQItem[] = [
   {
     question: "How are the 7-Factor Fit Scores calculated?",
     answer:
-      "Our AI analyzes 7 weighted dimensions: Industry Relevance (20 pts), Audience Overlap (20 pts), Product Synergy (15 pts), Event Type Match (15 pts), Student Program History (15 pts), Financial Capability (10 pts), and Geographic Alignment (5 pts). SponFy always shows you 'Why this scored 86' with positive and negative point rationales.",
+      "Our AI analyzes 7 weighted dimensions: Industry Relevance (20 pts), Audience Overlap (20 pts), Product Synergy (15 pts), Event Type Match (15 pts), Student Program History (15 pts), Financial Capability (10 pts), and Geographic Alignment (5 pts). SponFy always shows you an explainable score breakdown with positive and negative point rationales.",
   },
   {
     question: "What happens if a sponsor replies saying 'Not Interested' or asks to be removed?",
@@ -33,12 +33,12 @@ const faqs: FAQItem[] = [
   {
     question: "Can I use SponFy for cultural fests, sports meets, or student clubs?",
     answer:
-      "Yes! While our demo dataset highlights college hackathons, SponFy supports all campus event formats including cultural fests, technical symposiums, e-sports tournaments, entrepreneurship summits, and student chapters.",
+      "Yes! SponFy is designed for all student event formats, including technical fests, hackathons, cultural festivals, sports tournaments, entrepreneurship summits, and campus student clubs.",
   },
   {
     question: "Can I test SponFy without configuring any API keys?",
     answer:
-      "Absolutely. SponFy is built with a zero-configuration Demo Mode. When launched without API keys, it uses realistic, cited Indian tech sponsor data ('SponFy Hackathon 2026') across all 12 pipeline stages, allowing you to experience the complete workflow immediately.",
+      "Absolutely. SponFy is built with a zero-configuration Demo Mode. When launched without API keys, it uses a pre-seeded sample campaign across all 12 pipeline stages, allowing you to experience the complete workflow immediately.",
   },
 ];
 

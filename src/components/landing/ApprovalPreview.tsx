@@ -40,7 +40,7 @@ export const ApprovalPreview: React.FC = () => {
                     <h3 className="font-heading font-bold text-base text-green-dark group-hover/gate:text-green-mid transition-colors">
                       Outreach Approval Gate
                     </h3>
-                    <p className="text-xs text-text-dim">Company: Postman (Ali Mustufa)</p>
+                    <p className="text-xs text-text-dim">Company: Acme Cloud (Campus DevRel)</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 hover:scale-105 transition-transform cursor-default">
@@ -74,7 +74,7 @@ export const ApprovalPreview: React.FC = () => {
               {/* Email Body Snippet */}
               <div className="p-4 bg-white rounded-xl border border-green-dark/12 text-xs text-text-dim space-y-2 italic hover:border-green-dark/25 transition-colors">
                 <p>
-                  "Given Postman's commitment to campus developer education, we would love to invite Postman as our Official API Partner (Gold Tier: ₹75,000)..."
+                  "Given Acme Cloud's active commitment to student developers, we would love to invite your team as a Gold Tier track partner for our upcoming hackathon..."
                 </p>
               </div>
             </div>
@@ -101,7 +101,7 @@ export const ApprovalPreview: React.FC = () => {
                     <h3 className="font-heading font-bold text-base text-green-dark group-hover/reply:text-green-mid transition-colors">
                       Gemini Reply Intelligence
                     </h3>
-                    <p className="text-xs text-text-dim">Thread: Razorpay DevRel Counter-Offer</p>
+                    <p className="text-xs text-text-dim">Thread: Orbit Payments Track Sponsorship Counter-Offer</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 hover:scale-105 transition-transform cursor-default">
@@ -114,7 +114,7 @@ export const ApprovalPreview: React.FC = () => {
                 <div className="p-4 bg-butter-panel rounded-xl border border-green-dark/10 space-y-2 hover:border-green-dark/25 transition-colors">
                   <span className="font-bold text-green-dark block">AI Summary & Intent Extraction:</span>
                   <p className="text-text-dim leading-relaxed">
-                    Razorpay offered ₹60,000 for Gold Tier (counter-offer from ₹75,000 ask). Agreed to judge seat. Requested GST details and invoice for processing.
+                    Sponsor agreed to challenge track and mentor jury seat with adjusted tier allocation. Requested event invoice and registration details for processing.
                   </p>
                 </div>
 
@@ -123,7 +123,7 @@ export const ApprovalPreview: React.FC = () => {
                     Recommended Next Action:
                   </span>
                   <p className="text-xs">
-                    Accept ₹60,000 counter-offer, send GST details, and generate formal sponsorship invoice.
+                    Confirm track terms, send organizer invoice details, and schedule an onboarding touchpoint.
                   </p>
                 </div>
               </div>

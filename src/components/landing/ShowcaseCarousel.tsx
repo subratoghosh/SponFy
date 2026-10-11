@@ -18,54 +18,54 @@ export const ShowcaseCarousel: React.FC = () => {
 
   const showcaseSponsors = [
     {
-      name: "Postman",
+      name: "Acme Cloud",
       industry: "Developer Tools",
-      description: "API platform with active Indian student developer grants and workshops.",
+      description: "API and cloud platform with active student developer grants and workshops.",
       fitScore: 94,
-      targetTier: "Gold Sponsor (₹75,000)",
-      angle: "Best API Integration Challenge Track + Postman Student Expert onboarding.",
-      contact: "Ali Mustufa (Student Community Lead)",
-      signals: ["API Hackathon Fund", "Bengaluru DevRel Team"],
+      targetTier: "Gold Tier",
+      angle: "Cloud API Challenge Track + campus student ambassador onboarding.",
+      contact: "Campus DevRel Lead",
+      signals: ["API Hackathon Fund", "Campus DevRel Team"],
     },
     {
-      name: "Devfolio",
-      industry: "Developer Tools",
-      description: "India's premier community of builders and hackathon organizing platform.",
+      name: "Nimbus APIs",
+      industry: "Developer Platform",
+      description: "Developer tooling ecosystem and community platform supporting student builders.",
       fitScore: 98,
-      targetTier: "Title Partner (₹1,50,000)",
-      angle: "Official hackathon submission platform + grant prize pool partner.",
-      contact: "Shakti Goap (Community Partnerships)",
-      signals: ["Hackathon Season 2026", "Direct Grant Fund"],
+      targetTier: "Title Partner",
+      angle: "Official hackathon challenge platform + grant prize pool partner.",
+      contact: "Community Program Manager",
+      signals: ["Active Campus Grants", "Developer Bounties"],
     },
     {
-      name: "Razorpay",
+      name: "Orbit Payments",
       industry: "Fintech & Payments",
-      description: "Full-stack payment infrastructure with Rize startup and campus grants.",
+      description: "Full-stack payment infrastructure with startup and campus hackathon grants.",
       fitScore: 88,
-      targetTier: "Gold Sponsor (₹75,000)",
+      targetTier: "Gold Tier",
       angle: "Fintech & Payment Gateway Innovation Challenge + jury seat.",
-      contact: "Vikram R. (DevRel Outreach)",
-      signals: ["Rize Startup Sandbox", "Fintech Track"],
+      contact: "Campus Outreach Lead",
+      signals: ["Innovation Sandbox", "Fintech Track"],
     },
     {
-      name: "GitHub Campus",
+      name: "DevStack Labs",
       industry: "Developer Tools",
-      description: "GitHub Education empowers student developers with Copilot and campus packs.",
+      description: "Developer platform empowering student builders with cloud packs and tools.",
       fitScore: 96,
-      targetTier: "Title Partner (₹1,50,000)",
-      angle: "GitHub Copilot challenge track + swag box delivery for 800 hackers.",
-      contact: "Komal S. (Education APAC)",
-      signals: ["Copilot for Students", "Swag Box Dispatch"],
+      targetTier: "Title Partner",
+      angle: "AI developer challenge track + merchandise perks for participants.",
+      contact: "Education Program Lead",
+      signals: ["Student Developer Pack", "Event Swag Kit"],
     },
     {
-      name: "MongoDB",
-      industry: "Cloud & DevOps",
-      description: "Document database with MongoDB for Academia and hackathon prizes.",
+      name: "Vortex Data",
+      industry: "Cloud & Data",
+      description: "Database and cloud analytics platform offering student developer tier benefits.",
       fitScore: 91,
-      targetTier: "Silver Sponsor (₹50,000)",
-      angle: "MongoDB Atlas & Vector Search Track with $500 cash bounty.",
-      contact: "Raghav M. (DevRel Coordinator)",
-      signals: ["Atlas Vector Search Grant", "Academia Partner"],
+      targetTier: "Silver Tier",
+      angle: "Vector database challenge track with category prize bounty.",
+      contact: "DevRel Coordinator",
+      signals: ["Database Developer Grant", "Campus Partner"],
     },
   ];
 
@@ -84,7 +84,7 @@ export const ShowcaseCarousel: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-text-muted bg-butter-warm px-3.5 py-1.5 rounded-full border border-green-dark/10">
-              Live Sponsor Showcase
+              Example Sponsor Showcase
             </span>
             <h2 className="heading-font text-3xl sm:text-4xl font-extrabold text-green-dark mt-3">
               Curated Sponsor Intelligence Dossiers

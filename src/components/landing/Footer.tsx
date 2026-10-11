@@ -182,7 +182,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom Credits */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-onDarkSub/70">
-          <p>© 2026 SponFy. Built for student organizers across India.</p>
+          <p>© 2026 SponFy. Built for student organizers and campus teams.</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link href="/privacy" className="footer-link text-xs">
               Privacy Policy

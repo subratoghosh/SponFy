@@ -1,12 +1,19 @@
 import { getSponsors } from "./sponsors";
 import { getDrafts } from "./outreach";
 import { getReplyAnalyses } from "./replies";
+import { getCampaigns, getCampaignById } from "./campaigns";
 import { PIPELINE_STAGES } from "@/lib/config/pipeline";
 
 export async function getAnalyticsData(campaignId?: string) {
-  const sponsors = await getSponsors(campaignId);
-  const drafts = await getDrafts();
-  const replies = await getReplyAnalyses();
+  const [sponsors, drafts, replies, campaigns] = await Promise.all([
+    getSponsors(campaignId),
+    getDrafts(),
+    getReplyAnalyses(),
+    campaignId ? getCampaignById(campaignId).then((c) => (c ? [c] : [])) : getCampaigns(),
+  ]);
+
+  const activeCampaign = campaigns[0] || null;
+  const targetAmount = activeCampaign?.targetAmount || 0;
 
   // If there are 0 sponsors in the workspace, return blank clean data
   if (sponsors.length === 0) {
@@ -29,7 +36,7 @@ export async function getAnalyticsData(campaignId?: string) {
         committedCount: 0,
         committedAmount: 0,
         pipelineAmount: 0,
-        targetAmount: 0,
+        targetAmount,
       },
     };
   }
@@ -138,7 +145,7 @@ export async function getAnalyticsData(campaignId?: string) {
       committedCount: committed,
       committedAmount,
       pipelineAmount,
-      targetAmount: 500000,
+      targetAmount,
     },
   };
 }
