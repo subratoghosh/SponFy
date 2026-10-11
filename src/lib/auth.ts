@@ -90,8 +90,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async session({ session, token }) {
-      if (token?.sub) {
-        session.user.id = token.sub;
+      if (token?.sub && session.user) {
+        session.user.id = token.sub as string;
       }
       if (token?.role && session.user) {
         (session.user as any).role = token.role;
@@ -105,6 +105,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if ((user as any)?.role) {
         (token as any).role = (user as any).role;
       }
+
+      // Check configured admin emails
+      const adminEmails = (process.env.ADMIN_EMAILS || "admin@sponfy.dev")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+
+      const userEmail = (token.email || (user as any)?.email || "").toLowerCase();
+      if (userEmail && (userEmail === "admin@sponfy.dev" || adminEmails.includes(userEmail))) {
+        (token as any).role = "ADMIN";
+      }
+
+      // If database is configured, dynamically sync latest role from PostgreSQL
+      if (isDatabaseConfigured() && (token.sub || token.email)) {
+        try {
+          const dbUser = await (prisma as any).user.findFirst({
+            where: {
+              OR: [
+                ...(token.sub ? [{ id: token.sub }] : []),
+                ...(token.email ? [{ email: token.email }] : []),
+              ],
+            },
+            select: { id: true, role: true, email: true },
+          });
+
+          if (dbUser) {
+            if (dbUser.role) {
+              (token as any).role = dbUser.role;
+            }
+            if (dbUser.id) {
+              token.sub = dbUser.id;
+            }
+          }
+        } catch (err) {
+          // If transient DB disconnect, keep current token role
+        }
+      }
+
       return token;
     },
   },

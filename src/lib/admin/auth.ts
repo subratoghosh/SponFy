@@ -90,11 +90,14 @@ export async function verifyAdminSession(): Promise<AdminAuthResult> {
         return { authorized: false, reason: "SUSPENDED" };
       }
 
-      // Check explicit ADMIN role or server ADMIN_EMAILS environment variable
+      // Check explicit ADMIN role or server ADMIN_EMAILS environment variable or session role
       const hasDbAdminRole = dbUser.role === "ADMIN";
-      const hasEnvAdminEmail = adminEmails.includes(dbUser.email?.toLowerCase());
+      const hasEnvAdminEmail =
+        adminEmails.includes(dbUser.email?.toLowerCase()) ||
+        (userEmail && adminEmails.includes(userEmail));
+      const hasSessionAdminRole = (session.user as any)?.role === "ADMIN";
 
-      if (hasDbAdminRole || hasEnvAdminEmail) {
+      if (hasDbAdminRole || hasEnvAdminEmail || hasSessionAdminRole) {
         return {
           authorized: true,
           user: {
@@ -124,13 +127,13 @@ export async function verifyAdminSession(): Promise<AdminAuthResult> {
     }
   }
 
-  // 3. Fallback for environment variable matches if DB is unreachable
-  if (userEmail && adminEmails.includes(userEmail)) {
+  // 3. Fallback for environment variable matches or admin session role if DB is unreachable
+  if ((userEmail && adminEmails.includes(userEmail)) || (session.user as any)?.role === "ADMIN") {
     return {
       authorized: true,
       user: {
         id: userId || "env-admin",
-        email: userEmail,
+        email: userEmail || "admin@sponfy.dev",
         name: session.user.name || "System Admin",
         role: "ADMIN",
       },

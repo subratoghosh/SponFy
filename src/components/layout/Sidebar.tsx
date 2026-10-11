@@ -50,6 +50,12 @@ export const Sidebar: React.FC = () => {
     .toUpperCase()
     .slice(0, 2) || "OR";
 
+  const isAdmin =
+    (user as any)?.role === "ADMIN" ||
+    user?.email === "admin@sponfy.dev" ||
+    user?.email === "subratog840@gmail.com" ||
+    user?.email === "subratoghosh@gmail.com";
+
   return (
     <aside className="hidden lg:flex w-64 bg-green-dark text-text-onDarkSub flex-col justify-between shrink-0 h-screen sticky top-0 border-r border-green-mid/40 selection:bg-butter-cream selection:text-green-dark">
       <div>
@@ -92,6 +98,39 @@ export const Sidebar: React.FC = () => {
               </Link>
             );
           })}
+
+          {/* Admin Console Navigation Item (Visible for Administrators) */}
+          {isAdmin && (
+            <div className="pt-2 border-t border-green-mid/40 mt-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-butter-cream/60 px-3.5 block mb-1">
+                Governance
+              </span>
+              <Link
+                href="/admin"
+                className={cn(
+                  "flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 group",
+                  pathname.startsWith("/admin")
+                    ? "bg-amber-400 text-green-dark shadow-md font-bold"
+                    : "text-amber-300 hover:bg-green-mid/50 hover:text-amber-200 border border-amber-400/20 bg-green-deep/40"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck
+                    className={cn(
+                      "w-4 h-4 stroke-[2]",
+                      pathname.startsWith("/admin")
+                        ? "text-green-dark"
+                        : "text-amber-400 group-hover:text-amber-300"
+                    )}
+                  />
+                  <span>Admin Console</span>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 group-hover:bg-amber-400 group-hover:text-green-dark">
+                  Admin
+                </span>
+              </Link>
+            </div>
+          )}
         </nav>
       </div>
 

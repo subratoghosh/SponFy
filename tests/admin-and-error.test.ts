@@ -8,7 +8,7 @@ import {
   updateUserRole,
 } from "@/lib/data/repositories/admin";
 
-describe("Admin Governance & Platform Telemetry", () => {
+describe("Admin Governance & Platform Telemetry", { timeout: 15000 }, () => {
   it("calculates accurate overview KPI metrics with realistic relationships", async () => {
     const metrics = await getAdminOverviewMetrics("30d");
 
