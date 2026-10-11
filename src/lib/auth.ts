@@ -41,12 +41,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = (credentials.email as string).trim().toLowerCase();
         const password = credentials.password as string;
 
-        // 1. Database validation if database is configured
+        // 1. Database validation if database is configured (with fast timeout fallback for cold serverless DB)
         if (isDatabaseConfigured()) {
           try {
-            const dbUser = await (prisma as any).user.findUnique({
+            const dbPromise = (prisma as any).user.findUnique({
               where: { email },
             });
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("DB_TIMEOUT")), 3500)
+            );
+            const dbUser = (await Promise.race([dbPromise, timeoutPromise])) as any;
+
             if (dbUser) {
               const isMatch = dbUser.password
                 ? verifyPassword(password, dbUser.password)
@@ -63,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               return null;
             }
           } catch (err) {
-            console.error("Database user lookup in authorize failed:", err);
+            console.warn("Database user lookup in authorize fallback triggered:", err);
           }
         }
 
@@ -117,10 +122,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (token as any).role = "ADMIN";
       }
 
-      // If database is configured, dynamically sync latest role from PostgreSQL
-      if (isDatabaseConfigured() && (token.sub || token.email)) {
+      // Only query DB if role is not already attached (avoiding redundant DB calls on login)
+      if (!token.role && isDatabaseConfigured() && (token.sub || token.email)) {
         try {
-          const dbUser = await (prisma as any).user.findFirst({
+          const dbPromise = (prisma as any).user.findFirst({
             where: {
               OR: [
                 ...(token.sub ? [{ id: token.sub }] : []),
@@ -129,6 +134,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
             select: { id: true, role: true, email: true },
           });
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("DB_TIMEOUT")), 3000)
+          );
+          const dbUser = (await Promise.race([dbPromise, timeoutPromise])) as any;
 
           if (dbUser) {
             if (dbUser.role) {

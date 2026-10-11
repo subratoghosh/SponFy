@@ -30,6 +30,8 @@ const PRIMARY_TABS = [
 const MORE_LINKS = [
   { label: "Reply Intelligence", href: "/intelligence", icon: Activity, desc: "Sentiment analysis & AI drafts" },
   { label: "Knowledge Base & FAQ", href: "/faq", icon: HelpCircle, desc: "Safety, Gmail OAuth & answers" },
+  { label: "Cookie Policy", href: "/cookie-policy", icon: ShieldCheck, desc: "Cookie usage & storage disclosures" },
+  { label: "Consent Preferences", href: "/consent", icon: ShieldCheck, desc: "Manage privacy choices & tokens" },
   { label: "Privacy Policy", href: "/privacy", icon: ShieldCheck, desc: "Data protection & zero LLM training" },
   { label: "Terms of Service", href: "/terms", icon: FileText, desc: "Organizer rules & anti-spam policy" },
 ];
@@ -93,9 +95,9 @@ export const MarketingMobileNav: React.FC = () => {
             {/* Quick Action Buttons */}
             <div className="pt-2 flex flex-col gap-2.5">
               <Link href="/login" onClick={() => setMoreOpen(false)}>
-                <Button variant="butter" className="w-full justify-center text-sm font-extrabold shadow-md">
+                <Button variant="butter" className="w-full justify-center text-xs font-black tracking-wider uppercase shadow-md py-2.5">
                   <LogIn className="w-4 h-4 mr-2" />
-                  Log in to Workspace
+                  LOGIN
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>

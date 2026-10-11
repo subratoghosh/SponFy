@@ -167,13 +167,18 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="footer-link">
-                  Human Approval Gate
+                <Link href="/cookie-policy" className="footer-link">
+                  Cookie Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/consent" className="footer-link">
+                  Consent Preferences
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="footer-link">
-                  Gmail OAuth Security
+                  Human Approval Gate
                 </Link>
               </li>
             </ul>
@@ -190,6 +195,14 @@ export const Footer: React.FC = () => {
             <span className="text-butter-cream/30 select-none">•</span>
             <Link href="/terms" className="footer-link text-xs">
               Terms of Service
+            </Link>
+            <span className="text-butter-cream/30 select-none">•</span>
+            <Link href="/cookie-policy" className="footer-link text-xs">
+              Cookie Policy
+            </Link>
+            <span className="text-butter-cream/30 select-none">•</span>
+            <Link href="/consent" className="footer-link text-xs">
+              Consent
             </Link>
             <span className="text-butter-cream/30 select-none">•</span>
             <p className="flex items-center gap-1">

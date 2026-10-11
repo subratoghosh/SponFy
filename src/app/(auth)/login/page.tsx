@@ -24,6 +24,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered") === "true";
   const initialEmail = searchParams.get("email") || "";
+  const callbackUrl = searchParams.get("callbackUrl") || "/app";
 
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
@@ -42,7 +43,8 @@ function LoginForm() {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!email || !password) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) {
       setErrorMsg("Please enter both your email address and password.");
       return;
     }
@@ -55,17 +57,18 @@ function LoginForm() {
     setLoading(true);
     try {
       const res = await signIn("credentials", {
-        email,
+        email: cleanEmail,
         password,
         redirect: false,
+        callbackUrl,
       });
 
       if (res?.error) {
         setErrorMsg("Invalid credentials. Please verify your email and password.");
         setLoading(false);
       } else {
-        router.push("/app");
-        router.refresh();
+        // Immediate hard navigation ensures the newly set Auth.js session cookie is sent on first request
+        window.location.href = callbackUrl;
       }
     } catch {
       setErrorMsg("Sign in attempt failed. Please try again or use Demo Mode.");
@@ -77,7 +80,7 @@ function LoginForm() {
     setErrorMsg(null);
     setSocialLoading(provider);
     try {
-      await signIn(provider, { callbackUrl: "/app" });
+      await signIn(provider, { callbackUrl });
     } catch {
       setErrorMsg(`Failed to connect with ${provider}. Please try email login.`);
       setSocialLoading(null);
@@ -91,12 +94,11 @@ function LoginForm() {
         email: "demo@sponfy.dev",
         password: "demo-password-123",
         redirect: false,
+        callbackUrl: "/app",
       });
-      router.push("/app");
-      router.refresh();
+      window.location.href = "/app";
     } catch {
-      router.push("/app");
-      router.refresh();
+      window.location.href = "/app";
     }
   };
 
@@ -238,9 +240,9 @@ function LoginForm() {
               type="submit"
               variant="green"
               loading={loading}
-              className="w-full font-bold shadow-sm justify-center text-sm py-2.5"
+              className="w-full font-black uppercase tracking-wider shadow-sm justify-center text-xs py-2.5 h-10"
             >
-              Sign In to Workspace
+              LOGIN
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </form>

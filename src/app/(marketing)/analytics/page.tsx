@@ -17,10 +17,6 @@ export default function AnalyticsPage() {
       <section className="py-20 bg-butter-bg border-t border-green-dark/10">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-green-dark/5 border border-green-dark/15 text-green-dark text-xs font-bold uppercase tracking-wider mb-3">
-              <BarChart3 className="w-3.5 h-3.5 text-green-accent" />
-              CAMPUS SPONSORSHIP BENCHMARKS
-            </div>
             <h2 className="display-font text-3xl sm:text-4xl font-extrabold text-green-dark tracking-tight mb-4">
               Campus Sponsorship Performance
             </h2>

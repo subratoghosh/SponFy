@@ -55,6 +55,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { CookieConsentBanner } from "@/components/common/CookieConsentBanner";
 
 export default function RootLayout({
   children,
@@ -67,7 +68,10 @@ export default function RootLayout({
       className={`${fraunces.variable} ${outfit.variable} ${jakarta.variable} ${space.variable}`}
     >
       <body className="min-h-screen bg-butter-bg text-text-main selection:bg-butter-cream selection:text-green-dark">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <CookieConsentBanner />
+        </AuthProvider>
       </body>
     </html>
   );
