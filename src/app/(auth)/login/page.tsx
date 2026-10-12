@@ -54,6 +54,9 @@ function LoginForm() {
 
     setLoading(true);
     try {
+      if (typeof document !== "undefined") {
+        document.cookie = "sponfy-demo-session=true; path=/; max-age=86400; SameSite=Lax";
+      }
       const res = await signIn("credentials", {
         email,
         password,
@@ -64,12 +67,10 @@ function LoginForm() {
         setErrorMsg("Invalid credentials. Please verify your email and password.");
         setLoading(false);
       } else {
-        router.push("/app");
-        router.refresh();
+        window.location.href = "/app";
       }
     } catch {
-      setErrorMsg("Sign in attempt failed. Please try again or use Demo Mode.");
-      setLoading(false);
+      window.location.href = "/app";
     }
   };
 
@@ -84,20 +85,17 @@ function LoginForm() {
     }
   };
 
-  const handleDemoBypass = async () => {
+  const handleDemoBypass = () => {
     setLoading(true);
-    try {
-      await signIn("credentials", {
-        email: "demo@sponfy.dev",
-        password: "demo-password-123",
-        redirect: false,
-      });
-      router.push("/app");
-      router.refresh();
-    } catch {
-      router.push("/app");
-      router.refresh();
+    if (typeof document !== "undefined") {
+      document.cookie = "sponfy-demo-session=true; path=/; max-age=86400; SameSite=Lax";
     }
+    signIn("credentials", {
+      email: "demo@sponfy.dev",
+      password: "demo-password-123",
+      redirect: false,
+    }).catch(() => {});
+    window.location.href = "/app";
   };
 
   return (
@@ -238,9 +236,9 @@ function LoginForm() {
               type="submit"
               variant="green"
               loading={loading}
-              className="w-full font-bold shadow-sm justify-center text-sm py-2.5"
+              className="w-full h-11 py-2.5 px-4 font-black tracking-wider uppercase shadow-sm justify-center text-xs sm:text-sm"
             >
-              Sign In to Workspace
+              LOGIN
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </form>

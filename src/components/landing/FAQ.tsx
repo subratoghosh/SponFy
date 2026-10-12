@@ -53,10 +53,7 @@ export const FAQ: React.FC = () => {
     <section id="faq" className="py-24 bg-butter-bg border-b border-green-dark/10">
       <div className="max-w-[880px] mx-auto px-6">
         <div className="text-center mb-16">
-          <span className="text-xs font-bold uppercase tracking-widest text-text-muted bg-butter-warm px-3.5 py-1.5 rounded-full border border-green-dark/10">
-            Common Questions
-          </span>
-          <h2 className="heading-font text-3xl sm:text-4xl font-extrabold text-green-dark mt-3 mb-4">
+          <h2 className="heading-font text-3xl sm:text-4xl font-extrabold text-green-dark mb-4">
             Frequently Asked Questions
           </h2>
           <p className="text-sm sm:text-base text-text-dim">

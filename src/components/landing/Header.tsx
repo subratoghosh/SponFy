@@ -313,10 +313,10 @@ export const Header: React.FC = () => {
                   variant="butter"
                   size="sm"
                   tabIndex={isCollapsed ? -1 : undefined}
-                  className="font-bold shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
+                  className="font-black uppercase tracking-wider text-xs px-4 py-1.5 shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
                 >
-                  Log in
-                  <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                  LOGIN
+                  <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
             </div>
@@ -325,7 +325,7 @@ export const Header: React.FC = () => {
             <div className="flex sm:hidden items-center gap-2">
               <Link href="/login">
                 <Button variant="butter" size="sm" className="text-xs px-3 py-1.5 font-bold">
-                  Log in
+                  LOGIN
                 </Button>
               </Link>
               <button
@@ -368,9 +368,9 @@ export const Header: React.FC = () => {
             })}
             <div className="pt-2 flex flex-col gap-2.5 border-t border-green-mid/40 mt-1">
               <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="butter" className="w-full justify-center font-bold shadow-md">
-                  Log in
-                  <ArrowRight className="w-4 h-4 ml-1.5" />
+                <Button variant="butter" className="w-full justify-center font-black uppercase tracking-wider text-xs shadow-md">
+                  LOGIN
+                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                 </Button>
               </Link>
             </div>

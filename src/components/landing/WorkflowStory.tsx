@@ -64,10 +64,7 @@ export const WorkflowStory: React.FC = () => {
       <div className="max-w-[1240px] mx-auto px-6">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-bold uppercase tracking-widest text-text-muted bg-butter-warm px-3.5 py-1.5 rounded-full border border-green-dark/10">
-            End-to-End Operating System
-          </span>
-          <h2 className="heading-font text-3xl sm:text-4xl md:text-5xl font-extrabold text-green-dark mt-4 mb-4">
+          <h2 className="heading-font text-3xl sm:text-4xl md:text-5xl font-extrabold text-green-dark mb-4">
             How SponFy closes your sponsorship target in 5 steps
           </h2>
           <p className="text-sm sm:text-base text-text-dim">

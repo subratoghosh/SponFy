@@ -68,13 +68,7 @@ export const Hero: React.FC = () => {
       {/* Interactive Background Vector Images (Hover-to-glow, floating motifs) */}
       <HeroVectorMotifs />
 
-      <div className="relative max-w-[1240px] mx-auto px-2 sm:px-6 text-center flex flex-col items-center z-10 w-full">
-        {/* Pill Tag */}
-        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-butter-cream/15 border border-butter-cream/30 text-butter-cream text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-5 sm:mb-6 hover:bg-butter-cream/25 hover:border-butter-cream/60 hover:shadow-[0_0_20px_rgba(255,240,179,0.35)] hover:scale-105 transition-all duration-300 cursor-default max-w-full">
-          <Zap className="w-3.5 h-3.5 fill-butter-cream text-butter-cream shrink-0" />
-          <span className="truncate">The AI Sponsorship OS for College Fests & Hackathons</span>
-        </div>
-
+      <div className="relative max-w-[1240px] mx-auto px-2 sm:px-6 text-center flex flex-col items-center z-10 w-full pt-4">
         {/* Display Headline in Fraunces */}
         <h1 className="display-font text-3xl sm:text-5xl md:text-6xl lg:text-[68px] leading-[1.12] sm:leading-[1.08] font-black text-butter-cream max-w-4xl tracking-tight mb-4 sm:mb-6">
           Find, research and win event sponsors — with AI that asks before it sends.
