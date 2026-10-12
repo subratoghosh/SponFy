@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata = {
   title: "Terms of Service | SponFy",
-  description: "Terms and conditions governing the use of SponFy for student fests, hackathons, and corporate sponsorship operations.",
+  description: "Terms and conditions governing the use of SponFy for campaigns, events, and sponsorship operations.",
 };
 
 export default function TermsOfServicePage() {
@@ -61,7 +61,7 @@ export default function TermsOfServicePage() {
               </div>
               <h3 className="font-bold text-sm text-green-dark">Student Representation</h3>
               <p className="text-xs text-text-dim leading-relaxed">
-                You represent a genuine student society, college festival, hackathon, or university chapter.
+                You represent a genuine organization, event, or initiative.
               </p>
             </div>
 
@@ -104,7 +104,7 @@ export default function TermsOfServicePage() {
                 <Link href="/privacy" className="text-green-dark underline font-medium">Privacy Policy</Link>.
               </p>
               <p>
-                To be eligible to use SponFy, you must be at least 18 years old or an enrolled student acting with authorization from your academic institution, club, fest organizing committee, or student council.
+                To be eligible to use SponFy, you must be at least 18 years old or an enrolled student acting with authorization from your academic institution, organization or event committee.
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function TermsOfServicePage() {
               </p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>Send unsolicited bulk emails, deceptive claims, or phishing attempts.</li>
-                <li>Misrepresent your college, fest footfall, participant metrics, or institutional affiliation.</li>
+                <li>Misrepresent your event attendance, participant metrics, or institutional affiliation.</li>
                 <li>Contact recipients who have previously opted out, requested unsubscribe, or asked not to be contacted.</li>
                 <li>Attempt to reverse engineer, scrape at scale, or bypass rate limits on SponFy’s AI APIs or search services.</li>
                 <li>Promote illegal activities, hate speech, or defamatory statements in sponsor correspondence.</li>
@@ -162,7 +162,7 @@ export default function TermsOfServicePage() {
             <div className="text-sm text-text-dim space-y-3 leading-relaxed pl-10">
               <ul className="list-disc pl-5 space-y-2">
                 <li>
-                  <strong className="text-green-dark">Your Content:</strong> You retain full ownership of your fest brochures, decks, institution logos, custom pitch text, and organizer materials uploaded to SponFy.
+                  <strong className="text-green-dark">Your Content:</strong> You retain full ownership of your campaign brochures, decks, institution logos, custom pitch text, and organizer materials uploaded to SponFy.
                 </li>
                 <li>
                   <strong className="text-green-dark">SponFy Property:</strong> SponFy, our design tokens, branding, algorithm workflows, intelligence extractors, and software code remain the exclusive property of SponFy.
@@ -249,7 +249,7 @@ export default function TermsOfServicePage() {
         <div className="max-w-[840px] mx-auto p-8 rounded-3xl bg-green-dark text-butter-cream flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-1 text-center sm:text-left">
             <h4 className="display-font text-xl font-bold text-butter-cream">
-              Questions about festival sponsorships?
+              Questions about sponsorships?
             </h4>
             <p className="text-xs text-text-onDarkSub/80 max-w-md">
               Check our FAQ for deep dives on Gmail OAuth safety and ethical AI drafting.

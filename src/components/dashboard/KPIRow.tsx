@@ -144,7 +144,7 @@ export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
             }}
             className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-green-accent hover:text-green-dark hover:underline cursor-pointer"
           >
-            <span>✏️ Choose / Change Target Amount</span>
+            <span>Choose / Change Target Amount</span>
           </button>
         </div>
 
@@ -173,7 +173,7 @@ export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
                   Set Campaign Target Goal
                 </h3>
                 <p className="text-xs text-text-dim mt-0.5">
-                  Choose your expected sponsorship budget for this festival.
+                  Choose your expected sponsorship budget for this campaign.
                 </p>
               </div>
               <button

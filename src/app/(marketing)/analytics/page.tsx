@@ -4,7 +4,7 @@ import { BarChart3 } from "lucide-react";
 
 export const metadata = {
   title: "Funnel Analytics | SponFy",
-  description: "Track conversion rates, reply speeds, confirmed funds, and tier progress across your festival pipeline.",
+  description: "Track conversion rates, reply speeds, confirmed funds, and tier progress across your campaign pipeline.",
 };
 
 export default function AnalyticsPage() {

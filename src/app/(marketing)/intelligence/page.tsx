@@ -4,7 +4,7 @@ import { ShieldCheck, MessageSquare, MailCheck, UserCheck, CheckCircle2 } from "
 
 export const metadata = {
   title: "Reply Intelligence & Safety | SponFy",
-  description: "Human-in-the-loop approval gate and automated reply classification for student festival organizers.",
+  description: "Human-in-the-loop approval gate and automated reply classification for campaign and event organizers.",
 };
 
 export default function IntelligencePage() {
@@ -80,7 +80,7 @@ export default function IntelligencePage() {
               </p>
               <div className="text-xs font-semibold text-green-mid flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-accent" />
-                Never drops a warm lead in the festival chaos
+                Never drops a warm lead in the outreach chaos
               </div>
             </div>
 

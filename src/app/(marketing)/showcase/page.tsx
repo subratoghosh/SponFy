@@ -4,7 +4,7 @@ import { Target } from "lucide-react";
 
 export const metadata = {
   title: "Sponsor Showcase | SponFy",
-  description: "Explore real company dossiers prepared for college hackathons and cultural fests with live cited evidence.",
+  description: "Explore real company dossiers prepared for events and campaigns with live cited evidence.",
 };
 
 export default function ShowcasePage() {
@@ -56,7 +56,7 @@ export default function ShowcasePage() {
                 Historical Grant Patterns
               </h3>
               <p className="text-text-dim text-xs sm:text-sm leading-relaxed">
-                Analyzes previous campus festival sponsorships across India, verified grant sizes, and past tier selections.
+                Analyzes previous campaign sponsorships across India, verified grant sizes, and past tier selections.
               </p>
             </div>
 

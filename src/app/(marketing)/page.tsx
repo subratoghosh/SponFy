@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "SponFy — AI Sponsorship OS for College Fests & Hackathons",
+  title: "SponFy — AI Sponsorship Operating System for Campaigns & Events",
   description:
     "Find, research and win event sponsors with AI that asks before it sends. Built for student organizers and campus conveners across India.",
 };
@@ -75,7 +75,7 @@ export default function LandingPage() {
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <h2 className="heading-font text-3xl sm:text-4xl font-extrabold text-green-dark tracking-tight mb-3">
-              Everything student conveners need to fund their festival
+              Everything organizers need to fund their campaigns
             </h2>
             <p className="text-text-dim text-sm sm:text-base leading-relaxed">
               Dive into our dedicated platform modules to see how SponFy automates research, drafting, and reply tracking with institutional rigor.

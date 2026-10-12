@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata = {
   title: "Privacy Policy | SponFy",
-  description: "Learn how SponFy collects, uses, and safeguards data for college organizers, fest committees, and sponsor outreach.",
+  description: "Learn how SponFy collects, uses, and safeguards data for organizers, campaign teams, and sponsor outreach.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-text-dim text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            At SponFy, we are committed to transparent, secure, and privacy-respecting operations for college fests, hackathons, and student societies. Here is how your data is handled.
+            At SponFy, we are committed to transparent, secure, and privacy-respecting operations for campaigns, events, and organizations. Here is how your data is handled.
           </p>
           <div className="text-xs text-text-dim/80 pt-1 font-mono">
             Last Updated: <span className="font-semibold text-green-dark">{lastUpdated}</span>
@@ -83,7 +83,7 @@ export default function PrivacyPolicyPage() {
               </div>
               <h3 className="font-bold text-sm text-green-dark">Never Sold or Rented</h3>
               <p className="text-xs text-text-dim leading-relaxed">
-                Student contact lists, fest databases, and sponsor intelligence are never commercialized to third parties.
+                Contact lists, campaign databases, and sponsor intelligence are never commercialized to third parties.
               </p>
             </div>
           </div>
@@ -106,10 +106,10 @@ export default function PrivacyPolicyPage() {
               </p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>
-                  <strong className="text-green-dark">Account & Organizer Profile:</strong> Your name, official college email address, institution name, student fest or society title, and contact details.
+                  <strong className="text-green-dark">Account & Organizer Profile:</strong> Your name, official college email address, institution name, organization or campaign title, and contact details.
                 </li>
                 <li>
-                  <strong className="text-green-dark">Campaign & Pitch Inputs:</strong> Fest deliverables, expected attendee numbers, tier pricing (Title, Associate, Gift Partner), brochures, and custom value propositions.
+                  <strong className="text-green-dark">Campaign & Pitch Inputs:</strong> Campaign deliverables, expected attendee numbers, tier pricing (Title, Associate, Gift Partner), brochures, and custom value propositions.
                 </li>
                 <li>
                   <strong className="text-green-dark">Public Sponsor Intelligence:</strong> Corporate domain names, public brand press releases, job postings, CSR focus areas, and publicly accessible corporate contact information discovered via live web search.
@@ -132,7 +132,7 @@ export default function PrivacyPolicyPage() {
                 We use the information we process strictly for the following purposes:
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Providing automated research dossiers matching your college fest type with relevant corporate sponsors.</li>
+                <li>Providing automated research dossiers matching your campaign type with relevant corporate sponsors.</li>
                 <li>Drafting tailored sponsor proposals and value proposition emails for your review and approval.</li>
                 <li>Delivering approved messages through your connected Gmail account and parsing inbound responses for sponsorship status updates.</li>
                 <li>Maintaining audit trails and telemetry on your organizer campaign dashboard.</li>
@@ -255,7 +255,7 @@ export default function PrivacyPolicyPage() {
                   <strong className="text-green-dark">Right to Revoke:</strong> You can disconnect your Google OAuth credentials anytime directly from your dashboard or via Google Account Security settings.
                 </li>
                 <li>
-                  <strong className="text-green-dark">Right to Deletion:</strong> You may request complete erasure of your workspace, outreach logs, and account records upon fest conclusion.
+                  <strong className="text-green-dark">Right to Deletion:</strong> You may request complete erasure of your workspace, outreach logs, and account records upon campaign conclusion.
                 </li>
                 <li>
                   <strong className="text-green-dark">Right to Export:</strong> Download all generated company dossiers, verified contact emails, and response logs in standard formats.

@@ -72,7 +72,7 @@ export const AnalyticsPreview = async () => {
     Contacted: { label: "Contacted via Gmail", color: "bg-green-light" },
     Replied: { label: "Replied", color: "bg-sky-600" },
     Interested: { label: "Interested & Negotiating", color: "bg-amber-600" },
-    Committed: { label: "Committed Sponsors 🎉", color: "bg-green-600" },
+    Committed: { label: "Committed Sponsors", color: "bg-green-600" },
   };
 
   const rawFunnel = analyticsData?.funnel && analyticsData.funnel.length > 0
@@ -86,7 +86,7 @@ export const AnalyticsPreview = async () => {
         { stage: "Committed", count: summary?.committedCount ?? 0 },
       ];
 
-  const funnelStages = rawFunnel.map((f) => {
+  const funnelStages = rawFunnel.map((f: any) => {
     const meta = stageDisplayMap[f.stage] || { label: f.stage, color: "bg-green-dark" };
     const pct = Math.min(100, Math.round((f.count / totalBase) * 100));
     return {
@@ -154,7 +154,7 @@ export const AnalyticsPreview = async () => {
           </div>
 
           <div className="space-y-3">
-            {funnelStages.map((f, i) => (
+            {funnelStages.map((f: any, i: number) => (
               <div key={i} className="space-y-1 p-2 -mx-2 rounded-xl hover:bg-butter-warm/40 hover:scale-[1.01] transition-all cursor-pointer group/row">
                 <div className="flex justify-between text-xs font-bold text-green-dark group-hover/row:text-green-mid transition-colors">
                   <span>{f.stage}</span>

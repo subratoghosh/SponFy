@@ -126,7 +126,7 @@ export const WorkflowStory: React.FC = () => {
               {activeStep === 0 && (
                 <div className="space-y-4 text-xs animate-fade-in">
                   <div className="p-4 bg-butter-panel rounded-xl border border-green-dark/15 font-mono text-green-dark hover:border-green-dark/30 transition-colors">
-                    "Find cloud and developer-tool companies sponsoring student hackathons and campus tech fests"
+                    "Find cloud and developer-tool companies sponsoring hackathons and tech events"
                   </div>
                   <div className="space-y-2">
                     <div className="p-3 bg-green-50 rounded-lg flex items-center justify-between border border-green-200 hover:bg-green-100 hover:scale-[1.01] transition-all cursor-pointer">

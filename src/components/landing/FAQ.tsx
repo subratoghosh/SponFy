@@ -31,9 +31,9 @@ const faqs: FAQItem[] = [
       "Our Gemini reply classifier immediately flags the intent as 'Not Interested', stops all scheduled follow-ups, advances the stage to 'Lost', and automatically adds the contact/domain to your Suppression List to ensure they are never emailed again.",
   },
   {
-    question: "Can I use SponFy for cultural fests, sports meets, or student clubs?",
+    question: "Can I use SponFy for cultural events, sports meets, or organizations?",
     answer:
-      "Yes! SponFy is designed for all student event formats, including technical fests, hackathons, cultural festivals, sports tournaments, entrepreneurship summits, and campus student clubs.",
+      "Yes! SponFy is designed for all event formats, including tech conferences, hackathons, cultural events, sports tournaments, entrepreneurship summits, and organizations.",
   },
   {
     question: "Can I test SponFy without configuring any API keys?",

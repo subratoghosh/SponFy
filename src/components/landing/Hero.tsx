@@ -76,7 +76,7 @@ export const Hero: React.FC = () => {
 
         {/* Subline */}
         <p className="text-sm sm:text-base md:text-xl text-text-onDarkSub max-w-2xl font-normal leading-relaxed mb-8 sm:mb-10 px-2">
-          Built for student organizers, fest conveners, and club leads. SponFy finds high-fit companies, cites verified sources, drafts tailored pitches, and waits for your nod.
+          Built for organizers, campaign leaders, and team leads. SponFy finds high-fit companies, cites verified sources, drafts tailored pitches, and waits for your nod.
         </p>
 
         {/* Action CTAs */}

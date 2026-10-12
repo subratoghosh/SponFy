@@ -25,7 +25,7 @@ export default function FAQPage() {
                 STILL HAVE QUESTIONS?
               </div>
               <h3 className="display-font text-2xl sm:text-3xl font-bold text-green-dark mb-3">
-                Need a custom setup for your inter-college festival?
+                Need a custom setup for your organization or campaign?
               </h3>
               <p className="text-text-dim text-sm sm:text-base leading-relaxed">
                 Whether you run an 8,000-attendee cultural extravaganza or a 36-hour flagship hackathon, our campus advisors are ready to walk through your campaign setup.

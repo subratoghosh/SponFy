@@ -15,7 +15,7 @@ export const Footer: React.FC = () => {
               <SponfyBrand href="/" size="md" theme="dark" />
             </div>
             <p className="text-xs sm:text-sm text-text-onDarkSub/80 leading-relaxed">
-              The AI sponsorship operating system for college fests, hackathons, and student communities.
+              The AI sponsorship operating system for campaigns, conferences, and organizations.
             </p>
 
             {/* Social Media Links */}
@@ -134,7 +134,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/app" className="footer-link">
-                  Cultural & Tech Fests
+                  Conferences & Events
                 </Link>
               </li>
               <li>

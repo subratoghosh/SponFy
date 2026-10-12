@@ -25,7 +25,7 @@ export default function WorkflowPage() {
               Why student organizers raise 3x more with SponFy
             </h2>
             <p className="text-text-dim text-sm sm:text-base leading-relaxed">
-              Traditional fest sponsorship is messy spreadsheets, unverified contact emails, and awkward cold follow-ups. SponFy brings institutional rigor to student fests.
+              Traditional sponsorship is messy spreadsheets, unverified contact emails, and awkward cold follow-ups. SponFy brings institutional rigor to modern campaigns.
             </p>
           </div>
 
@@ -39,7 +39,7 @@ export default function WorkflowPage() {
                   Zero Cold Email Blank Pages
                 </h3>
                 <p className="text-text-dim text-sm leading-relaxed mb-6">
-                  SponFy cross-references your fest prospectus with real company CSR initiatives, student hiring goals, and developer relations programs to draft hyper-relevant pitches.
+                  SponFy cross-references your campaign prospectus with real company CSR initiatives, student hiring goals, and developer relations programs to draft hyper-relevant pitches.
                 </p>
               </div>
               <ul className="space-y-2 text-xs text-text-muted border-t border-green-dark/8 pt-4">
