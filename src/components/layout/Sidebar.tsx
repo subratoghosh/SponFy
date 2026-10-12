@@ -57,8 +57,8 @@ export const Sidebar: React.FC = () => {
     user?.email === "subratoghosh@gmail.com";
 
   return (
-    <aside className="hidden lg:flex w-64 bg-green-dark text-text-onDarkSub flex-col justify-between shrink-0 h-screen sticky top-0 border-r border-green-mid/40 selection:bg-butter-cream selection:text-green-dark">
-      <div>
+    <aside className="hidden lg:flex w-64 bg-green-dark text-text-onDarkSub flex-col justify-between shrink-0 h-screen sticky top-0 border-r border-green-mid/40 selection:bg-butter-cream selection:text-green-dark overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {/* Brand Header */}
         <div className="p-5 border-b border-green-mid/40 flex items-center justify-between">
           <SponfyBrand href="/" size="md" theme="dark" />
@@ -135,7 +135,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Bottom User Profile & Sign Out Bar */}
-      <div className="p-4 border-t border-green-mid/40 space-y-3">
+      <div className="p-4 border-t border-green-mid/40 space-y-3 shrink-0 bg-green-dark">
         {/* Safety Gate Indicator */}
         <div className="p-3 bg-green-deep/80 rounded-xl border border-green-mid/50 space-y-1.5">
           <div className="flex items-center justify-between">

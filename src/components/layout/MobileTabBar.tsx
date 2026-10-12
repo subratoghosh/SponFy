@@ -36,7 +36,7 @@ const MORE_APP_ITEMS = [
   { label: "Discover", href: "/app/discover", icon: Compass, desc: "Search and discover high-fit sponsors" },
   { label: "Follow-ups", href: "/app/followups", icon: Clock, desc: "Automated sequence reminders" },
   { label: "Analytics", href: "/app/analytics", icon: BarChart3, desc: "Campaign conversions & metrics" },
-  { label: "Settings", href: "/app/settings", icon: Settings, desc: "Gmail connection & fest preferences" },
+  { label: "Settings", href: "/app/settings", icon: Settings, desc: "Gmail connection & workspace preferences" },
   { label: "Admin Console", href: "/admin", icon: ShieldCheck, desc: "Platform governance & metrics" },
   { label: "Landing Home", href: "/", icon: Home, desc: "Back to marketing overview" },
 ];
@@ -114,7 +114,7 @@ export const MobileTabBar: React.FC = () => {
               <Link href="/app/campaigns?action=new" onClick={() => setMoreOpen(false)}>
                 <Button variant="butter" className="w-full justify-center text-sm font-extrabold shadow-md">
                   <Plus className="w-4 h-4 mr-1.5" />
-                  Create New Fest Campaign
+                  Create New Campaign
                 </Button>
               </Link>
             </div>

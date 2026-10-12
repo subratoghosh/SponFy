@@ -181,9 +181,8 @@ export const TopBar: React.FC = () => {
           </span>
         ) : (
           <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="hidden xs:inline">Live Workspace</span>
-            <span className="xs:hidden">Live</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+            <span>Workspace</span>
           </span>
         )}
 
