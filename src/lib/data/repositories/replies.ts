@@ -4,7 +4,7 @@ import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Direction, Intent } from "@prisma/client";
 import { memoryStore } from "@/lib/data/memory-store";
 
-const replyAnalysesStoreRef = memoryStore<ReplyAnalysis[]>("replyAnalyses", () => [...DEMO_REPLIES]);
+const replyAnalysesStoreRef = memoryStore<ReplyAnalysis[]>("replyAnalyses", () => process.env.NODE_ENV === "test" ? [...DEMO_REPLIES] : []);
 
 const INTENT_TO_DB: Record<string, Intent> = {
   Interested: "INTERESTED",
@@ -79,6 +79,21 @@ export async function getReplyAnalyses(companyId?: string): Promise<ReplyAnalysi
 }
 
 export async function getInboundThreads(): Promise<{ message: Message; analysis?: ReplyAnalysis }[]> {
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/replies");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Client fetch /api/replies failed:", e);
+    }
+    return [];
+  }
+
   if (isDatabaseConfigured()) {
     try {
       const messages = await prisma.message.findMany({
@@ -127,14 +142,18 @@ export async function getInboundThreads(): Promise<{ message: Message; analysis?
     }
   }
 
-  const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
-  return inbounds.map((msg) => {
-    const analysis = replyAnalysesStoreRef.value.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
-    return {
-      message: msg,
-      analysis,
-    };
-  });
+  if (process.env.NODE_ENV === "test") {
+    const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
+    return inbounds.map((msg) => {
+      const analysis = replyAnalysesStoreRef.value.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
+      return {
+        message: msg,
+        analysis,
+      };
+    });
+  }
+
+  return [];
 }
 
 export async function recordInboundReply(

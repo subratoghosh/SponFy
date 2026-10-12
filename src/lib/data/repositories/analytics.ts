@@ -5,6 +5,21 @@ import { getCampaigns, getCampaignById } from "./campaigns";
 import { PIPELINE_STAGES } from "@/lib/config/pipeline";
 
 export async function getAnalyticsData(campaignId?: string) {
+  if (typeof window !== "undefined") {
+    try {
+      const url = campaignId ? `/api/analytics?campaignId=${encodeURIComponent(campaignId)}` : "/api/analytics";
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Client fetch /api/analytics failed:", e);
+    }
+  }
+
   const [sponsors, drafts, replies, campaigns] = await Promise.all([
     getSponsors(campaignId),
     getDrafts(),

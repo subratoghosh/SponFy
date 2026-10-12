@@ -3,10 +3,25 @@ import { DEMO_CAMPAIGN } from "../seed-data";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { memoryStore } from "@/lib/data/memory-store";
 
-// In-memory store for demo mode sessions
-const campaignsStoreRef = memoryStore<Campaign[]>("campaigns", () => [DEMO_CAMPAIGN]);
+// In-memory store for empty states / fallback
+const campaignsStoreRef = memoryStore<Campaign[]>("campaigns", () => process.env.NODE_ENV === "test" ? [DEMO_CAMPAIGN] : []);
 
 export async function getCampaigns(): Promise<Campaign[]> {
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/campaigns");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Client fetch /api/campaigns failed:", e);
+    }
+    return [];
+  }
+
   if (isDatabaseConfigured()) {
     try {
       const records = await prisma.campaign.findMany({

@@ -5,7 +5,7 @@ import { Stage, ContactStatus, ResearchStatus } from "@prisma/client";
 import { findDuplicateCompany, DuplicateCompanyError } from "@/lib/outreach/duplicates";
 import { memoryStore } from "@/lib/data/memory-store";
 
-const sponsorsStoreRef = memoryStore<Company[]>("sponsors", () => [...DEMO_COMPANIES]);
+const sponsorsStoreRef = memoryStore<Company[]>("sponsors", () => process.env.NODE_ENV === "test" ? [...DEMO_COMPANIES] : []);
 
 const STAGE_MAP: Record<string, Stage> = {
   Discovered: "DISCOVERED",
@@ -50,6 +50,22 @@ const PIPELINE_STAGE_MAP: Record<string, PipelineStage> = {
 };
 
 export async function getSponsors(campaignId?: string): Promise<Company[]> {
+  if (typeof window !== "undefined") {
+    try {
+      const url = campaignId ? `/api/sponsors?campaignId=${encodeURIComponent(campaignId)}` : "/api/sponsors";
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Client fetch /api/sponsors failed:", e);
+    }
+    return [];
+  }
+
   if (isDatabaseConfigured()) {
     try {
       const companies = await prisma.company.findMany({
@@ -106,10 +122,14 @@ export async function getSponsors(campaignId?: string): Promise<Company[]> {
     }
   }
 
-  if (campaignId) {
-    return sponsorsStoreRef.value.filter((c) => c.campaignId === campaignId);
+  if (process.env.NODE_ENV === "test") {
+    if (campaignId) {
+      return sponsorsStoreRef.value.filter((c) => c.campaignId === campaignId);
+    }
+    return [...sponsorsStoreRef.value];
   }
-  return [...sponsorsStoreRef.value];
+
+  return [];
 }
 
 export async function getSponsorById(id: string): Promise<Company | null> {

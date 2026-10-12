@@ -12,8 +12,8 @@ import { getSponsors } from "./sponsors";
 import { getDrafts } from "./outreach";
 import { getReplyAnalyses } from "./replies";
 
-// In-memory demo store for fallback / local testing
-let inMemoryUsers: AdminUser[] = [
+// In-memory store for empty states / test fallback
+let inMemoryUsers: AdminUser[] = process.env.NODE_ENV === "test" ? [
   {
     id: "usr-admin-1",
     name: "Subrato Ghosh (Platform Lead)",
@@ -31,10 +31,10 @@ let inMemoryUsers: AdminUser[] = [
   {
     id: "usr-lead-2",
     name: "Aarav Sharma",
-    email: "aarav@iitd-fest.org",
+    email: "aarav@test-org.org",
     image: null,
-    orgName: "IIT Delhi Tryst 2026",
-    orgType: "College Tech Fest",
+    orgName: "Tech Event 2026",
+    orgType: "Conference",
     role: "USER",
     status: "ACTIVE",
     campaignsCount: 2,
@@ -42,51 +42,9 @@ let inMemoryUsers: AdminUser[] = [
     lastActiveAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
   },
-  {
-    id: "usr-lead-3",
-    name: "Pooja Varma",
-    email: "pooja@bits-waves.in",
-    image: null,
-    orgName: "BITS Goa Waves",
-    orgType: "Cultural Fest",
-    role: "USER",
-    status: "ACTIVE",
-    campaignsCount: 1,
-    emailsSentCount: 18,
-    lastActiveAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "usr-lead-4",
-    name: "Rohan Kulkarni",
-    email: "rohan@hacknitk.com",
-    image: null,
-    orgName: "NITK HackVerse",
-    orgType: "Student Hackathon",
-    role: "USER",
-    status: "ACTIVE",
-    campaignsCount: 2,
-    emailsSentCount: 27,
-    lastActiveAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "usr-lead-5",
-    name: "Meera Nair",
-    email: "meera@cet-dhwani.edu",
-    image: null,
-    orgName: "College of Engg Trivandrum",
-    orgType: "Cultural Fest",
-    role: "USER",
-    status: "SUSPENDED",
-    campaignsCount: 1,
-    emailsSentCount: 4,
-    lastActiveAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+] : [];
 
-let inMemoryAuditLogs: AuditLogEntry[] = [
+let inMemoryAuditLogs: AuditLogEntry[] = process.env.NODE_ENV === "test" ? [
   {
     id: "audit-1",
     adminId: "usr-admin-1",
@@ -94,22 +52,11 @@ let inMemoryAuditLogs: AuditLogEntry[] = [
     adminEmail: "admin@sponfy.dev",
     action: "user_suspended",
     targetType: "user",
-    targetId: "usr-lead-5",
-    details: { reason: "Inactivity and unverified campus domain policy review" },
+    targetId: "usr-lead-2",
+    details: { reason: "Policy review" },
     createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
   },
-  {
-    id: "audit-2",
-    adminId: "usr-admin-1",
-    adminName: "Subrato Ghosh",
-    adminEmail: "admin@sponfy.dev",
-    action: "role_changed",
-    targetType: "user",
-    targetId: "usr-admin-1",
-    details: { role: "ADMIN", reason: "Initial administrator designation" },
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+] : [];
 
 function getTimeBoundary(timeRange: string): Date {
   const now = new Date();
