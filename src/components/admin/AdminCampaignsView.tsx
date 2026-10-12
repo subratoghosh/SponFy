@@ -85,7 +85,7 @@ export function AdminCampaignsView({ initialCampaigns, adminUser }: Props) {
       <AdminHeader
         adminUser={adminUser}
         title="Campaign Administration"
-        subtitle="Platform-wide festival sponsorship campaigns, status oversight, and moderation."
+        subtitle="Platform-wide sponsorship campaigns, status oversight, and moderation."
       />
 
       <div className="p-6 max-w-7xl mx-auto space-y-6">

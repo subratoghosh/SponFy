@@ -254,7 +254,6 @@ export function AdminUsersView({ initialUsers, total, adminUser }: Props) {
               <thead className="bg-[#FAF4E6]/60 border-b border-[#0C382E]/10 text-neutral-500 font-bold uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">User / Organizer</th>
-                  <th className="py-3 px-4">Organization</th>
                   <th className="py-3 px-4">Role</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Campaigns</th>
@@ -266,7 +265,7 @@ export function AdminUsersView({ initialUsers, total, adminUser }: Props) {
               <tbody className="divide-y divide-neutral-100">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-neutral-400">
+                    <td colSpan={7} className="py-12 text-center text-neutral-400">
                       No user accounts found matching current query or filters.
                     </td>
                   </tr>
@@ -293,17 +292,6 @@ export function AdminUsersView({ initialUsers, total, adminUser }: Props) {
                             </div>
                           </div>
                         </div>
-                      </td>
-
-                      <td className="py-3 px-4 text-neutral-600">
-                        {user.orgName ? (
-                          <div>
-                            <div className="font-semibold text-neutral-800">{user.orgName}</div>
-                            <div className="text-[10px] text-neutral-400">{user.orgType || "Campus Fest"}</div>
-                          </div>
-                        ) : (
-                          <span className="text-neutral-400 italic">Not set</span>
-                        )}
                       </td>
 
                       <td className="py-3 px-4">

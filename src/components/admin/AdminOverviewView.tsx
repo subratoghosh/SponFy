@@ -118,7 +118,7 @@ export function AdminOverviewView({
     },
     {
       title: "Campaign Operations",
-      description: "Sponsorship campaigns organized by student fests and events.",
+      description: "Sponsorship campaigns organized across events and organizations.",
       cards: [
         {
           label: "Total Campaigns",
@@ -137,7 +137,7 @@ export function AdminOverviewView({
           label: "Archived / Concluded",
           value: metrics.completedCampaigns,
           icon: Archive,
-          hint: "Finished or historically archived festival campaigns",
+          hint: "Finished or historically archived campaigns",
         },
         {
           label: "Discovered Sponsors",
