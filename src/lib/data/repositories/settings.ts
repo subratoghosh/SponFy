@@ -3,29 +3,21 @@ import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { memoryStore } from "@/lib/data/memory-store";
 
 const profileStoreRef = memoryStore<UserProfile>("profile", () => ({
-  fullName: "SponFy Fest Lead",
-  organization: "SponFy Hackathon 2026",
-  email: "lead@sponfy.dev",
+  fullName: "",
+  organization: "",
+  email: "",
   avatarUrl: "",
-  title: "Head of Corporate Relations",
-  signature: "Best regards,\nOrganizing Team, SponFy Hackathon 2026",
+  title: "",
+  signature: "",
   dailySendLimit: 30,
 }));
 
 const gmailStatusStoreRef = memoryStore<GmailConnectionStatus>("gmailStatus", () => ({
   connected: false,
-  isMock: true,
+  isMock: false,
 }));
 
-const suppressionsStoreRef = memoryStore<SuppressionEntry[]>("suppressions", () => [
-  {
-    id: "sup-1",
-    email: "declined@algorand.foundation",
-    domain: "algorand.foundation",
-    reason: "not_interested",
-    createdAt: "2026-08-25T16:00:00Z",
-  },
-]);
+const suppressionsStoreRef = memoryStore<SuppressionEntry[]>("suppressions", () => []);
 
 export async function getUserProfile(): Promise<UserProfile> {
   if (isDatabaseConfigured()) {
@@ -37,8 +29,8 @@ export async function getUserProfile(): Promise<UserProfile> {
           organization: u.orgName || "",
           email: u.email || "",
           avatarUrl: u.image || "",
-          title: "Sponsorship Lead",
-          signature: u.name ? `Best regards,\n${u.name}` : "Best regards,\nSponsorship Lead",
+          title: "",
+          signature: u.name ? `Best regards,\n${u.name}` : "",
           dailySendLimit: u.dailySendCap || 30,
         };
       }

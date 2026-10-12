@@ -163,6 +163,7 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Full Name</label>
                     <Input
                       value={profile.fullName ?? ''}
+                      placeholder="e.g. Alex Morgan"
                       onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                       className="text-xs"
                     />
@@ -171,6 +172,7 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Organizer Title</label>
                     <Input
                       value={profile.title ?? ''}
+                      placeholder="e.g. Head of Sponsorships"
                       onChange={(e) => setProfile({ ...profile, title: e.target.value })}
                       className="text-xs"
                     />
@@ -182,6 +184,7 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Organization / College</label>
                     <Input
                       value={profile.organization ?? ''}
+                      placeholder="e.g. Stanford ACM, DevFest 2026"
                       onChange={(e) => setProfile({ ...profile, organization: e.target.value })}
                       className="text-xs"
                     />
@@ -190,8 +193,9 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Sender Email (Gmail connected)</label>
                     <Input
                       value={profile.email ?? ''}
-                      disabled
-                      className="text-xs bg-[#FAF4E6]/50 opacity-80"
+                      placeholder="connect your email in Gmail tab or enter email"
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      className="text-xs bg-[#FAF4E6]/50"
                     />
                   </div>
                 </div>
@@ -201,6 +205,7 @@ export function SettingsTabs() {
                   <Textarea
                     rows={4}
                     value={profile.signature ?? ''}
+                    placeholder="Enter your custom email closing, sign-off, and contact details..."
                     onChange={(e) => setProfile({ ...profile, signature: e.target.value })}
                     className="text-xs font-mono"
                   />
@@ -362,7 +367,7 @@ export function SettingsTabs() {
                   className="w-full accent-[#0C382E]"
                 />
                 <p className="text-[11px] text-[#0C382E]/60 mt-1">
-                  We recommend 25-40 emails/day for new college fest domains to avoid spam filters.
+                  We recommend 25-40 emails/day for new domains to avoid spam filters.
                 </p>
               </div>
 
