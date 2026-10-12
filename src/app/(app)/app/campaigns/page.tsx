@@ -22,12 +22,14 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CardSkeleton } from "@/components/skeletons/CardSkeleton";
 import { formatCurrencyINR } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 type StatusFilter = "all" | "active" | "archived";
 type ViewMode = "grid" | "table";
 
 export default function CampaignsPage() {
+  const { data: session } = useSession();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -39,13 +41,19 @@ export default function CampaignsPage() {
   const loadData = () => {
     setLoading(true);
     getCampaigns()
-      .then(setCampaigns)
+      .then((data) => {
+        const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
+        const cleanData = isDemo
+          ? data
+          : data.filter((c) => c.name !== "SponFy Hackathon 2026" && c.id !== "camp-demo-1");
+        setCampaigns(cleanData);
+      })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [session]);
 
   const eventTypes = useMemo(() => {
     const types = new Set(campaigns.map((c) => c.eventType).filter(Boolean));

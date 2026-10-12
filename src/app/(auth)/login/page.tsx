@@ -55,10 +55,11 @@ function LoginForm() {
     setLoading(true);
     try {
       if (typeof document !== "undefined") {
-        document.cookie = "sponfy-demo-session=true; path=/; max-age=86400; SameSite=Lax";
+        document.cookie = "sponfy-demo-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "sponfy-auth-session=true; path=/; max-age=86400; SameSite=Lax";
       }
       const res = await signIn("credentials", {
-        email,
+        email: email.trim().toLowerCase(),
         password,
         redirect: false,
       });
@@ -78,6 +79,9 @@ function LoginForm() {
     setErrorMsg(null);
     setSocialLoading(provider);
     try {
+      if (typeof document !== "undefined") {
+        document.cookie = "sponfy-demo-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      }
       await signIn(provider, { callbackUrl: "/app" });
     } catch {
       setErrorMsg(`Failed to connect with ${provider}. Please try email login.`);
@@ -85,17 +89,22 @@ function LoginForm() {
     }
   };
 
-  const handleDemoBypass = () => {
+  const handleDemoBypass = async () => {
     setLoading(true);
     if (typeof document !== "undefined") {
       document.cookie = "sponfy-demo-session=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "sponfy-auth-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
-    signIn("credentials", {
-      email: "demo@sponfy.dev",
-      password: "demo-password-123",
-      redirect: false,
-    }).catch(() => {});
-    window.location.href = "/app";
+    try {
+      await signIn("credentials", {
+        email: "demo@sponfy.dev",
+        password: "demo-password-123",
+        redirect: false,
+      });
+      window.location.href = "/app";
+    } catch {
+      window.location.href = "/app";
+    }
   };
 
   return (

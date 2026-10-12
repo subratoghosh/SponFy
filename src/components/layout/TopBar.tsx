@@ -33,14 +33,18 @@ export const TopBar: React.FC = () => {
 
   useEffect(() => {
     getCampaigns().then((data) => {
-      setCampaigns(data);
-      if (data.length > 0) {
-        setSelectedCampaign(data[0]);
+      const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
+      const cleanData = isDemo
+        ? data
+        : data.filter((c) => c.name !== "SponFy Hackathon 2026" && c.id !== "camp-demo-1");
+      setCampaigns(cleanData);
+      if (cleanData.length > 0) {
+        setSelectedCampaign(cleanData[0]);
       } else {
         setSelectedCampaign(null);
       }
     });
-  }, []);
+  }, [session]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -59,10 +63,11 @@ export const TopBar: React.FC = () => {
   const user = session?.user;
   const isDemo = !user || user.email === "demo@sponfy.dev";
   const isAdmin =
-    (user as any)?.role === "ADMIN" ||
-    user?.email === "admin@sponfy.dev" ||
-    user?.email === "subratog840@gmail.com" ||
-    user?.email === "subratoghosh@gmail.com";
+    !isDemo &&
+    ((user as any)?.role === "ADMIN" ||
+      user?.email === "admin@sponfy.dev" ||
+      user?.email === "subratog840@gmail.com" ||
+      user?.email === "subratoghosh@gmail.com");
   const displayName = user?.name || (isDemo ? "Demo Organizer" : "Event Organizer");
   const displayEmail = user?.email || (isDemo ? "demo@sponfy.dev" : "");
   const initials = displayName

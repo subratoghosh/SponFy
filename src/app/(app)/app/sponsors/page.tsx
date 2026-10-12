@@ -13,10 +13,12 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 
+import { useSession } from "next-auth/react";
 import { SponsorsKanbanSkeleton } from "@/components/skeletons/SponsorsKanbanSkeleton";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 export default function SponsorsPipelinePage() {
+  const { data: session } = useSession();
   const { toast } = useToast();
   const [sponsors, setSponsors] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,13 +31,19 @@ export default function SponsorsPipelinePage() {
   const loadSponsors = () => {
     setLoading(true);
     getSponsors()
-      .then(setSponsors)
+      .then((data) => {
+        const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
+        const cleanData = isDemo
+          ? data
+          : data.filter((s) => s.campaignId !== "camp-demo-1");
+        setSponsors(cleanData);
+      })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadSponsors();
-  }, []);
+  }, [session]);
 
   const handleStageChange = async (sponsorId: string, targetStage: PipelineStage) => {
     try {

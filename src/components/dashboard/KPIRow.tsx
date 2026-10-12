@@ -31,16 +31,23 @@ interface KPIRowProps {
 }
 
 export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
-  const [targetAmount, setTargetAmount] = React.useState<number>(() => {
-    if (typeof window !== "undefined") {
+  const [targetAmount, setTargetAmount] = React.useState<number>(
+    summary.targetAmount > 0 ? summary.targetAmount : 500000
+  );
+
+  React.useEffect(() => {
+    try {
       const saved = localStorage.getItem("sponfy_target_amount");
       if (saved) {
         const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed > 0) return parsed;
+        if (!isNaN(parsed) && parsed > 0) {
+          setTargetAmount(parsed);
+        }
       }
+    } catch {
+      // localStorage unavailable or blocked
     }
-    return summary.targetAmount > 0 ? summary.targetAmount : 500000;
-  });
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [customAmount, setCustomAmount] = React.useState<string>("");

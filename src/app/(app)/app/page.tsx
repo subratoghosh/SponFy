@@ -7,19 +7,55 @@ import { auth } from "@/lib/auth";
 
 export default async function OverviewPage() {
   const session = await auth();
-  const [analytics, campaigns] = await Promise.all([
+  const isDemoUser = session?.user?.email === "demo@sponfy.dev";
+
+  const [rawAnalytics, rawCampaigns] = await Promise.all([
     getAnalyticsData(),
     getCampaigns(),
   ]);
 
-  const isDemoUser = session?.user?.email === "demo@sponfy.dev";
-  const activeCampaign = campaigns[0] || null;
-  const campaignName = activeCampaign?.name || (isDemoUser ? "SponFy Hackathon 2026" : "Your Workspace");
+  // Remove preloaded demo campaign for real users
+  const userCampaigns = isDemoUser
+    ? rawCampaigns
+    : rawCampaigns.filter(
+        (c) => c.name !== "SponFy Hackathon 2026" && c.id !== "camp-demo-1"
+      );
+
+  const activeCampaign = userCampaigns[0] || null;
+  const campaignName = activeCampaign?.name || "Your Workspace";
+
+  // For real users without campaigns, start completely from zero
+  const analytics = isDemoUser
+    ? rawAnalytics
+    : userCampaigns.length === 0
+    ? {
+        funnel: [],
+        outreachTrends: [],
+        pipelineValueByStage: [],
+        industryStats: [],
+        followupLift: [],
+        intentDistribution: [],
+        summary: {
+          totalSponsors: 0,
+          qualifiedCount: 0,
+          sentEmails: 0,
+          repliesCount: 0,
+          overallReplyRate: 0,
+          positiveReplyRate: 0,
+          meetingCount: 0,
+          negotiationsCount: 0,
+          committedCount: 0,
+          committedAmount: 0,
+          pipelineAmount: 0,
+          targetAmount: activeCampaign?.targetAmount || 0,
+        },
+      }
+    : rawAnalytics;
 
   const demoInsights = [
     "Developer Tools and Cloud companies in your pipeline have an 82% positive reply rate — 2.4x higher than FMCG brands.",
     "Outreach pitches sent between 10:00 AM and 11:30 AM IST showed a 40% faster reply turnaround from DevRel managers.",
-    "Postman and Razorpay have active negotiations totaling ₹1.6 Lakhs; closing both achieves 52% of your ₹5,00,000 target.",
+    "Postman and Razorpay have active negotiations totaling ₹1.6 Lakhs; closing both achieves 52% of your target.",
   ];
 
   return (
@@ -28,7 +64,7 @@ export default async function OverviewPage() {
       campaignName={campaignName}
       activities={isDemoUser ? DEMO_ACTIVITIES : []}
       insights={isDemoUser ? demoInsights : []}
-      actionQueue={analytics.summary.totalSponsors > 0 ? undefined : []}
+      actionQueue={isDemoUser && analytics.summary.totalSponsors > 0 ? undefined : []}
     />
   );
 }
