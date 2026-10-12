@@ -38,6 +38,9 @@
 8. `toast()` - 18 edges
 9. `useToast()` - 18 edges
 10. `Campaign` - 18 edges
+11. `computeFitScore()` - 16 edges
+12. `ShowcaseCompany` - 14 edges
+13. `verifyAdminSession()` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Next.js 15, Prisma ORM & Neon Serverless Stack` --conceptually_related_to--> `SponFy Product & Architecture Specification`  [INFERRED]

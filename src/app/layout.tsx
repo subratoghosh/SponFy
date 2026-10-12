@@ -6,28 +6,28 @@ const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
   display: "swap",
-  weight: ["700", "800", "900"],
+  weight: ["800"],
 });
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
   display: "swap",
-  weight: ["500", "600", "700", "800"],
+  weight: ["700"],
 });
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600", "700"],
 });
 
 const space = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space",
   display: "swap",
-  weight: ["600", "700"],
+  weight: ["700"],
 });
 
 export const metadata: Metadata = {

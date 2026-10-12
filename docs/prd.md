@@ -89,6 +89,12 @@ Charts (each answers a question): Funnel (where do we lose sponsors?), Replies o
 ### 6.11 Settings
 Profile/org, Gmail connection, integration status (Connected / Not configured per service), send limits (daily cap default 30), follow-up defaults, suppression list, data export (JSON).
 
+### 6.12 Admin Console (/admin)
+Role-based routing (`role: ADMIN` vs `USER`). Admin access is verified server-side only via `ADMIN_EMAILS` environment variable. Non-admins requesting `/admin` receive a 404. Logged-in admins are redirected to `/admin` and never see `/app` shell. Platform overview shows aggregate metrics only (admins cannot read private campaigns or email content). All admin mutations are logged in `AdminLog`.
+
+### 6.13 Showcase Companies (Landing Page)
+Landing page showcase section is powered by `ShowcaseCompany` database model (name, websiteUrl, logoUrl with https requirement and initials avatar fallback, industry, shortDescription, sortOrder, isVisible, isPartner). Admin CRUD under `/admin/showcase` with Zod validation, order controls, visibility toggles, and instant cache revalidation. Truthfully labelled ("Types of companies sponsors approach").
+
 ## 7. Demo Mode (required)
 `NEXT_PUBLIC_DEMO_MODE=true` or missing credentials → mock adapters + seeded campaign "SponFy Hackathon 2026" (Hackathon, 800 students, Surat, target ₹5,00,000; Developer tools, Cloud, Fintech, SaaS, EdTech) with ~24 companies across all stages, ~12 sent emails, ~7 replies with analyses, 60 days of activity. "Demo data" badge visible. App must run with `npm run dev` and zero credentials (SQLite is NOT used; mock repositories serve data in-memory when `DATABASE_URL` is absent — see architecture.md).
 

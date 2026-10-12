@@ -52,9 +52,7 @@ export const Sidebar: React.FC = () => {
 
   const isAdmin =
     (user as any)?.role === "ADMIN" ||
-    user?.email === "admin@sponfy.dev" ||
-    user?.email === "subratog840@gmail.com" ||
-    user?.email === "subratoghosh@gmail.com";
+    user?.email === "admin@sponfy.dev";
 
   return (
     <aside className="hidden lg:flex w-64 bg-green-dark text-text-onDarkSub flex-col justify-between shrink-0 h-screen sticky top-0 border-r border-green-mid/40 selection:bg-butter-cream selection:text-green-dark overflow-hidden">

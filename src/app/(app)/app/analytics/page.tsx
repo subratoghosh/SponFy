@@ -2,14 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import { BarChart2, Download } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { getAnalyticsData } from '@/lib/data/repositories/analytics';
-import { AnalyticsCharts } from '@/components/analytics/AnalyticsCharts';
 import { KPIRow } from '@/components/dashboard/KPIRow';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { KPISkeleton } from '@/components/skeletons/KPISkeleton';
 import { ChartSkeleton } from '@/components/skeletons/ChartSkeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+
+const AnalyticsCharts = dynamic(
+  () => import('@/components/analytics/AnalyticsCharts').then((mod) => mod.AnalyticsCharts),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-6">
+        <ChartSkeleton />
+        <ChartSkeleton />
+      </div>
+    ),
+  }
+);
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);

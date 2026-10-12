@@ -3,9 +3,10 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import {
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Building2,
   Lock,
@@ -32,11 +33,33 @@ function LoginForm() {
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const authError = searchParams.get("error");
+
   useEffect(() => {
     if (initialEmail && !email) {
       setEmail(initialEmail);
     }
   }, [initialEmail, email]);
+
+  useEffect(() => {
+    if (authError) {
+      switch (authError) {
+        case "Configuration":
+        case "OAuthCallbackError":
+        case "InvalidCheck":
+          setErrorMsg("Sign-in session expired or cookie check failed. Please click 'Google Account' again to retry.");
+          break;
+        case "OAuthAccountNotLinked":
+          setErrorMsg("An account with this email already exists using another sign-in method.");
+          break;
+        case "AccessDenied":
+          setErrorMsg("Access was denied. Please ensure your account has permission.");
+          break;
+        default:
+          setErrorMsg("Authentication could not be completed. Please try again.");
+      }
+    }
+  }, [authError]);
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +104,7 @@ function LoginForm() {
     try {
       if (typeof document !== "undefined") {
         document.cookie = "sponfy-demo-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "sponfy-auth-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
       await signIn(provider, { callbackUrl: "/app" });
     } catch {
@@ -109,6 +133,18 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen bg-butter-bg flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 text-green-dark selection:bg-butter-cream">
+      {/* Back to Home Button */}
+      <div className="w-full max-w-md mb-4 flex items-center justify-start">
+        <Link
+          href="/"
+          aria-label="Back to home"
+          className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-green-dark bg-white border border-green-dark/15 hover:bg-butter-cream hover:border-green-dark/30 shadow-xs hover:shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-dark/20"
+        >
+          <ArrowLeft className="w-4 h-4 text-green-dark shrink-0" />
+          <span>Back to home</span>
+        </Link>
+      </div>
+
       {/* Centered Single Column Auth Card */}
       <div className="w-full max-w-md bg-white rounded-3xl border border-green-dark/15 shadow-2xl overflow-hidden flex flex-col p-8 sm:p-10 space-y-6">
         {/* Brand Logo Centered */}

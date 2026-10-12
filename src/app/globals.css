@@ -198,15 +198,37 @@ body {
 }
 
 /* Shimmer Skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(12, 56, 46, 0.05) 0%,
-    rgba(255, 240, 179, 0.45) 50%,
-    rgba(12, 56, 46, 0.05) 100%
+    rgba(12, 56, 46, 0.04) 0%,
+    rgba(255, 240, 179, 0.55) 50%,
+    rgba(12, 56, 46, 0.04) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.8s infinite linear;
+  animation: shimmer 2s infinite ease-in-out;
+}
+
+.skeleton-stagger-1 { animation-delay: 0.12s; }
+.skeleton-stagger-2 { animation-delay: 0.24s; }
+.skeleton-stagger-3 { animation-delay: 0.36s; }
+.skeleton-stagger-4 { animation-delay: 0.48s; }
+.skeleton-stagger-5 { animation-delay: 0.60s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none !important;
+    background: rgba(12, 56, 46, 0.06) !important;
+  }
 }
 
 /* Subtle Organic Blob Animation */

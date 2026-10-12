@@ -1,14 +1,19 @@
 import React from "react";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { getAdminEmails } from "@/lib/admin/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { ToastProvider } from "@/components/ui/toast";
 
-export default function AppLayout({
+export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+
   return (
     <ToastProvider>
       <div className="flex min-h-screen bg-butter-bg text-text-main">

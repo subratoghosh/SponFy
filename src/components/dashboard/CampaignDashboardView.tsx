@@ -47,9 +47,9 @@ export function CampaignDashboardView({
 
   const tabs: { id: TabType; label: string; icon: any; count?: number }[] = [
     { id: "all", label: "Overview", icon: LayoutDashboard },
-    { id: "queue", label: "Action Queue", icon: CheckSquare, count: 3 },
+    { id: "queue", label: "Action Queue", icon: CheckSquare, count: actionQueue ? actionQueue.length : 0 },
     { id: "pipeline", label: "Pipeline & Stages", icon: BarChart3 },
-    { id: "insights", label: "Live Intel & Feed", icon: Activity, count: insights.length },
+    { id: "insights", label: "Live Intel & Feed", icon: Activity, count: activities ? activities.length : 0 },
   ];
 
   return (
@@ -128,7 +128,7 @@ export function CampaignDashboardView({
               >
                 <Icon className={cn("w-4 h-4", isActive ? "text-butter-cream" : "text-text-muted")} />
                 <span>{tab.label}</span>
-                {tab.count !== undefined && (
+                {tab.count !== undefined && tab.count > 0 && (
                   <span
                     className={cn(
                       "px-1.5 py-0.2 rounded-full text-[10px] font-black",

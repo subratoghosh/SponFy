@@ -65,9 +65,7 @@ export const TopBar: React.FC = () => {
   const isAdmin =
     !isDemo &&
     ((user as any)?.role === "ADMIN" ||
-      user?.email === "admin@sponfy.dev" ||
-      user?.email === "subratog840@gmail.com" ||
-      user?.email === "subratoghosh@gmail.com");
+      user?.email === "admin@sponfy.dev");
   const displayName = user?.name || (isDemo ? "Demo Organizer" : "Event Organizer");
   const displayEmail = user?.email || (isDemo ? "demo@sponfy.dev" : "");
   const initials = displayName
@@ -278,7 +276,7 @@ export const TopBar: React.FC = () => {
                 {!isDemo && (
                   <div className="px-3 py-1.5 flex items-center gap-2 text-[11px] text-emerald-800 font-medium">
                     <Database className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>PostgreSQL Database Active</span>
+                    <span>Your data is stored securely</span>
                   </div>
                 )}
               </div>

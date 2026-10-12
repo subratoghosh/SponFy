@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import {
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Lock,
   Mail,
@@ -82,6 +83,18 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-butter-bg flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 text-green-dark selection:bg-butter-cream">
+      {/* Back to Home Button */}
+      <div className="w-full max-w-5xl mb-4 flex items-center justify-start">
+        <Link
+          href="/"
+          aria-label="Back to home"
+          className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-green-dark bg-white border border-green-dark/15 hover:bg-butter-cream hover:border-green-dark/30 shadow-xs hover:shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-dark/20"
+        >
+          <ArrowLeft className="w-4 h-4 text-green-dark shrink-0" />
+          <span>Back to home</span>
+        </Link>
+      </div>
+
       {/* Landscape Container Card */}
       <div className="w-full max-w-5xl bg-white rounded-3xl border border-green-dark/15 shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[620px]">
         {/* Left Side: Brand Narrative & Campaign Highlights (Landscape Accent Pane) */}

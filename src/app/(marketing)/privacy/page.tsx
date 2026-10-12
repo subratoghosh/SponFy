@@ -220,7 +220,7 @@ export default function PrivacyPolicyPage() {
                   </thead>
                   <tbody className="divide-y divide-green-dark/10 bg-white">
                     <tr>
-                      <td className="p-3 font-medium text-green-dark">Neon PostgreSQL</td>
+                      <td className="p-3 font-medium text-green-dark">Encrypted Cloud Database</td>
                       <td className="p-3">Serverless Database</td>
                       <td className="p-3">Encrypted account data & telemetry</td>
                     </tr>

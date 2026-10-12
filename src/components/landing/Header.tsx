@@ -14,7 +14,6 @@ const NAV_ITEMS = [
   { name: "Workflow", href: "/workflow" },
   { name: "Showcase", href: "/showcase" },
   { name: "Intelligence", href: "/intelligence" },
-  { name: "Analytics", href: "/analytics" },
   { name: "FAQ", href: "/faq" },
 ];
 

@@ -19,10 +19,17 @@ const gmailStatusStoreRef = memoryStore<GmailConnectionStatus>("gmailStatus", ()
 
 const suppressionsStoreRef = memoryStore<SuppressionEntry[]>("suppressions", () => []);
 
-export async function getUserProfile(): Promise<UserProfile> {
-  if (isDatabaseConfigured()) {
+export async function getUserProfile(userIdOrEmail?: string): Promise<UserProfile> {
+  if (isDatabaseConfigured() && userIdOrEmail) {
     try {
-      const u = await prisma.user.findFirst();
+      const u = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: userIdOrEmail },
+            { email: userIdOrEmail.toLowerCase().trim() },
+          ],
+        },
+      });
       if (u) {
         return {
           fullName: u.name || "",
@@ -42,10 +49,17 @@ export async function getUserProfile(): Promise<UserProfile> {
   return { ...profileStoreRef.value };
 }
 
-export async function updateUserProfile(updates: Partial<UserProfile>): Promise<UserProfile> {
-  if (isDatabaseConfigured()) {
+export async function updateUserProfile(updates: Partial<UserProfile>, userIdOrEmail?: string): Promise<UserProfile> {
+  if (isDatabaseConfigured() && userIdOrEmail) {
     try {
-      const u = await prisma.user.findFirst();
+      const u = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: userIdOrEmail },
+            { email: userIdOrEmail.toLowerCase().trim() },
+          ],
+        },
+      });
       if (u) {
         await prisma.user.update({
           where: { id: u.id },

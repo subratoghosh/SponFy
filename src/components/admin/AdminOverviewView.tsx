@@ -453,7 +453,7 @@ export function AdminOverviewView({
                     Platform Governance & RLS
                   </h3>
                   <p className="text-xs text-neutral-600 leading-relaxed">
-                    All tenant boundaries enforced at database level via Postgres Row Level Security. Administrative actions are verified server-side with zero client-side credential exposure.
+                    All tenant boundaries enforced at database level via strict tenant data isolation. Administrative actions are verified server-side with zero client-side credential exposure.
                   </p>
 
                   <div className="p-3 bg-[#FAF4E6] rounded-xl border border-[#0C382E]/10 space-y-2 text-xs">

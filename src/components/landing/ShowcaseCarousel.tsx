@@ -7,159 +7,172 @@ import {
   ChevronRight,
   TrendingUp,
   UserCheck,
-  CheckCircle2,
   ArrowRight,
+  CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { ShowcaseCompany } from "@/types";
 
-export const ShowcaseCarousel: React.FC = () => {
+interface ShowcaseCarouselProps {
+  companies?: ShowcaseCompany[];
+}
+
+export const ShowcaseCarousel: React.FC<ShowcaseCarouselProps> = ({ companies = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const showcaseSponsors = [
-    {
-      name: "Acme Cloud",
-      industry: "Developer Tools",
-      description: "API and cloud platform with active student developer grants and workshops.",
-      fitScore: 94,
-      targetTier: "Gold Tier",
-      angle: "Cloud API Challenge Track + campus student ambassador onboarding.",
-      contact: "Campus DevRel Lead",
-      signals: ["API Hackathon Fund", "Campus DevRel Team"],
-    },
-    {
-      name: "Nimbus APIs",
-      industry: "Developer Platform",
-      description: "Developer tooling ecosystem and community platform supporting student builders.",
-      fitScore: 98,
-      targetTier: "Title Partner",
-      angle: "Official hackathon challenge platform + grant prize pool partner.",
-      contact: "Community Program Manager",
-      signals: ["Active Campus Grants", "Developer Bounties"],
-    },
-    {
-      name: "Orbit Payments",
-      industry: "Fintech & Payments",
-      description: "Full-stack payment infrastructure with startup and campus hackathon grants.",
-      fitScore: 88,
-      targetTier: "Gold Tier",
-      angle: "Fintech & Payment Gateway Innovation Challenge + jury seat.",
-      contact: "Campus Outreach Lead",
-      signals: ["Innovation Sandbox", "Fintech Track"],
-    },
-    {
-      name: "DevStack Labs",
-      industry: "Developer Tools",
-      description: "Developer platform empowering student builders with cloud packs and tools.",
-      fitScore: 96,
-      targetTier: "Title Partner",
-      angle: "AI developer challenge track + merchandise perks for participants.",
-      contact: "Education Program Lead",
-      signals: ["Student Developer Pack", "Event Swag Kit"],
-    },
-    {
-      name: "Vortex Data",
-      industry: "Cloud & Data",
-      description: "Database and cloud analytics platform offering student developer tier benefits.",
-      fitScore: 91,
-      targetTier: "Silver Tier",
-      angle: "Vector database challenge track with category prize bounty.",
-      contact: "DevRel Coordinator",
-      signals: ["Database Developer Grant", "Campus Partner"],
-    },
-  ];
+  if (!companies || companies.length === 0) {
+    return (
+      <section id="showcase" className="py-20 bg-butter-bg border-b border-green-dark/10">
+        <div className="max-w-[1240px] mx-auto px-6 text-center">
+          <span className="text-xs font-bold uppercase tracking-widest text-text-muted bg-butter-warm px-3.5 py-1.5 rounded-full border border-green-dark/10">
+            Sponsor Showcase
+          </span>
+          <h2 className="heading-font text-2xl sm:text-3xl font-extrabold text-green-dark mt-3 mb-2">
+            Types of companies organizers approach
+          </h2>
+          <p className="text-xs sm:text-sm text-text-dim max-w-md mx-auto">
+            No showcase entries currently configured. Add entries via the Admin Console.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? showcaseSponsors.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? companies.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === showcaseSponsors.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === companies.length - 1 ? 0 : prev + 1));
   };
+
+  // Visible window of 3 items (or fewer if total is less than 3)
+  const visibleCount = Math.min(3, companies.length);
+  const displayItems = Array.from({ length: visibleCount }).map((_, offset) => {
+    return companies[(currentIndex + offset) % companies.length];
+  });
 
   return (
     <section id="showcase" className="py-24 bg-butter-bg border-b border-green-dark/10">
       <div className="max-w-[1240px] mx-auto px-6">
-        {/* Header with Navigation Buttons */}
+        {/* Header with Navigation Controls */}
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-text-muted bg-butter-warm px-3.5 py-1.5 rounded-full border border-green-dark/10">
-              Example Sponsor Showcase
+              Types of companies sponsors approach
             </span>
             <h2 className="heading-font text-3xl sm:text-4xl font-extrabold text-green-dark mt-3">
               Curated Sponsor Intelligence Dossiers
             </h2>
             <p className="text-sm text-text-dim mt-1">
-              Every company is scored across 7 factors with cited sources and personalized pitch angles.
+              Curated profiles illustrating developer, cloud, and collegiate sponsorship capacity.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrev}
-              aria-label="Previous showcase sponsor"
-              className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-110 hover:border-green-dark/30 hover:shadow-md active:scale-95 transition-all duration-200"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleNext}
-              aria-label="Next showcase sponsor"
-              className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-110 hover:border-green-dark/30 hover:shadow-md active:scale-95 transition-all duration-200"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+          {companies.length > 3 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label="Previous showcase sponsor"
+                className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-2xs"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                aria-label="Next showcase sponsor"
+                className="w-11 h-11 rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-2xs"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Showcase Grid of White Rounded Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[0, 1, 2].map((offset) => {
-            const item = showcaseSponsors[(currentIndex + offset) % showcaseSponsors.length];
+        {/* Showcase Grid of Rounded Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayItems.map((item) => {
+            const initials = item.name
+              .split(" ")
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2);
+
             return (
               <div
-                key={item.name}
-                className="bg-white rounded-2xl p-6 border border-green-dark/12 shadow-sm feature-card-interactive flex flex-col justify-between group/card"
+                key={item.id}
+                className="bg-white rounded-2xl p-6 border border-green-dark/12 shadow-sm feature-card-interactive flex flex-col justify-between group/card h-full min-w-0"
               >
                 <div>
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-butter-warm flex items-center justify-center text-green-dark border border-green-dark/10 group-hover/card:scale-110 group-hover/card:rotate-6 group-hover/card:bg-butter-gold group-hover/card:shadow-[0_0_14px_rgba(254,231,144,0.6)] transition-all duration-300">
-                      <Building2 className="w-6 h-6" />
+                  <div className="flex items-start justify-between mb-4 gap-2">
+                    {/* Safe Logo with initials fallback */}
+                    <div className="w-12 h-12 rounded-xl bg-butter-warm flex items-center justify-center text-green-dark font-black text-sm border border-green-dark/10 group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-300 shrink-0">
+                      {item.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.logoUrl}
+                          alt={`${item.name} logo`}
+                          className="w-10 h-10 object-contain rounded-lg"
+                        />
+                      ) : (
+                        <span>{initials}</span>
+                      )}
                     </div>
+
                     <div className="text-right">
-                      <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 border border-green-300 hover:scale-105 hover:bg-green-200 transition-all cursor-default">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        {item.fitScore}% Fit
-                      </span>
+                      {item.isPartner ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                          Confirmed Partner
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-butter-warm text-green-dark/80 border border-green-dark/10" title="Representative candidate company profile">
+                          Industry Candidate
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <h3 className="font-heading font-extrabold text-xl text-green-dark mb-1 group-hover/card:text-green-mid transition-colors">
+                  <h3 className="font-heading font-extrabold text-xl text-green-dark mb-1 group-hover/card:text-green-mid transition-colors truncate">
                     {item.name}
                   </h3>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-green-accent mb-2">
+                    {item.industry}
+                  </div>
                   <p className="text-xs text-text-dim mb-4 leading-relaxed line-clamp-2">
-                    {item.description}
+                    {item.shortDescription}
                   </p>
 
-                  <div className="p-3.5 bg-butter-panel rounded-xl text-xs space-y-2 border border-green-dark/8 mb-4 hover:border-green-dark/20 transition-colors">
-                    <div>
-                      <span className="font-bold text-green-dark block mb-0.5">Target Tier:</span>
-                      <span className="font-mono text-green-800 font-bold">{item.targetTier}</span>
+                  <div className="p-3.5 bg-butter-panel rounded-xl text-xs space-y-1.5 border border-green-dark/8 mb-4">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-green-dark">Official Domain:</span>
+                      <a
+                        href={item.websiteUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-green-accent font-semibold flex items-center gap-1 hover:underline truncate max-w-[160px]"
+                      >
+                        <span className="truncate">{item.websiteUrl.replace(/^https?:\/\//, "")}</span>
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
                     </div>
-                    <div>
-                      <span className="font-bold text-green-dark block mb-0.5">Recommended Pitch Angle:</span>
-                      <span className="text-text-dim leading-snug">{item.angle}</span>
+                    <div className="text-[10px] text-text-muted italic pt-1 border-t border-green-dark/5">
+                      Sample score for the demo campaign: 88–98% Fit
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-green-dark/10 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-text-dim">
-                    <UserCheck className="w-4 h-4 text-green-600" />
-                    <span className="truncate max-w-[140px]">{item.contact}</span>
+                <div className="pt-4 border-t border-green-dark/10 flex items-center justify-between text-xs gap-2 min-w-0">
+                  <div className="flex items-center gap-1.5 text-text-dim min-w-0 flex-1">
+                    <UserCheck className="w-4 h-4 text-green-600 shrink-0" />
+                    <span className="truncate text-xs">Public DevRel / Campus Leads</span>
                   </div>
-                  <Link href="/app/sponsors">
-                    <span className="font-bold text-green-dark group-hover/card:text-green-mid inline-flex items-center gap-1 transition-colors">
+                  <Link href="/login" className="shrink-0">
+                    <span className="font-bold text-green-dark group-hover/card:text-green-mid inline-flex items-center gap-1 transition-colors whitespace-nowrap">
                       View Dossier <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/card:translate-x-1" />
                     </span>
                   </Link>

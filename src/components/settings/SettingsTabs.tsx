@@ -21,9 +21,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/toast';
+import { useSession } from 'next-auth/react';
 import { settingsRepository } from '@/lib/data/repositories/settings';
 
 export function SettingsTabs() {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<'profile' | 'gmail' | 'limits' | 'suppression' | 'data'>('profile');
   const [profile, setProfile] = useState<any>(null);
   const [suppressionList, setSuppressionList] = useState<any[]>([]);
@@ -48,10 +50,15 @@ export function SettingsTabs() {
         toast(`Connection failed: ${urlParams.get('error')}`, 'error');
       }
     }
-  }, []);
+  }, [session]);
 
   const loadSettings = async () => {
-    const p = await settingsRepository.getProfile();
+    const userIdentifier = session?.user?.id || session?.user?.email;
+    const p = await settingsRepository.getProfile(userIdentifier || undefined);
+    if (session?.user) {
+      if (!p.fullName && session.user.name) p.fullName = session.user.name;
+      if (!p.email && session.user.email) p.email = session.user.email;
+    }
     setProfile(p);
     const supp = await settingsRepository.getSuppressionList();
     setSuppressionList(supp);
@@ -87,7 +94,8 @@ export function SettingsTabs() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
-    await settingsRepository.updateProfile(profile);
+    const userIdentifier = session?.user?.id || session?.user?.email;
+    await settingsRepository.updateProfile(profile, userIdentifier || undefined);
     toast('Profile & signature updated successfully!', 'success');
   };
 

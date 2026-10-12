@@ -240,27 +240,28 @@ export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
         </div>
       )}
 
-      {/* 6 KPI Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {kpiItems.map((item, idx) => (
           <div
             key={idx}
-            className={`p-4 rounded-2xl border shadow-sm transition-all hover:translate-y-[-2px] ${
+            className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 hover:-translate-y-1 hover:shadow-hover flex flex-col justify-between min-w-0 h-full ${
               item.highlight
-                ? "bg-butter-panel border-green-mid/40 ring-2 ring-butter-gold/50"
-                : "bg-white border-green-dark/10"
+                ? "bg-butter-panel border-green-dark/20 shadow-sm"
+                : "bg-white border-green-dark/10 shadow-xs"
             }`}
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
-                {item.label}
-              </span>
-              <item.icon className="w-4 h-4 text-green-dark opacity-75" />
+            <div>
+              <div className="flex items-start justify-between gap-1 mb-2 min-w-0">
+                <span className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider leading-tight line-clamp-1">
+                  {item.label}
+                </span>
+                <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-dark opacity-75 shrink-0 mt-0.5" />
+              </div>
+              <p className="stat-font text-base sm:text-xl lg:text-2xl font-black text-green-dark mb-0.5 truncate tracking-tight">
+                {item.value}
+              </p>
             </div>
-            <p className="stat-font text-xl sm:text-2xl font-black text-green-dark mb-0.5">
-              {item.value}
-            </p>
-            <p className="text-[11px] text-text-dim truncate font-medium">
+            <p className="text-[10px] sm:text-[11px] text-text-dim truncate font-medium pt-1 border-t border-green-dark/5 mt-1">
               {item.subtext}
             </p>
           </div>

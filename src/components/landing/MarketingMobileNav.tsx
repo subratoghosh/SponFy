@@ -24,11 +24,10 @@ const PRIMARY_TABS = [
   { label: "Home", href: "/", icon: Home },
   { label: "Workflow", href: "/workflow", icon: GitBranch },
   { label: "Showcase", href: "/showcase", icon: Layers },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { label: "Intelligence", href: "/intelligence", icon: Activity },
 ];
 
 const MORE_LINKS = [
-  { label: "Reply Intelligence", href: "/intelligence", icon: Activity, desc: "Sentiment analysis & AI drafts" },
   { label: "Knowledge Base & FAQ", href: "/faq", icon: HelpCircle, desc: "Safety, Gmail OAuth & answers" },
   { label: "Privacy Policy", href: "/privacy", icon: ShieldCheck, desc: "Data protection & zero LLM training" },
   { label: "Terms of Service", href: "/terms", icon: FileText, desc: "Organizer rules & anti-spam policy" },

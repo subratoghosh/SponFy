@@ -36,7 +36,11 @@ export function getGmailClient(tokens?: any, redirectUriOverride?: string): IGma
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const defaultRedirect = `${baseUrl}/api/integrations/gmail/callback`;
-  const redirectUri = redirectUriOverride || process.env.GMAIL_REDIRECT_URI || defaultRedirect;
+  const redirectUri =
+    redirectUriOverride ||
+    process.env.GOOGLE_GMAIL_REDIRECT_URI ||
+    process.env.GMAIL_REDIRECT_URI ||
+    defaultRedirect;
 
   if (
     clientId &&
@@ -97,10 +101,10 @@ export function getIntegrationStatus(): IntegrationHealth[] {
       lastChecked: new Date().toISOString(),
     },
     {
-      name: "PostgreSQL & Prisma ORM (Neon DB)",
-      service: "neon",
+      name: "Cloud Database Storage",
+      service: "database" as any,
       isConfigured: dbConfigured,
-      statusText: dbConfigured ? "Connected (Neon Serverless)" : "In-Memory Demo Store",
+      statusText: dbConfigured ? "Connected (Secure Cloud Storage)" : "In-Memory Demo Store",
       lastChecked: new Date().toISOString(),
     },
   ];

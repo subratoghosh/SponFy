@@ -408,3 +408,27 @@ export interface AdminAnalyticsData {
   topCampaigns: { id: string; name: string; ownerName: string; sponsorsCount: number; committedAmount: number; status: string }[];
 }
 
+export interface ShowcaseCompany {
+  id: string;
+  name: string;
+  websiteUrl: string;
+  logoUrl?: string | null;
+  industry: string;
+  shortDescription: string;
+  sortOrder: number;
+  isVisible: boolean;
+  isPartner?: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface AdminLogEntry {
+  id: string;
+  adminEmail: string;
+  action: string;
+  targetType: string;
+  targetId?: string | null;
+  details?: any;
+  createdAt: string | Date;
+}
+

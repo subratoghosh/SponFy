@@ -1,5 +1,6 @@
 import React from "react";
 import { ShowcaseCarousel } from "@/components/landing/ShowcaseCarousel";
+import { getVisibleShowcaseCompanies } from "@/lib/data/repositories/showcase";
 import { Target } from "lucide-react";
 
 export const metadata = {
@@ -7,11 +8,13 @@ export const metadata = {
   description: "Explore real company dossiers prepared for events and campaigns with live cited evidence.",
 };
 
-export default function ShowcasePage() {
+export default async function ShowcasePage() {
+  const companies = await getVisibleShowcaseCompanies();
+
   return (
     <div className="flex flex-col pt-16 md:pt-20">
       {/* Showcase Carousel Component */}
-      <ShowcaseCarousel />
+      <ShowcaseCarousel companies={companies} />
 
       {/* Anatomy of a SponFy Fit Score */}
       <section className="py-20 bg-butter-bg border-t border-green-dark/10">

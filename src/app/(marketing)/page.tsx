@@ -44,14 +44,6 @@ const FEATURE_MODULES = [
       "Classifies incoming brand replies by intent and objections while guaranteeing zero emails leave without explicit organizer approval.",
   },
   {
-    title: "Funnel Analytics",
-    href: "/analytics",
-    icon: BarChart3,
-    tag: "Realtime Telemetry",
-    description:
-      "Track conversion rates, reply speeds, tier progress, and fund realization metrics against collegiate sponsorship benchmarks.",
-  },
-  {
     title: "Knowledge Base & FAQ",
     href: "/faq",
     icon: HelpCircle,

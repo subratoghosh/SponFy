@@ -6,19 +6,17 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart3,
-  Users,
-  FolderKanban,
-  ShieldAlert,
+  Building2,
+  Settings,
   ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ADMIN_MOBILE_TABS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "Showcase", href: "/admin/showcase", icon: Building2 },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Campaigns", href: "/admin/campaigns", icon: FolderKanban },
-  { label: "Audit", href: "/admin/activity", icon: ShieldAlert },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export const AdminMobileTabBar: React.FC = () => {

@@ -24,6 +24,7 @@ datasource db {
 // NOTE: if the installed Prisma major version moves datasource URLs to prisma.config.ts
 // or requires a driver adapter for Neon, follow that version's official docs instead.
 
+enum UserRole { USER ADMIN }
 enum Stage { DISCOVERED RESEARCHED QUALIFIED CONTACT_FOUND DRAFT_READY APPROVED CONTACTED REPLIED INTERESTED NEGOTIATION COMMITTED LOST }
 enum ContactStatus { VERIFIED PUBLIC NEEDS_VERIFICATION UNKNOWN }
 enum DraftStatus { DRAFT APPROVED SENDING SENT FAILED }
@@ -43,6 +44,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  role          UserRole  @default(USER)
   orgName       String?
   orgType       String?
   onboarded     Boolean   @default(false)
@@ -357,6 +359,37 @@ model Insight {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   @@index([userId, campaignId])
+}
+
+model ShowcaseCompany {
+  id               String   @id @default(cuid())
+  name             String
+  websiteUrl       String
+  logoUrl          String?
+  industry         String
+  shortDescription String   @db.Text
+  sortOrder        Int      @default(0)
+  isVisible        Boolean  @default(true)
+  isPartner        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([isVisible, sortOrder])
+  @@map("showcase_companies")
+}
+
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminEmail String
+  action     String
+  targetType String?
+  targetId   String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([adminEmail, createdAt])
+  @@index([action])
+  @@map("admin_logs")
 }
 ```
 

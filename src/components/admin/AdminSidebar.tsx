@@ -6,11 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart3,
-  Users,
-  FolderKanban,
-  ShieldAlert,
+  Building2,
   Settings,
-  ArrowRight,
   ShieldCheck,
   Menu,
   X,
@@ -21,10 +18,8 @@ import { SponfyBrand } from "@/components/ui/SponfyBrand";
 
 const ADMIN_NAV_ITEMS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
-  { label: "Platform Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { label: "User Management", href: "/admin/users", icon: Users },
-  { label: "Campaigns", href: "/admin/campaigns", icon: FolderKanban },
-  { label: "Security & Auditing", href: "/admin/activity", icon: ShieldAlert },
+  { label: "Showcase Companies", href: "/admin/showcase", icon: Building2 },
+  { label: "Admin Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -105,17 +100,13 @@ export function AdminSidebar() {
         </nav>
       </div>
 
-      {/* Footer Switch to User App */}
-      <div className="p-4 border-t border-green-mid/40 space-y-2">
-        <Link
-          href="/app"
-          className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-green-mid/30 hover:bg-green-mid/60 text-butter-cream border border-green-mid/50 text-xs font-semibold transition-all group"
-        >
-          <span>Return to Workspace</span>
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-        </Link>
+      {/* Footer Info */}
+      <div className="p-4 border-t border-green-mid/40 space-y-1">
+        <p className="text-xs font-semibold text-butter-cream text-center">
+          Admin Control Plane
+        </p>
         <p className="text-[11px] text-text-onDarkSub/70 text-center">
-          Authenticated Administrator Session
+          Strict Tenant Isolation Active
         </p>
       </div>
     </div>

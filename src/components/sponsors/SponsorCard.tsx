@@ -24,11 +24,11 @@ export const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor, onDragStart }
             <div className="w-8 h-8 rounded-lg bg-butter-warm flex items-center justify-center text-green-dark font-bold text-xs shrink-0 border border-green-dark/10">
               <Building2 className="w-4 h-4" />
             </div>
-            <div>
-              <h4 className="font-bold text-sm text-green-dark truncate max-w-[130px]">
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold text-sm text-green-dark truncate">
                 {sponsor.name}
               </h4>
-              <span className="text-[10px] text-text-dim block truncate max-w-[130px]">
+              <span className="text-[10px] text-text-dim block truncate">
                 {sponsor.industry}
               </span>
             </div>

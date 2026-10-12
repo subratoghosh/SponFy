@@ -165,7 +165,7 @@ export function AdminSettingsView({ adminUser }: Props) {
                   Database & Connection Pool Status
                 </h3>
                 <p className="text-xs text-neutral-500">
-                  Telemetry on Prisma database engine and live connectivity.
+                  Telemetry on database engine and live connectivity.
                 </p>
               </div>
             </div>
@@ -173,7 +173,7 @@ export function AdminSettingsView({ adminUser }: Props) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
               <div className="p-3 bg-[#FAF4E6] rounded-xl border border-[#0C382E]/10">
                 <span className="text-[10px] text-neutral-400 font-bold uppercase">Architecture</span>
-                <div className="font-bold text-[#0C382E] mt-0.5">PostgreSQL + Prisma</div>
+                <div className="font-bold text-[#0C382E] mt-0.5">Relational Engine (Active)</div>
               </div>
               <div className="p-3 bg-[#FAF4E6] rounded-xl border border-[#0C382E]/10">
                 <span className="text-[10px] text-neutral-400 font-bold uppercase">Isolation</span>

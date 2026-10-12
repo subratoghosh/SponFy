@@ -113,11 +113,6 @@ export const Footer: React.FC = () => {
                   Reply Intelligence
                 </Link>
               </li>
-              <li>
-                <Link href="/analytics" className="footer-link">
-                  Funnel Analytics
-                </Link>
-              </li>
             </ul>
           </div>
 
