@@ -69,7 +69,7 @@ export async function POST(req: Request) {
             data: {
               userId,
               name: `${user?.name || "Active"} Sponsorship Campaign`,
-              eventType: "Technical Hackathon & Fest",
+              eventType: "Conference & Event",
               audienceSize: 1500,
               location: "Campus Auditorium",
               targetAmount: 500000,
