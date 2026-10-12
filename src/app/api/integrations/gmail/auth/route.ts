@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getGmailClient } from "@/lib/integrations/factory";
 import { RealGmailClient } from "@/lib/integrations/gmail";
-import { createSignedOAuthState } from "@/lib/oauth-state";
 
 export const runtime = "nodejs";
 
@@ -16,8 +15,7 @@ export async function GET(req: Request) {
 
   const client = getGmailClient();
   if (client instanceof RealGmailClient) {
-    const signedState = createSignedOAuthState(session.user.id);
-    const authUrl = client.getAuthUrl(signedState);
+    const authUrl = client.getAuthUrl(session.user.id);
     return NextResponse.redirect(authUrl);
   }
 

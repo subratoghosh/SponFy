@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { loadFollowups } from "@/lib/outreach/followup-service";
 import { buildFollowupDraft } from "@/lib/outreach/followups";
 import { getSponsorById } from "@/lib/data/repositories/sponsors";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
 import { createDraft } from "@/lib/data/repositories/outreach";
 import { getUserProfile } from "@/lib/data/repositories/settings";
-import { checkRateLimit, createRateLimitResponse, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
-
-const followupDraftRequestSchema = z.object({
-  companyId: z.string().min(1).max(100),
-}).strict();
 
 /**
  * Creates a follow-up DRAFT for a company whose follow-up window is open.
@@ -20,38 +13,8 @@ const followupDraftRequestSchema = z.object({
  */
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = session.user.id;
-
-    const rl = checkRateLimit(
-      `draft:${userId}`,
-      RATE_LIMIT_CONFIGS.draft.limit,
-      RATE_LIMIT_CONFIGS.draft.windowSeconds
-    );
-    if (!rl.allowed) {
-      return createRateLimitResponse(rl.reset);
-    }
-
-    let bodyJson: unknown;
-    try {
-      bodyJson = await req.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-    }
-
-    const parsed = followupDraftRequestSchema.safeParse(bodyJson);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation error", details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const { companyId } = parsed.data;
+    const { companyId } = await req.json();
+    if (!companyId) return NextResponse.json({ error: "companyId required" }, { status: 400 });
 
     const item = (await loadFollowups()).find((i) => i.companyId === companyId);
     if (!item) return NextResponse.json({ error: "This company has not been contacted yet." }, { status: 404 });
@@ -63,9 +26,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: item.reason, state: item.state }, { status: 409 });
     }
 
-    const company = await getSponsorById(companyId, userId);
+    const company = await getSponsorById(companyId);
     if (!company) return NextResponse.json({ error: "Company not found" }, { status: 404 });
-    const campaign = await getCampaignById(company.campaignId, userId);
+    const campaign = await getCampaignById(company.campaignId);
     if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
 
     // Follow up with the same person who got the first email, never a different address.
@@ -77,7 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const profile = await getUserProfile(userId);
+    const profile = await getUserProfile();
     const { subject, body } = buildFollowupDraft({
       item,
       campaign,
@@ -85,12 +48,10 @@ export async function POST(req: Request) {
     });
 
     const draft = await createDraft({
-      userId,
       companyId,
       contactId: contact.id,
       subject,
       body,
-      status: "draft",
       quality: {
         personalization: 0,
         relevance: 0,
@@ -98,12 +59,13 @@ export async function POST(req: Request) {
         cta: 0,
         professionalism: 0,
         overall: 0,
-        suggestions: ["Human review required before approval"],
+        suggestions: ["Template follow-up: not AI-scored. Read it and edit before approving."],
       },
+      status: "draft",
     });
 
     return NextResponse.json({ success: true, draft });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Drafting follow-up failed" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Could not create follow-up" }, { status: 500 });
   }
 }

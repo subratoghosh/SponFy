@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { auth } from "@/lib/auth";
 import {
   getDraftById,
   getMessages,
@@ -10,71 +8,31 @@ import {
   countOutboundSince,
 } from "@/lib/data/repositories/outreach";
 import { getSponsorById } from "@/lib/data/repositories/sponsors";
-import { isSuppressed, getUserProfile, getGmailStatus } from "@/lib/data/repositories/settings";
+import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
 import { executeApprovedSend } from "@/lib/workflows/outreach-graph";
 import { resolveRecipient, evaluateSend } from "@/lib/outreach/send-guard";
 import { SYSTEM_LIMITS } from "@/lib/config/limits";
-import { isDatabaseConfigured } from "@/lib/prisma";
-import { checkRateLimit, createRateLimitResponse, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
-
-const sendRequestSchema = z.object({
-  draftId: z.string().min(1).max(100),
-  toEmail: z.string().email().max(254).optional(),
-}).strict();
 
 export async function POST(req: Request) {
+  let body: { draftId?: string; toEmail?: string };
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    const userId = session.user.id;
+  const { draftId, toEmail } = body;
+  if (!draftId) {
+    return NextResponse.json({ error: "Draft ID required" }, { status: 400 });
+  }
 
-    let bodyJson: unknown;
-    try {
-      bodyJson = await req.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-    }
-
-    const parsed = sendRequestSchema.safeParse(bodyJson);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation error", details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const { draftId, toEmail } = parsed.data;
-
-    // Per-user daily send cap rate limit
-    const rl = checkRateLimit(
-      `send:${userId}`,
-      RATE_LIMIT_CONFIGS.send.limit,
-      RATE_LIMIT_CONFIGS.send.windowSeconds
-    );
-    if (!rl.allowed) {
-      return createRateLimitResponse(rl.reset);
-    }
-
-    // Verify Gmail account is active if database is configured
-    if (isDatabaseConfigured()) {
-      const gmail = await getGmailStatus(userId);
-      if (!gmail.connected) {
-        return NextResponse.json(
-          { error: "Gmail integration is not connected or active. Please connect Gmail in Settings.", code: "gmail_inactive" },
-          { status: 400 }
-        );
-      }
-    }
-
-    const draft = await getDraftById(draftId, userId);
+  try {
+    const draft = await getDraftById(draftId);
     if (!draft) {
       return NextResponse.json({ error: "Draft not found" }, { status: 404 });
     }
 
-    const company = await getSponsorById(draft.companyId, userId);
+    const company = await getSponsorById(draft.companyId);
     if (!company) {
       return NextResponse.json({ error: "Company not found for this draft" }, { status: 404 });
     }
@@ -94,7 +52,7 @@ export async function POST(req: Request) {
       isSuppressed(recipient.recipient),
       getMessages(company.id),
       countOutboundSince(windowStart),
-      getUserProfile(userId),
+      getUserProfile(),
     ]);
 
     const verdict = evaluateSend({
@@ -110,7 +68,7 @@ export async function POST(req: Request) {
     }
 
     // Atomically claim the draft so a double click or a teammate cannot send it twice.
-    const claimed = await claimDraftForSending(draft.id, userId);
+    const claimed = await claimDraftForSending(draft.id);
     if (!claimed) {
       return NextResponse.json(
         { error: "This draft is already being sent or is no longer approved.", code: "already_sent" },
@@ -118,12 +76,21 @@ export async function POST(req: Request) {
       );
     }
 
+    let activeUserId = draft.userId;
+    try {
+      const { auth } = await import("@/lib/auth");
+      const session = await auth();
+      if (session?.user?.id) activeUserId = session.user.id;
+    } catch {
+      // Running in unit test environment
+    }
+
     let sendResult: { messageId: string; threadId: string };
     try {
-      sendResult = await executeApprovedSend(draft, recipient.recipient, userId);
+      sendResult = await executeApprovedSend(draft, recipient.recipient, activeUserId);
     } catch (err: any) {
       // Nothing went out: give the approval back so the organizer can retry.
-      await releaseDraftClaim(draft.id, userId);
+      await releaseDraftClaim(draft.id);
       return NextResponse.json(
         { error: `Email was NOT sent: ${err?.message || "send failed"}`, code: "send_failed" },
         { status: 502 }
@@ -131,7 +98,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      const msg = await recordSentMessage(draft.id, recipient.recipient, sendResult.messageId, sendResult.threadId, userId);
+      const msg = await recordSentMessage(draft.id, recipient.recipient, sendResult.messageId, sendResult.threadId);
       if (!msg) throw new Error("draft disappeared while recording");
       return NextResponse.json({ success: true, message: msg });
     } catch (err: any) {

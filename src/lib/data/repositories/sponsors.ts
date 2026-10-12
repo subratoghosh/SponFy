@@ -49,14 +49,11 @@ const PIPELINE_STAGE_MAP: Record<string, PipelineStage> = {
   LOST: "Lost",
 };
 
-export async function getSponsors(campaignId?: string, userId?: string): Promise<Company[]> {
+export async function getSponsors(campaignId?: string): Promise<Company[]> {
   if (isDatabaseConfigured()) {
     try {
       const companies = await prisma.company.findMany({
-        where: {
-          ...(campaignId ? { campaignId } : {}),
-          ...(userId ? { userId } : {}),
-        },
+        where: campaignId ? { campaignId } : undefined,
         include: {
           contacts: true,
           report: true,
@@ -115,11 +112,11 @@ export async function getSponsors(campaignId?: string, userId?: string): Promise
   return [...sponsorsStoreRef.value];
 }
 
-export async function getSponsorById(id: string, userId?: string): Promise<Company | null> {
+export async function getSponsorById(id: string): Promise<Company | null> {
   if (isDatabaseConfigured()) {
     try {
-      const c = await prisma.company.findFirst({
-        where: userId ? { id, userId } : { id },
+      const c = await prisma.company.findUnique({
+        where: { id },
         include: {
           contacts: true,
           report: true,
@@ -213,17 +210,9 @@ export async function updateSponsorStage(id: string, stage: PipelineStage): Prom
   return sponsorsStoreRef.value[idx];
 }
 
-export async function updateSponsor(
-  id: string,
-  updates: Partial<Company>,
-  userId?: string
-): Promise<Company | null> {
+export async function updateSponsor(id: string, updates: Partial<Company>): Promise<Company | null> {
   if (isDatabaseConfigured()) {
     try {
-      if (userId) {
-        const check = await prisma.company.findFirst({ where: { id, userId } });
-        if (!check) return null;
-      }
       const dbStage = updates.stage ? STAGE_MAP[updates.stage] : undefined;
       const dbResearchStatus: ResearchStatus | undefined =
         updates.researchStatus === "completed"
@@ -279,13 +268,10 @@ export async function updateSponsor(
   return sponsorsStoreRef.value[idx];
 }
 
-export async function addSponsor(
-  company: Omit<Company, "id" | "createdAt" | "updatedAt">,
-  userId?: string
-): Promise<Company> {
+export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "updatedAt">): Promise<Company> {
   // Duplicate-outreach rule: one record per company per campaign, so two
   // teammates can never each own (and email) the same sponsor.
-  const existing = await getSponsors(company.campaignId, userId);
+  const existing = await getSponsors(company.campaignId);
   const dup = findDuplicateCompany(existing, company);
   if (dup) {
     throw new DuplicateCompanyError(company.name, dup.id);
@@ -293,11 +279,12 @@ export async function addSponsor(
 
   if (isDatabaseConfigured()) {
     try {
-      const activeUserId = userId || (await prisma.user.findFirst())?.id || "usr-demo-lead";
+      const user = await prisma.user.findFirst();
+      const userId = user?.id || "usr-demo-lead";
       const dbStage = company.stage ? STAGE_MAP[company.stage] || "DISCOVERED" : "DISCOVERED";
       const created = await prisma.company.create({
         data: {
-          userId: activeUserId,
+          userId,
           campaignId: company.campaignId,
           name: company.name,
           website: company.website,

@@ -24,7 +24,6 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered") === "true";
   const initialEmail = searchParams.get("email") || "";
-  const callbackUrl = searchParams.get("callbackUrl") || "/app";
 
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
@@ -32,21 +31,6 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const authError = searchParams.get("error");
-
-  useEffect(() => {
-    if (authError) {
-      if (authError === "OAuthCallback" || authError === "OAuthSignin") {
-        setErrorMsg("Could not connect with OAuth provider. Please check Google settings or use email sign-in.");
-      } else if (authError === "CredentialsSignin") {
-        setErrorMsg("Invalid credentials. Please verify your email and password, or use Instant Demo Mode.");
-      } else if (authError === "Configuration") {
-        setErrorMsg("OAuth provider configuration is pending. Please sign in with email and password or use Instant Demo Mode.");
-      } else {
-        setErrorMsg(`Sign in encountered an issue (${authError}). Please sign in with email or use Instant Demo Mode.`);
-      }
-    }
-  }, [authError]);
 
   useEffect(() => {
     if (initialEmail && !email) {
@@ -58,8 +42,7 @@ function LoginForm() {
     e.preventDefault();
     setErrorMsg(null);
 
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !password) {
+    if (!email || !password) {
       setErrorMsg("Please enter both your email address and password.");
       return;
     }
@@ -72,18 +55,17 @@ function LoginForm() {
     setLoading(true);
     try {
       const res = await signIn("credentials", {
-        email: cleanEmail,
+        email,
         password,
         redirect: false,
-        callbackUrl,
       });
 
       if (res?.error) {
         setErrorMsg("Invalid credentials. Please verify your email and password.");
         setLoading(false);
       } else {
-        // Immediate hard navigation ensures the newly set Auth.js session cookie is sent on first request
-        window.location.href = callbackUrl;
+        router.push("/app");
+        router.refresh();
       }
     } catch {
       setErrorMsg("Sign in attempt failed. Please try again or use Demo Mode.");
@@ -95,7 +77,7 @@ function LoginForm() {
     setErrorMsg(null);
     setSocialLoading(provider);
     try {
-      await signIn(provider, { callbackUrl });
+      await signIn(provider, { callbackUrl: "/app" });
     } catch {
       setErrorMsg(`Failed to connect with ${provider}. Please try email login.`);
       setSocialLoading(null);
@@ -109,11 +91,12 @@ function LoginForm() {
         email: "demo@sponfy.dev",
         password: "demo-password-123",
         redirect: false,
-        callbackUrl: "/app",
       });
-      window.location.href = "/app";
+      router.push("/app");
+      router.refresh();
     } catch {
-      window.location.href = "/app";
+      router.push("/app");
+      router.refresh();
     }
   };
 
@@ -255,9 +238,9 @@ function LoginForm() {
               type="submit"
               variant="green"
               loading={loading}
-              className="w-full font-black uppercase tracking-wider shadow-sm justify-center text-xs py-2.5 h-10"
+              className="w-full font-bold shadow-sm justify-center text-sm py-2.5"
             >
-              LOGIN
+              Sign In to Workspace
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </form>

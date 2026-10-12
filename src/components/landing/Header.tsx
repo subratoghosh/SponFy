@@ -308,15 +308,15 @@ export const Header: React.FC = () => {
 
             {/* CTA & Actions */}
             <div className="hidden sm:flex items-center gap-3">
-              <Link href="/login" tabIndex={isCollapsed ? -1 : undefined} className="shrink-0">
+              <Link href="/login" tabIndex={isCollapsed ? -1 : undefined}>
                 <Button
                   variant="butter"
                   size="sm"
                   tabIndex={isCollapsed ? -1 : undefined}
-                  className="h-9 px-4 text-xs font-black tracking-wider uppercase shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
+                  className="font-bold shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
                 >
-                  LOGIN
-                  <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-1" />
+                  Log in
+                  <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
             </div>
@@ -324,8 +324,8 @@ export const Header: React.FC = () => {
             {/* Mobile Hamburger Trigger (screens < sm) */}
             <div className="flex sm:hidden items-center gap-2">
               <Link href="/login">
-                <Button variant="butter" size="sm" className="h-8 px-3 text-xs font-black tracking-wider uppercase">
-                  LOGIN
+                <Button variant="butter" size="sm" className="text-xs px-3 py-1.5 font-bold">
+                  Log in
                 </Button>
               </Link>
               <button
@@ -368,8 +368,8 @@ export const Header: React.FC = () => {
             })}
             <div className="pt-2 flex flex-col gap-2.5 border-t border-green-mid/40 mt-1">
               <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="butter" className="w-full justify-center font-black tracking-wider uppercase shadow-md py-2.5 text-xs">
-                  LOGIN
+                <Button variant="butter" className="w-full justify-center font-bold shadow-md">
+                  Log in
                   <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </Link>

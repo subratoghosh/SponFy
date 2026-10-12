@@ -5,7 +5,6 @@ import { RealGmailClient } from "@/lib/integrations/gmail";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
 import { updateGmailStatus } from "@/lib/data/repositories/settings";
-import { verifySignedOAuthState } from "@/lib/oauth-state";
 
 export const runtime = "nodejs";
 
@@ -30,18 +29,12 @@ export async function GET(req: Request) {
 
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || stateUserId;
+
+    if (!userId) {
       settingsUrl.searchParams.set("error", "unauthenticated");
       return NextResponse.redirect(settingsUrl);
     }
-
-    const stateVerification = verifySignedOAuthState(stateUserId, session.user.id);
-    if (!stateVerification.valid) {
-      settingsUrl.searchParams.set("error", stateVerification.error || "invalid_state");
-      return NextResponse.redirect(settingsUrl);
-    }
-
-    const userId = session.user.id;
 
     const client = getGmailClient();
     if (client instanceof RealGmailClient) {

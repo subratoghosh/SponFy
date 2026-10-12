@@ -32,6 +32,11 @@ export const CTASection: React.FC = () => {
       </div>
 
       <div className="max-w-[1000px] mx-auto px-6 text-center relative z-10 flex flex-col items-center">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter-cream/15 border border-butter-cream/30 text-butter-cream text-xs font-bold uppercase tracking-wider mb-6 hover:bg-butter-cream/25 hover:border-butter-cream/60 hover:shadow-[0_0_18px_rgba(255,240,179,0.35)] hover:scale-105 transition-all duration-300 cursor-default">
+          <ShieldCheck className="w-3.5 h-3.5 text-butter-cream" />
+          Ready to supercharge your college fest sponsorship?
+        </div>
+
         <h2 className="display-font text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-butter-cream mb-6 tracking-tight max-w-3xl leading-[1.12]">
           Start your campaign today and reach sponsors in minutes.
         </h2>

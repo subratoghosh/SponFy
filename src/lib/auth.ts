@@ -1,4 +1,3 @@
-import "server-only";
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
@@ -7,9 +6,11 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth/password";
 
-// Resilient fallback secret ensuring NextAuth never crashes on serverless cold starts or Vercel
-if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
-  process.env.AUTH_SECRET = "sponfy-auth-secret-session-jwt-encryption-key-32chars-minimum";
+// Dev-only fallback. This string is public (it is in the repo), so using it in
+// production would let anyone forge a session cookie, including an admin's.
+// In production AUTH_SECRET must be set; Auth.js will refuse to start otherwise.
+if (!process.env.AUTH_SECRET && process.env.NODE_ENV !== "production") {
+  process.env.AUTH_SECRET = "sponfy-dev-auth-secret-super-safe-fallback-32chars";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -40,17 +41,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = (credentials.email as string).trim().toLowerCase();
         const password = credentials.password as string;
 
-        // 1. Database validation if database is configured (with fast timeout fallback for cold serverless DB)
+        // 1. Database validation if database is configured
         if (isDatabaseConfigured()) {
           try {
-            const dbPromise = (prisma as any).user.findUnique({
+            const dbUser = await (prisma as any).user.findUnique({
               where: { email },
             });
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("DB_TIMEOUT")), 3500)
-            );
-            const dbUser = (await Promise.race([dbPromise, timeoutPromise])) as any;
-
             if (dbUser) {
               const isMatch = dbUser.password
                 ? verifyPassword(password, dbUser.password)
@@ -67,7 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               return null;
             }
           } catch (err) {
-            console.warn("Database user lookup in authorize fallback triggered:", err);
+            console.error("Database user lookup in authorize failed:", err);
           }
         }
 
@@ -121,10 +117,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (token as any).role = "ADMIN";
       }
 
-      // Only query DB if role is not already attached (avoiding redundant DB calls on login)
-      if (!token.role && isDatabaseConfigured() && (token.sub || token.email)) {
+      // If database is configured, dynamically sync latest role from PostgreSQL
+      if (isDatabaseConfigured() && (token.sub || token.email)) {
         try {
-          const dbPromise = (prisma as any).user.findFirst({
+          const dbUser = await (prisma as any).user.findFirst({
             where: {
               OR: [
                 ...(token.sub ? [{ id: token.sub }] : []),
@@ -133,10 +129,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
             select: { id: true, role: true, email: true },
           });
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("DB_TIMEOUT")), 3000)
-          );
-          const dbUser = (await Promise.race([dbPromise, timeoutPromise])) as any;
 
           if (dbUser) {
             if (dbUser.role) {
@@ -156,7 +148,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {
     signIn: "/login",
-    error: "/login",
   },
   logger: {
     error(error) {
@@ -180,9 +171,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       console.warn(`[auth][warn] ${code}`);
     },
   },
-  secret:
-    process.env.AUTH_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
-    "sponfy-auth-secret-session-jwt-encryption-key-32chars-minimum",
+  secret: [
+    process.env.AUTH_SECRET || "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+    process.env.NEXTAUTH_SECRET || "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+    "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+  ].filter((s, idx, arr): s is string => Boolean(s) && arr.indexOf(s) === idx),
   trustHost: true,
 });

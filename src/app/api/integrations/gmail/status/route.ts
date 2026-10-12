@@ -7,10 +7,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const userId = session.user.id;
+    const userId = session?.user?.id;
     const status = await getGmailStatus(userId);
     return NextResponse.json(status);
   } catch (err: any) {

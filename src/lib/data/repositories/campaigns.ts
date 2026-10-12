@@ -6,11 +6,10 @@ import { memoryStore } from "@/lib/data/memory-store";
 // In-memory store for demo mode sessions
 const campaignsStoreRef = memoryStore<Campaign[]>("campaigns", () => [DEMO_CAMPAIGN]);
 
-export async function getCampaigns(userId?: string): Promise<Campaign[]> {
+export async function getCampaigns(): Promise<Campaign[]> {
   if (isDatabaseConfigured()) {
     try {
       const records = await prisma.campaign.findMany({
-        where: userId ? { userId } : undefined,
         orderBy: { createdAt: "desc" },
       });
       return records.map((r) => ({
@@ -36,11 +35,11 @@ export async function getCampaigns(userId?: string): Promise<Campaign[]> {
   return [...campaignsStoreRef.value];
 }
 
-export async function getCampaignById(id: string, userId?: string): Promise<Campaign | null> {
+export async function getCampaignById(id: string): Promise<Campaign | null> {
   if (isDatabaseConfigured()) {
     try {
-      const r = await prisma.campaign.findFirst({
-        where: userId ? { id, userId } : { id },
+      const r = await prisma.campaign.findUnique({
+        where: { id },
       });
       if (!r) return null;
       return {
@@ -63,25 +62,18 @@ export async function getCampaignById(id: string, userId?: string): Promise<Camp
     }
   }
 
-  const found = campaignsStoreRef.value.find((c) => c.id === id);
-  if (!found || (userId && (found as any).userId && (found as any).userId !== userId)) return null;
-  return found;
+  return campaignsStoreRef.value.find((c) => c.id === id) || null;
 }
 
-export async function createCampaign(
-  data: Omit<Campaign, "id" | "createdAt">,
-  userId?: string
-): Promise<Campaign> {
-  if (data.deckUrl && !data.deckUrl.startsWith("http://") && !data.deckUrl.startsWith("https://")) {
-    throw new Error("Invalid deck URL: must start with http:// or https://");
-  }
+export async function createCampaign(data: Omit<Campaign, "id" | "createdAt">): Promise<Campaign> {
   if (isDatabaseConfigured()) {
     try {
-      const activeUserId = userId || (await prisma.user.findFirst())?.id || "usr-demo-lead";
+      const user = await prisma.user.findFirst();
+      const userId = user?.id || "usr-demo-lead";
 
       const r = await prisma.campaign.create({
         data: {
-          userId: activeUserId,
+          userId,
           name: data.name,
           eventType: data.eventType,
           audienceSize: data.audienceSize,
@@ -115,28 +107,16 @@ export async function createCampaign(
 
   const newCampaign: Campaign = {
     ...data,
-    userId,
     id: `camp-${Date.now()}`,
     createdAt: new Date().toISOString(),
-  } as any;
+  };
   campaignsStoreRef.value.unshift(newCampaign);
   return newCampaign;
 }
 
-export async function updateCampaign(
-  id: string,
-  updates: Partial<Campaign>,
-  userId?: string
-): Promise<Campaign | null> {
-  if (updates.deckUrl && !updates.deckUrl.startsWith("http://") && !updates.deckUrl.startsWith("https://")) {
-    throw new Error("Invalid deck URL: must start with http:// or https://");
-  }
+export async function updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign | null> {
   if (isDatabaseConfigured()) {
     try {
-      if (userId) {
-        const check = await prisma.campaign.findFirst({ where: { id, userId } });
-        if (!check) return null;
-      }
       const r = await prisma.campaign.update({
         where: { id },
         data: {
@@ -173,9 +153,6 @@ export async function updateCampaign(
 
   const idx = campaignsStoreRef.value.findIndex((c) => c.id === id);
   if (idx === -1) return null;
-  if (userId && (campaignsStoreRef.value[idx] as any).userId && (campaignsStoreRef.value[idx] as any).userId !== userId) {
-    return null;
-  }
   campaignsStoreRef.value[idx] = { ...campaignsStoreRef.value[idx], ...updates };
   return campaignsStoreRef.value[idx];
 }

@@ -20,6 +20,10 @@ export default function FAQPage() {
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="p-8 md:p-12 bg-white rounded-3xl border border-green-dark/12 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-dark/5 text-green-dark text-xs font-bold uppercase tracking-wider mb-4">
+                <HelpCircle className="w-3.5 h-3.5 text-green-accent" />
+                STILL HAVE QUESTIONS?
+              </div>
               <h3 className="display-font text-2xl sm:text-3xl font-bold text-green-dark mb-3">
                 Need a custom setup for your inter-college festival?
               </h3>

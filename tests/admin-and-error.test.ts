@@ -1,10 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
-
-vi.mock("@/lib/prisma", () => ({
-  prisma: {},
-  default: {},
-  isDatabaseConfigured: () => false,
-}));
+import { describe, it, expect } from "vitest";
 import {
   getAdminOverviewMetrics,
   getAdminAnalytics,

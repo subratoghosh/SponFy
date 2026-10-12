@@ -1,4 +1,3 @@
-import "server-only";
 import { auth } from "@/lib/auth";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { AdminUser, UserRole } from "@/types";

@@ -27,12 +27,10 @@ const suppressionsStoreRef = memoryStore<SuppressionEntry[]>("suppressions", () 
   },
 ]);
 
-export async function getUserProfile(userId?: string): Promise<UserProfile> {
+export async function getUserProfile(): Promise<UserProfile> {
   if (isDatabaseConfigured()) {
     try {
-      const u = userId
-        ? await prisma.user.findUnique({ where: { id: userId } })
-        : await prisma.user.findFirst();
+      const u = await prisma.user.findFirst();
       if (u) {
         return {
           fullName: u.name || "",
@@ -52,12 +50,10 @@ export async function getUserProfile(userId?: string): Promise<UserProfile> {
   return { ...profileStoreRef.value };
 }
 
-export async function updateUserProfile(updates: Partial<UserProfile>, userId?: string): Promise<UserProfile> {
+export async function updateUserProfile(updates: Partial<UserProfile>): Promise<UserProfile> {
   if (isDatabaseConfigured()) {
     try {
-      const u = userId
-        ? await prisma.user.findUnique({ where: { id: userId } })
-        : await prisma.user.findFirst();
+      const u = await prisma.user.findFirst();
       if (u) {
         await prisma.user.update({
           where: { id: u.id },
