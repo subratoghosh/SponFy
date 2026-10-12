@@ -179,7 +179,7 @@ export interface SponsorshipTier {
 export interface Campaign {
   id: string;
   name: string;
-  eventType: string; // "Hackathon" | "Cultural Fest" | "Tech Symposium" | "Student Club"
+  eventType: string; // "Hackathon" | "Cultural Event" | "Tech Symposium" | "Organization"
   audienceSize: number;
   location: string;
   targetAmount: number;

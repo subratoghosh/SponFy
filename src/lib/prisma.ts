@@ -25,6 +25,7 @@ if (process.env.NODE_ENV !== "production") {
  * Helper to check whether a valid PostgreSQL / Neon DATABASE_URL is configured
  */
 export function isDatabaseConfigured(): boolean {
+  if (process.env.NODE_ENV === "test") return false;
   const url = process.env.DATABASE_URL;
   if (!url) return false;
   return (
