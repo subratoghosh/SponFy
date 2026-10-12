@@ -182,7 +182,7 @@ export default function RepliesPage() {
                     : 'bg-white text-[#0C382E] border-[#0C382E]/15'
                 }`}
               >
-                AI Intel {showIntelligence ? '✕' : '✨'}
+                AI Intel {showIntelligence ? 'Close' : 'Open'}
               </button>
             </div>
 

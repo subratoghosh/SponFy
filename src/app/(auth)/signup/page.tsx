@@ -84,7 +84,7 @@ export default function SignupPage() {
     <div className="min-h-screen bg-butter-bg flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 text-green-dark selection:bg-butter-cream">
       {/* Landscape Container Card */}
       <div className="w-full max-w-5xl bg-white rounded-3xl border border-green-dark/15 shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[620px]">
-        {/* Left Side: Brand Narrative & Fest Highlights (Landscape Accent Pane) */}
+        {/* Left Side: Brand Narrative & Campaign Highlights (Landscape Accent Pane) */}
         <div className="md:col-span-5 bg-green-dark text-butter-cream p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden">
           {/* Subtle Background Glow Blobs */}
           <div className="absolute top-[-20%] left-[-20%] w-[260px] h-[260px] rounded-full bg-butter-cream/10 blur-2xl pointer-events-none" />
@@ -103,7 +103,7 @@ export default function SignupPage() {
                 Fund your flagship event with confidence.
               </h1>
               <p className="text-xs sm:text-sm text-text-onDarkSub/80 leading-relaxed">
-                Set up your student society or festival workspace in under 2 minutes. Get instant company dossiers with verified sponsor evidence.
+                Set up your campaign workspace in under 2 minutes. Get instant company dossiers with verified sponsor evidence.
               </p>
             </div>
 
@@ -141,10 +141,10 @@ export default function SignupPage() {
         <div className="md:col-span-7 bg-white p-8 sm:p-10 flex flex-col justify-center space-y-5">
           <div>
             <h2 className="heading-font font-black text-2xl sm:text-3xl text-green-dark">
-              Create Fest Workspace
+              Create Workspace
             </h2>
             <p className="text-xs sm:text-sm text-text-dim mt-1">
-              Start building targeted sponsor pipelines for your college festival or hackathon.
+              Start building targeted sponsor pipelines for your campaigns and events.
             </p>
           </div>
 
@@ -223,7 +223,7 @@ export default function SignupPage() {
                 required
               />
               <Input
-                label="Festival / Society Name"
+                label="Organization / Campaign Name"
                 type="text"
                 value={festName}
                 onChange={(e) => setFestName(e.target.value)}
@@ -231,7 +231,7 @@ export default function SignupPage() {
             </div>
 
             <Input
-              label="College or University Email"
+              label="Work or Organization Email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

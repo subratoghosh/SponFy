@@ -87,7 +87,7 @@ export default function CampaignsPage() {
             Campaigns
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Manage your campus fest, hackathon, and student club sponsorship initiatives.
+            Manage your campaigns, hackathons, and event sponsorship initiatives.
           </p>
         </div>
         <Button
@@ -224,7 +224,7 @@ export default function CampaignsPage() {
           title={campaigns.length === 0 ? "No campaigns created yet" : "No matching campaigns"}
           description={
             campaigns.length === 0
-              ? "Create your first college fest, hackathon, or club sponsorship initiative to start discovering high-fit sponsors."
+              ? "Create your first campaign, hackathon, or event sponsorship initiative to start discovering high-fit sponsors."
               : "Try adjusting your search terms or filter options above."
           }
           actionLabel={campaigns.length === 0 ? "Create First Campaign" : undefined}

@@ -58,14 +58,14 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
     setLoading(true);
     try {
       await createCampaign({
-        name: formData.name || "New Fest 2026",
+        name: formData.name || "New Campaign 2026",
         eventType: formData.eventType,
         audienceSize: Number(formData.audienceSize),
         location: formData.location,
         targetAmount: Number(formData.targetAmount),
         preferredIndustries: formData.preferredIndustries,
         deckUrl: formData.deckUrl,
-        description: formData.description || "Student-led fest and hackathon.",
+        description: formData.description || "Annual sponsorship campaign.",
         status: "active",
         tiers: [
           { name: "Title Partner", amount: 150000, slots: 1, deliverables: ["Keynote", "Top branding"] },
@@ -89,7 +89,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
       open={open}
       onClose={onClose}
       title="Create New Sponsorship Campaign"
-      description="Define your fest details, target audience, and sponsorship tier goals."
+      description="Define your campaign details, target audience, and sponsorship tier goals."
       maxWidth="lg"
     >
       <div className="space-y-6">
@@ -121,7 +121,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
               onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
             >
               <option value="Hackathon">Collegiate Hackathon</option>
-              <option value="Cultural Fest">Cultural & Arts Fest</option>
+              <option value="Cultural Event">Cultural & Arts Event</option>
               <option value="Tech Symposium">Technical Symposium</option>
               <option value="Student Club">Student Chapter / Club</option>
               <option value="Summit">E-Cell / Startup Summit</option>

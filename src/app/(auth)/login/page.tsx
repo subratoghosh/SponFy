@@ -121,7 +121,7 @@ function LoginForm() {
             Sign In to SponFy
           </h2>
           <p className="text-xs sm:text-sm text-text-dim mt-1">
-            Access your college festival workspace, dossiers, and outreach queues.
+            Access your campaign workspace, dossiers, and outreach queues.
           </p>
         </div>
 
@@ -131,7 +131,7 @@ function LoginForm() {
               <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600" />
               <div>
                 <span className="font-bold block">Account created successfully!</span>
-                <span className="text-[11px] text-green-800">Please enter your password below to sign in to your festival workspace.</span>
+                <span className="text-[11px] text-green-800">Please enter your password below to sign in to your workspace.</span>
               </div>
             </div>
           )}
@@ -272,7 +272,7 @@ function LoginForm() {
               href="/signup"
               className="font-bold text-green-dark hover:underline flex items-center gap-1"
             >
-              Register your Fest Workspace <ArrowRight className="w-3 h-3" />
+              Create your Workspace <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
       </div>
