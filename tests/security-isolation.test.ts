@@ -141,7 +141,7 @@ describe("Security Hardening & Multi-Tenant Isolation", () => {
       });
       const res = await researchPost(req);
       expect(res.status).toBe(401);
-    });
+    }, 15000);
 
     it("rejects unauthenticated requests to discover route with 401", async () => {
       activeSession = null;

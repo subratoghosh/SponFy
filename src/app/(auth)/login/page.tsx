@@ -32,6 +32,21 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const authError = searchParams.get("error");
+
+  useEffect(() => {
+    if (authError) {
+      if (authError === "OAuthCallback" || authError === "OAuthSignin") {
+        setErrorMsg("Could not connect with OAuth provider. Please check Google settings or use email sign-in.");
+      } else if (authError === "CredentialsSignin") {
+        setErrorMsg("Invalid credentials. Please verify your email and password, or use Instant Demo Mode.");
+      } else if (authError === "Configuration") {
+        setErrorMsg("OAuth provider configuration is pending. Please sign in with email and password or use Instant Demo Mode.");
+      } else {
+        setErrorMsg(`Sign in encountered an issue (${authError}). Please sign in with email or use Instant Demo Mode.`);
+      }
+    }
+  }, [authError]);
 
   useEffect(() => {
     if (initialEmail && !email) {

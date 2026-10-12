@@ -2,24 +2,48 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Cookie, ShieldCheck, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Cookie, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
+  const { status } = useSession();
 
   useEffect(() => {
+    // Never show cookie banner once inside /app, /admin, or authenticated
+    if (
+      pathname?.startsWith("/app") ||
+      pathname?.startsWith("/admin") ||
+      status === "authenticated"
+    ) {
+      setVisible(false);
+      return;
+    }
+
     try {
       const consent = localStorage.getItem("sponfy_cookie_consent");
-      if (!consent) {
-        // Show after a brief delay so page renders smoothly
+      const dismissed = localStorage.getItem("sponfy_cookie_dismissed");
+      if (!consent && !dismissed) {
+        // Show after a brief delay on initial landing page visit
         const timer = setTimeout(() => setVisible(true), 1200);
         return () => clearTimeout(timer);
       }
     } catch {
       // Ignore
     }
-  }, []);
+  }, [pathname, status]);
+
+  const handleDismiss = () => {
+    try {
+      localStorage.setItem("sponfy_cookie_dismissed", "true");
+    } catch {
+      // Ignore
+    }
+    setVisible(false);
+  };
 
   const handleAcceptAll = () => {
     try {
@@ -32,6 +56,7 @@ export function CookieConsentBanner() {
           timestamp: new Date().toISOString(),
         })
       );
+      localStorage.setItem("sponfy_cookie_dismissed", "true");
       window.dispatchEvent(new Event("sponfy_consent_updated"));
     } catch {
       // Ignore
@@ -50,6 +75,7 @@ export function CookieConsentBanner() {
           timestamp: new Date().toISOString(),
         })
       );
+      localStorage.setItem("sponfy_cookie_dismissed", "true");
       window.dispatchEvent(new Event("sponfy_consent_updated"));
     } catch {
       // Ignore
@@ -57,7 +83,15 @@ export function CookieConsentBanner() {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  // Guard: Never display after login or inside app/admin dashboards
+  if (
+    !visible ||
+    pathname?.startsWith("/app") ||
+    pathname?.startsWith("/admin") ||
+    status === "authenticated"
+  ) {
+    return null;
+  }
 
   return (
     <aside
@@ -74,7 +108,7 @@ export function CookieConsentBanner() {
           </h3>
         </div>
         <button
-          onClick={() => setVisible(false)}
+          onClick={handleDismiss}
           className="text-text-muted hover:text-green-dark p-1 rounded-lg transition-colors cursor-pointer"
           aria-label="Close cookie banner"
         >
@@ -108,7 +142,7 @@ export function CookieConsentBanner() {
         <Link href="/consent" className="w-full sm:w-auto">
           <button
             type="button"
-            onClick={() => setVisible(false)}
+            onClick={handleDismiss}
             className="w-full px-3 py-2 text-xs font-bold text-text-muted hover:text-green-dark underline transition-colors cursor-pointer text-center"
           >
             Customize
