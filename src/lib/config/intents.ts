@@ -52,7 +52,7 @@ export const INTENT_CONFIGS: Record<Intent, IntentConfig> = {
     key: "MAYBE_LATER",
     label: "Maybe Later",
     badge: { bg: "bg-[#D97706]/10", text: "text-[#B45309]", border: "border-[#D97706]/25" },
-    recommendedAction: "Schedule reminder for next fest cycle",
+    recommendedAction: "Schedule reminder for next campaign cycle",
     defaultNextStage: "REPLIED",
   },
   OUT_OF_OFFICE: {

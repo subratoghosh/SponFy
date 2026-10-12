@@ -58,7 +58,7 @@ export const SCORING_DIMENSIONS: ScoringDimension[] = [
     key: "previousSponsorships",
     label: "Campus & Hackathon Track Record",
     weight: 25,
-    description: "History of sponsoring collegiate hackathons, developer fests, and student clubs in India",
+    description: "History of sponsoring collegiate hackathons, developer conferences, and organizations in India",
   },
   {
     key: "audienceFit",

@@ -96,7 +96,7 @@ export const PIPELINE_STAGES: StageDefinition[] = [
     order: 11,
     color: "#15803D",
     bgColor: "rgba(21, 128, 61, 0.20)",
-    description: "Agreement closed & funds / perks committed! 🎉",
+    description: "Agreement closed & funds / perks committed!",
   },
   {
     id: "Lost",

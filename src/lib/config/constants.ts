@@ -1,7 +1,7 @@
 import { PipelineStage, ReplyIntent } from "@/types";
 
 export const APP_NAME = "SponFy";
-export const APP_TAGLINE = "AI Sponsorship Operating System for College Fests & Hackathons";
+export const APP_TAGLINE = "AI Sponsorship Operating System for Campaigns & Events";
 export const DEFAULT_DAILY_SEND_CAP = 30;
 
 // Central Nav Configuration
