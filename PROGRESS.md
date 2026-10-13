@@ -104,3 +104,54 @@
   - `npm test`: Passed (8/8 test suites, 72/72 tests passing)
   - `npm run build`: Passed (all 54 static and dynamic routes compiled successfully)
 
+---
+
+## [2026-10-14] WORKFLOW IMPLEMENTATION TASK Complete
+- **Status**: Implemented end-to-end outreach workflow across all 8 capabilities without touching user's real database, Gmail, Gemini, or Tavily.
+- **Done**:
+  - **1. Discovery Isolation**:
+    - Transient search candidates are saved to dedicated `DiscoveryResult` model with 7-day TTL (`expiresAt`).
+    - Candidates never enter the `Company` pipeline table or Overview counts until explicitly approved.
+    - Survives page refresh via `GET /api/discover/results`. User can clear/dismiss with `DELETE /api/discover/results`.
+  - **2. Approval Idempotency**:
+    - Added checkboxes, floating bulk action bar, preview drawer, and select-all to `CandidateList.tsx`.
+    - Server endpoint `/api/sponsors/approve` saves approved companies with `sponsorApproved: true` into the `Company` pipeline.
+    - Idempotency enforced via normalized domain deduplication per campaign; concurrent or repeated approvals do not duplicate sponsors.
+  - **3. Draft Generation Safety**:
+    - Added server-side validation ensuring drafts can only be generated for approved sponsors.
+    - Added placeholder detection: unresolved template variables flag drafts as `needsAttention: true` with explanatory reasons.
+    - Draft approval and send buttons are disabled when `needsAttention` is true until the organizer resolves the variables.
+    - Bounded batch draft generation with concurrency limits in `/api/outreach/draft`.
+  - **4. Bulk Send with Human-in-the-Loop Confirmation**:
+    - Built `BulkSendModal.tsx` and `/api/outreach/bulk-send`.
+    - Pre-flight eligibility check inspects human approval, verified contacts, suppression list, daily send cap, and spacing.
+    - Displays exact eligible vs. excluded counts with specific human-readable reasons before dispatch.
+    - Atomic claim (`claimDraftForSending`) prevents race conditions and duplicate sends.
+    - Partial failure resilience: failed sends remain retryable without re-sending successes.
+  - **5. Reply Sync & Immediate Halting**:
+    - Protected `/api/replies/sync` with `auth()`.
+    - Removed arbitrary `sponsors[0]` fallback so replies are strictly matched by verified email or thread.
+    - Intent classification automatically moves not-interested sponsors to `Lost` + suppression, interested sponsors to `Interested`, and general replies to `Replied`.
+    - Follow-up sequences for that sponsor are immediately halted upon receiving a reply.
+  - **6. Follow-up Engine (2-Touch Limit & 2-Day Cadence)**:
+    - Updated default follow-up cadence in `src/lib/config/limits.ts`: **2 days** after initial send, **2 days** after follow-up 1 (`MIN_DAYS_BETWEEN_TOUCHES = 2`).
+    - Maximum 2 follow-ups strictly enforced at the read time and send-guard levels (`MAX_TOUCHES = 3`: 1 initial + 2 follow-ups).
+    - Added "Close Prospect" action in `FollowupQueue.tsx` and `/api/followups/action` to immediately stop follow-ups and move stage to `Lost`.
+    - Added bulk follow-up draft generation and bulk send confirmation.
+  - **7. Pure Stored Analytics**:
+    - All analytics computed directly from stored records without double-counting retries.
+    - Updated follow-up lift labels to "+2 days" cadence.
+  - **8. Live Dashboard Action Queue**:
+    - Overview page (`src/app/(app)/app/page.tsx`) computes live action items (follow-ups due, drafts awaiting approval, ready-to-send emails, awaiting drafts, replies, prospects at limit).
+    - Displays clean zero-count empty state for real users with no pending actions.
+  - **Verification**:
+    - Created `tests/workflow-integration.test.ts` testing discovery isolation, approval idempotency, draft safety gates, rolling daily cap, reply halting, and 2-follow-up limits.
+    - Created `tests/workflow-routes-and-safety.test.ts` testing discovery CRUD & isolation, `/api/discover/results` single & clear operations, idempotent candidate approval, bulk send pre-flight & execution, and prospect closing actions.
+    - Strictly enforced offline safety: all 90 tests run against in-memory stores with `isDatabaseConfigured() === false`, ensuring zero queries, modifications, or deletions against live Neon PostgreSQL or third-party APIs.
+    - All 10 Vitest test suites (90 unit & integration tests) passing with 100% success rate.
+    - `npm run typecheck` (`tsc --noEmit`): 0 errors.
+    - `npm run lint` (`next lint`): 0 errors, 0 warnings.
+    - Generated additive offline migration: `prisma/migrations/20261014_workflow_state_models/migration.sql`.
+    - Produced `docs/WORKFLOW_GAP_ANALYSIS.md` and `docs/MANUAL_TEST_PLAN.md`.
+
+

@@ -6,6 +6,9 @@ vi.mock("@/lib/prisma", () => ({
   default: {},
   isDatabaseConfigured: () => false,
 }));
+vi.mock("@/lib/auth", () => ({
+  auth: async () => ({ user: { id: "usr-demo-lead", email: "demo@sponfy.dev" } }),
+}));
 
 import { evaluateSend, resolveRecipient, effectiveDailyLimit } from "@/lib/outreach/send-guard";
 import { findDuplicateCompany, normalizeDomain } from "@/lib/outreach/duplicates";

@@ -61,8 +61,8 @@ describe("M1 Foundation Tests", () => {
     it("enforces safe default send cap and follow-up thresholds", () => {
       expect(SYSTEM_LIMITS.DEFAULT_DAILY_SEND_CAP).toBe(30);
       expect(SYSTEM_LIMITS.MAX_FOLLOWUP_COUNT).toBe(2);
-      expect(SYSTEM_LIMITS.DEFAULT_FIRST_FOLLOWUP_DELAY_DAYS).toBe(4);
-      expect(SYSTEM_LIMITS.DEFAULT_SECOND_FOLLOWUP_DELAY_DAYS).toBe(7);
+      expect(SYSTEM_LIMITS.DEFAULT_FIRST_FOLLOWUP_DELAY_DAYS).toBe(2);
+      expect(SYSTEM_LIMITS.DEFAULT_SECOND_FOLLOWUP_DELAY_DAYS).toBe(2);
     });
   });
 
