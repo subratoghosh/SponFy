@@ -45,3 +45,36 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: [] });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const session = await auth();
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ success: false, error: "Missing campaign id" }, { status: 400 });
+  }
+
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: true, message: "Campaign deleted" });
+  }
+
+  try {
+    const userId = session?.user?.id;
+    const where: any = { id };
+    if (userId && session?.user?.email !== "demo@sponfy.dev") {
+      where.userId = userId;
+    }
+
+    if ((prisma as any).campaign) {
+      await (prisma as any).campaign.deleteMany({
+        where,
+      });
+    }
+
+    return NextResponse.json({ success: true, message: "Campaign deleted" });
+  } catch (err: any) {
+    console.error("DELETE /api/campaigns error:", err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
