@@ -1,7 +1,18 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { CheckCircle, Clock, Send, User, ShieldCheck } from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  Send,
+  User,
+  ShieldCheck,
+  CheckSquare,
+  Square,
+  XCircle,
+  Loader2,
+  AlertTriangle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
@@ -30,6 +41,9 @@ export function FollowupQueue() {
   const [items, setItems] = useState<FollowupItem[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchActionBusy, setBatchActionBusy] = useState(false);
+  const [confirmBulkSend, setConfirmBulkSend] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -49,13 +63,94 @@ export function FollowupQueue() {
     load();
   }, [load]);
 
-  if (loading) {
-    return <div className="text-sm text-[#0C382E]/60 p-6">Loading follow-ups...</div>;
-  }
-
   const attention = items.filter((i) => i.state === 'due' || i.state === 'draft_ready');
   const waiting = items.filter((i) => i.state === 'waiting');
   const finished = items.filter((i) => !['due', 'draft_ready', 'waiting'].includes(i.state));
+
+  const eligibleForDrafting = attention.filter((i) => i.state === 'due');
+  const eligibleForBulkSend = attention.filter((i) => i.state === 'draft_ready' && i.pendingDraft?.status === 'approved');
+
+  const toggleSelect = (companyId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(companyId) ? prev.filter((id) => id !== companyId) : [...prev, companyId]
+    );
+  };
+
+  const selectAllAttention = () => {
+    setSelectedIds(attention.map((i) => i.companyId));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds([]);
+  };
+
+  const handleBulkDraft = async () => {
+    const toDraft = selectedIds.length > 0 ? selectedIds : eligibleForDrafting.map((i) => i.companyId);
+    if (toDraft.length === 0) return;
+    setBatchActionBusy(true);
+    try {
+      const res = await fetch('/api/followups/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyIds: toDraft }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast(`Generated ${data.createdCount || toDraft.length} follow-up draft(s). Review before sending.`, 'success');
+        setSelectedIds([]);
+        load();
+      } else {
+        toast(data.error || 'Bulk draft generation failed', 'error');
+      }
+    } catch (err: any) {
+      toast(err.message || 'Failed to draft follow-ups', 'error');
+    } finally {
+      setBatchActionBusy(false);
+    }
+  };
+
+  const handleBulkSendApproved = async () => {
+    if (eligibleForBulkSend.length === 0) return;
+    setBatchActionBusy(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const item of eligibleForBulkSend) {
+      if (!item.pendingDraft) continue;
+      try {
+        const res = await fetch('/api/outreach/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            draftId: item.pendingDraft.id,
+            toEmail: item.recipientEmail,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch {
+        failCount++;
+      }
+    }
+
+    setBatchActionBusy(false);
+    setConfirmBulkSend(false);
+    if (successCount > 0) {
+      toast(`Sent ${successCount} follow-up email(s)!`, 'success');
+    }
+    if (failCount > 0) {
+      toast(`${failCount} follow-up send(s) failed or were excluded.`, 'error');
+    }
+    load();
+  };
+
+  if (loading) {
+    return <div className="text-sm text-[#0C382E]/60 p-6">Loading follow-ups...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -67,7 +162,102 @@ export function FollowupQueue() {
       </div>
 
       <section>
-        <h2 className="font-heading font-bold text-lg text-[#0C382E] mb-3">Needs your attention</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <h2 className="font-heading font-bold text-lg text-[#0C382E]">Needs your attention</h2>
+          {attention.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={selectAllAttention}
+                className="text-[11px] h-8"
+              >
+                Select All ({attention.length})
+              </Button>
+              {selectedIds.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={clearSelection}
+                  className="text-[11px] h-8 text-[#0C382E]/60"
+                >
+                  Clear
+                </Button>
+              )}
+              {eligibleForDrafting.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="green"
+                  disabled={batchActionBusy}
+                  onClick={handleBulkDraft}
+                  className="text-[11px] font-bold h-8 flex items-center gap-1.5"
+                >
+                  {batchActionBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                  Generate Follow-ups ({selectedIds.length > 0 ? selectedIds.length : eligibleForDrafting.length})
+                </Button>
+              )}
+              {eligibleForBulkSend.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="butter"
+                  disabled={batchActionBusy}
+                  onClick={() => setConfirmBulkSend(true)}
+                  className="text-[11px] font-bold h-8 flex items-center gap-1.5 shadow-sm"
+                >
+                  <Send className="w-3 h-3" />
+                  Send Approved Follow-ups ({eligibleForBulkSend.length})
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {confirmBulkSend && (
+          <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-4 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-heading font-bold text-sm text-amber-900">
+                  Confirm Bulk Follow-up Send
+                </h4>
+                <p className="text-xs text-amber-800 mt-1">
+                  You are about to dispatch <strong>{eligibleForBulkSend.length}</strong> approved follow-up email(s) via Gmail to verified recipients.
+                  Companies that have replied, unsubscribed, or are closed will NEVER receive follow-ups.
+                </p>
+                <div className="mt-2 text-[11px] text-amber-900 max-h-24 overflow-y-auto space-y-0.5 pr-2">
+                  {eligibleForBulkSend.map((item) => (
+                    <div key={item.companyId} className="flex justify-between">
+                      <span className="font-semibold">{item.companyName}</span>
+                      <span className="text-amber-700">{item.recipientEmail}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-amber-200">
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={batchActionBusy}
+                onClick={() => setConfirmBulkSend(false)}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                variant="green"
+                disabled={batchActionBusy}
+                onClick={handleBulkSendApproved}
+                className="text-xs font-bold"
+              >
+                {batchActionBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                Confirm and Send ({eligibleForBulkSend.length})
+              </Button>
+            </div>
+          </div>
+        )}
+
         {attention.length === 0 ? (
           <div className="bg-white border border-[#0C382E]/10 rounded-2xl p-10 text-center shadow-sm">
             <CheckCircle className="w-10 h-10 text-[#0C382E] mx-auto mb-2" />
@@ -79,7 +269,13 @@ export function FollowupQueue() {
         ) : (
           <div className="space-y-3">
             {attention.map((item) => (
-              <AttentionCard key={item.companyId} item={item} onChanged={load} />
+              <AttentionCard
+                key={item.companyId}
+                item={item}
+                isSelected={selectedIds.includes(item.companyId)}
+                onToggleSelect={() => toggleSelect(item.companyId)}
+                onChanged={load}
+              />
             ))}
           </div>
         )}
@@ -138,7 +334,17 @@ function SimpleRow({ item }: { item: FollowupItem }) {
   );
 }
 
-function AttentionCard({ item, onChanged }: { item: FollowupItem; onChanged: () => void }) {
+function AttentionCard({
+  item,
+  isSelected,
+  onToggleSelect,
+  onChanged,
+}: {
+  item: FollowupItem;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
+  onChanged: () => void;
+}) {
   const { toast } = useToast();
   const draft = item.pendingDraft;
   const [busy, setBusy] = useState(false);
@@ -199,24 +405,56 @@ function AttentionCard({ item, onChanged }: { item: FollowupItem; onChanged: () 
       toast(`Follow-up sent to ${item.companyName}.`, 'success');
     });
 
+  const closeProspect = () =>
+    run(async () => {
+      await post('/api/followups/action', { companyId: item.companyId, action: 'close' });
+      toast(`${item.companyName} marked as closed. Follow-up sequence halted.`, 'info');
+    });
+
   const dirty = !!draft && (subject !== draft.subject || body !== draft.body);
 
   return (
     <div className="bg-white p-5 rounded-2xl border border-[#0C382E]/10 shadow-sm space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="font-heading font-bold text-[#0C382E] text-base">{item.companyName}</span>
-        <Badge variant="neutral" className="text-xs font-semibold">
-          Email {item.nextTouch} of 3
-        </Badge>
-        <Badge variant="warning" className="text-xs">
-          <Clock className="w-3 h-3 mr-1" />
-          {Math.floor(item.daysSinceLast)} days since last email
-        </Badge>
-        {draft && (
-          <Badge variant={draft.status === 'approved' ? 'success' : 'info'} className="text-xs">
-            {draft.status === 'approved' ? 'Approved' : 'Draft'}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          {onToggleSelect && (
+            <button
+              type="button"
+              onClick={onToggleSelect}
+              className="text-[#0C382E] hover:scale-105 transition-transform mr-1"
+            >
+              {isSelected ? (
+                <CheckSquare className="w-4 h-4 text-[#0C382E]" />
+              ) : (
+                <Square className="w-4 h-4 text-[#0C382E]/30" />
+              )}
+            </button>
+          )}
+          <span className="font-heading font-bold text-[#0C382E] text-base">{item.companyName}</span>
+          <Badge variant="neutral" className="text-xs font-semibold">
+            Email {item.nextTouch} of 3
           </Badge>
-        )}
+          <Badge variant="warning" className="text-xs">
+            <Clock className="w-3 h-3 mr-1" />
+            {Math.floor(item.daysSinceLast)} days since last email
+          </Badge>
+          {draft && (
+            <Badge variant={draft.status === 'approved' ? 'success' : 'info'} className="text-xs">
+              {draft.status === 'approved' ? 'Approved' : 'Draft'}
+            </Badge>
+          )}
+        </div>
+
+        <button
+          type="button"
+          disabled={busy}
+          onClick={closeProspect}
+          className="text-[11px] font-medium text-[#0C382E]/60 hover:text-red-700 flex items-center gap-1 transition-colors"
+          title="Stop follow-up sequence and close prospect"
+        >
+          <XCircle className="w-3.5 h-3.5" />
+          Close Prospect
+        </button>
       </div>
 
       <div className="text-xs text-[#0C382E]/60 flex items-center gap-1.5">
