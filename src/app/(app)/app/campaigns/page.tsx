@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { CampaignCard } from "@/components/campaigns/CampaignCard";
 import { CreateCampaignModal } from "@/components/campaigns/CreateCampaignModal";
-import { getCampaigns } from "@/lib/data/repositories/campaigns";
+import { getCampaigns, deleteCampaign } from "@/lib/data/repositories/campaigns";
 import { Campaign } from "@/types";
 import {
   Plus,
@@ -17,6 +17,7 @@ import {
   MapPin,
   TrendingUp,
   ArrowRight,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -49,6 +50,16 @@ export default function CampaignsPage() {
         setCampaigns(cleanData);
       })
       .finally(() => setLoading(false));
+  };
+
+  const handleDeleteCampaign = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this campaign? This action only removes the campaign from your workspace.")) {
+      return;
+    }
+    const success = await deleteCampaign(id);
+    if (success) {
+      setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    }
   };
 
   useEffect(() => {
@@ -233,7 +244,11 @@ export default function CampaignsPage() {
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
           {filteredCampaigns.map((camp) => (
-            <CampaignCard key={camp.id} campaign={camp} />
+            <CampaignCard
+              key={camp.id}
+              campaign={camp}
+              onDelete={handleDeleteCampaign}
+            />
           ))}
         </div>
       ) : (
@@ -294,13 +309,23 @@ export default function CampaignsPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <Link
-                        href="/app"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-green-dark hover:text-green-mid"
-                      >
-                        <span>Manage</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href="/app"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-green-dark hover:text-green-mid"
+                        >
+                          <span>Manage</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCampaign(camp.id)}
+                          title="Remove Campaign"
+                          className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

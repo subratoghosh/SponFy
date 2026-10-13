@@ -2,20 +2,35 @@ import React from "react";
 import Link from "next/link";
 import { Campaign } from "@/types";
 import { formatCurrencyINR, formatNumber } from "@/lib/utils";
-import { FolderKanban, Users, MapPin, ArrowRight, ExternalLink } from "lucide-react";
+import { FolderKanban, Users, MapPin, ArrowRight, ExternalLink, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const CampaignCard: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
+export const CampaignCard: React.FC<{
+  campaign: Campaign;
+  onDelete?: (id: string) => void;
+}> = ({ campaign, onDelete }) => {
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-green-dark/12 shadow-sm feature-card-interactive flex flex-col justify-between space-y-5">
+    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-green-dark/12 shadow-sm feature-card-interactive flex flex-col justify-between space-y-5 relative group">
       <div>
         <div className="flex items-start justify-between mb-4">
           <div className="w-12 h-12 rounded-2xl bg-butter-warm flex items-center justify-center text-green-dark font-bold border border-green-dark/10">
             <FolderKanban className="w-6 h-6" />
           </div>
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-300">
-            {campaign.status === "active" ? "Active" : "Archived"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-300">
+              {campaign.status === "active" ? "Active" : "Archived"}
+            </span>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(campaign.id)}
+                title="Remove Campaign"
+                className="w-7 h-7 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         <h3 className="font-heading font-extrabold text-xl text-green-dark mb-1">
@@ -75,7 +90,7 @@ export const CampaignCard: React.FC<{ campaign: Campaign }> = ({ campaign }) => 
 
         <Link href="/app/sponsors">
           <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
-            View Pipeline <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            View Sponsors <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </Link>
       </div>
