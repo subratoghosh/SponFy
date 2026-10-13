@@ -12,12 +12,14 @@ import {
   Menu,
   X,
   Radio,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 
 const ADMIN_NAV_ITEMS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "User Management", href: "/admin/users", icon: Users },
   { label: "Showcase Companies", href: "/admin/showcase", icon: Building2 },
   { label: "Admin Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },

@@ -1,81 +1,146 @@
 import { NextResponse } from "next/server";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
-import { addSponsor } from "@/lib/data/repositories/sponsors";
-import { DuplicateCompanyError } from "@/lib/outreach/duplicates";
-import { getGeminiClient } from "@/lib/integrations/factory";
+import { getSponsors, addSponsor } from "@/lib/data/repositories/sponsors";
+import { DuplicateCompanyError, normalizeName, normalizeDomain } from "@/lib/outreach/duplicates";
+import { FALLBACK_SPONSOR_CATALOG, DiscoveryCandidate } from "@/lib/discovery/catalog";
+import { getFirecrawlClient } from "@/lib/integrations/factory";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { campaignId, prompt, targetCount = 5 } = body;
+    const { campaignId, prompt = "", targetCount = 5 } = body;
 
     const campaign = await getCampaignById(campaignId || "camp-sponfy-2026");
     if (!campaign) {
       return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
     }
 
-    // Dynamic candidate generation
-    const candidates = [
-      {
-        name: "Anthropic",
-        website: "https://www.anthropic.com",
-        industry: "AI & Machine Learning",
-        description: "AI safety and research company behind Claude 3.7 with dedicated student developer grant programs.",
-        fitScore: 95,
-        pipelineValue: 100000,
-        signals: ["Claude API Credits Grant", "AI Track Challenge Sponsor"],
-      },
-      {
-        name: "Neon Tech",
-        website: "https://neon.tech",
-        industry: "Developer Tools",
-        description: "Serverless Postgres with instant branching built for modern cloud and hackathon developers.",
-        fitScore: 92,
-        pipelineValue: 50000,
-        signals: ["Serverless Postgres Track", "Free Hacker Tier"],
-      },
-      {
-        name: "Inngest",
-        website: "https://www.inngest.com",
-        industry: "Developer Tools",
-        description: "Event-driven background jobs and durable execution engine for TypeScript developers.",
-        fitScore: 89,
-        pipelineValue: 40000,
-        signals: ["Best Event-Driven Architecture Prize"],
-      },
-      {
-        name: "Mistral AI",
-        website: "https://mistral.ai",
-        industry: "AI & Machine Learning",
-        description: "Frontier open and commercial AI models for developers.",
-        fitScore: 91,
-        pipelineValue: 75000,
-        signals: ["Open Weights Challenge", "API Credits"],
-      },
-      {
-        name: "Appwrite",
-        website: "https://appwrite.io",
-        industry: "Developer Tools",
-        description: "Open-source backend server for web, mobile, and flutter developers.",
-        fitScore: 90,
-        pipelineValue: 30000,
-        signals: ["Appwrite Cloud Pro credits", "Flutter Track partner"],
-      },
-    ];
+    // 1. Fetch all existing companies in this campaign to avoid any duplicate proposals
+    const existing = await getSponsors(campaign.id);
+    const existingNames = new Set(existing.map((c) => normalizeName(c.name)));
+    const existingDomains = new Set(existing.map((c) => normalizeDomain(c.website)).filter(Boolean));
 
-    const added = [];
-    const skipped: { name: string; reason: string }[] = [];
-    for (const c of candidates.slice(0, targetCount)) {
-      let spon;
+    let candidates: DiscoveryCandidate[] = [];
+
+    // 2. Natural Language Processing Engine via Google Gemini 2.0 Flash
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (geminiKey && geminiKey.length > 10 && !geminiKey.includes("your-")) {
       try {
-        spon = await addSponsor({
+        const { GoogleGenAI } = await import("@google/genai");
+        const ai = new GoogleGenAI({ apiKey: geminiKey });
+
+        const existingListSample = Array.from(existingNames).slice(0, 40).join(", ");
+        const nlpPrompt = `You are a sponsorship intelligence scout for collegiate tech hackathons and developer events.
+Target Event: "${campaign.name}" (${campaign.eventType}, ${campaign.audienceSize} students in ${campaign.location}, Target Budget: ₹${campaign.targetAmount}).
+Preferred Industries: ${campaign.preferredIndustries?.join(", ") || "Developer Tools, AI, Cloud, Fintech"}.
+User Search Intent: "${prompt || "Find high-fit prospective sponsors with active student developer or hackathon programs"}".
+
+STRICT DEDUPLICATION RULE:
+Do NOT suggest any of these companies that are already in the pipeline:
+[${existingListSample}]
+
+Generate ${Math.min(Number(targetCount) || 5, 10)} real, innovative technology companies that actively sponsor hackathons, provide student developer grants, or have strong synergies with this event.
+Return a STRICT JSON array matching this format:
+[
+  {
+    "name": "<Company Name>",
+    "website": "<Valid full URL with https://>",
+    "industry": "<e.g. AI & Machine Learning | Developer Tools | Cloud & Infrastructure | Cybersecurity | Fintech>",
+    "description": "<2 sentences explaining company product and why they would sponsor this event>",
+    "fitScore": <integer between 75 and 97>,
+    "pipelineValue": <realistic sponsorship budget in INR between 30000 and 150000>,
+    "signals": ["<Signal 1, e.g. Student Hackathon Partner>", "<Signal 2, e.g. Free Developer Credits>"]
+  }
+]`;
+
+        const response = await ai.models.generateContent({
+          model: "gemini-2.0-flash",
+          contents: nlpPrompt,
+          config: {
+            responseMimeType: "application/json",
+          },
+        });
+
+        const text = response.text || "[]";
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Filter out any candidates that might still collide with existing
+          candidates = parsed.filter(
+            (c: any) =>
+              c.name &&
+              c.website &&
+              !existingNames.has(normalizeName(c.name)) &&
+              !existingDomains.has(normalizeDomain(c.website))
+          );
+        }
+      } catch (geminiErr) {
+        console.warn("Gemini NLP discovery generation error, falling back to catalog:", geminiErr);
+      }
+    }
+
+    // 3. Web Scraping & Search Signals via Firecrawl (if candidates found or needed)
+    const firecrawl = getFirecrawlClient();
+    if (firecrawl.isConfigured() && candidates.length > 0) {
+      try {
+        // Enrich first 2 candidates with live web scrape signals if missing
+        for (const cand of candidates.slice(0, 2)) {
+          if (!cand.signals || cand.signals.length === 0) {
+            const searchResults = await firecrawl.search(`${cand.name} student developer program hackathon`, 2);
+            if (searchResults.length > 0) {
+              cand.signals = searchResults.map((s) => s.title).slice(0, 2);
+            }
+          }
+        }
+      } catch (crawlErr) {
+        console.warn("Firecrawl live signal enrichment skipped:", crawlErr);
+      }
+    }
+
+    // 4. Robust Fallback Catalog (Deduplicated against pipeline)
+    if (candidates.length < targetCount) {
+      const cleanPrompt = prompt.toLowerCase().trim();
+      const filteredCatalog = FALLBACK_SPONSOR_CATALOG.filter((c) => {
+        const isNotDup = !existingNames.has(normalizeName(c.name)) && !existingDomains.has(normalizeDomain(c.website));
+        if (!isNotDup) return false;
+
+        // If user entered specific keywords, rank matching companies higher
+        if (cleanPrompt) {
+          const textToMatch = `${c.name} ${c.industry} ${c.description} ${c.signals.join(" ")}`.toLowerCase();
+          return cleanPrompt.split(" ").some((w: string) => w.length > 2 && textToMatch.includes(w));
+        }
+        return true;
+      });
+
+      // If prompt filter was too restrictive, relax to any non-duplicate
+      const availableFromCatalog =
+        filteredCatalog.length > 0
+          ? filteredCatalog
+          : FALLBACK_SPONSOR_CATALOG.filter(
+              (c) => !existingNames.has(normalizeName(c.name)) && !existingDomains.has(normalizeDomain(c.website))
+            );
+
+      for (const item of availableFromCatalog) {
+        if (candidates.length >= targetCount) break;
+        if (!candidates.some((c) => normalizeName(c.name) === normalizeName(item.name))) {
+          candidates.push(item);
+        }
+      }
+    }
+
+    // 5. Add discovered candidates to the pipeline
+    const added = [];
+    const skipped: { name: string; reason: string; existingId?: string }[] = [];
+
+    for (const c of candidates.slice(0, targetCount)) {
+      try {
+        const spon = await addSponsor({
           campaignId: campaign.id,
           name: c.name,
           website: c.website,
           industry: c.industry,
           description: c.description,
           stage: "Discovered",
-          fitScore: c.fitScore,
+          fitScore: c.fitScore || 88,
           scoreBreakdown: [
             { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: "High synergy with technical student builders", positive: true },
             { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} students in ${campaign.location}`, positive: true },
@@ -85,23 +150,37 @@ export async function POST(req: Request) {
             { factor: "Financial Capability", points: 8, maxPoints: 10, reason: "Standard track budget tier", positive: true },
             { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "National reach", positive: true },
           ],
-          pipelineValue: c.pipelineValue,
-          signals: c.signals,
+          pipelineValue: c.pipelineValue || 50000,
+          signals: c.signals || ["Developer Track Sponsor", "API Grants"],
           confidence: 90,
           researchStatus: "pending",
         });
+        added.push(spon);
       } catch (err) {
         if (err instanceof DuplicateCompanyError) {
-          skipped.push({ name: c.name, reason: "Already in this campaign's pipeline" });
+          skipped.push({ name: c.name, reason: "Already in this campaign's pipeline", existingId: err.existingId });
           continue;
         }
         throw err;
       }
-      added.push(spon);
     }
 
-    return NextResponse.json({ success: true, count: added.length, candidates: added, skipped });
+    // If all candidates happened to be in pipeline, retrieve existing matching records to show in UI
+    const existingMatches =
+      added.length === 0 && skipped.length > 0
+        ? existing.filter((ex) => skipped.some((sk) => normalizeName(sk.name) === normalizeName(ex.name)))
+        : [];
+
+    return NextResponse.json({
+      success: true,
+      count: added.length,
+      candidates: added.length > 0 ? added : existingMatches,
+      skipped,
+      alreadyInPipelineCount: existingMatches.length,
+      existingTotal: existing.length,
+    });
   } catch (err: any) {
+    console.error("Discovery API route error:", err);
     return NextResponse.json({ error: err.message || "Discovery failed" }, { status: 500 });
   }
 }

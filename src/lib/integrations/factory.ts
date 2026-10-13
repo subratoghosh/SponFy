@@ -9,6 +9,11 @@ import {
   MockTavilyClient,
 } from "./tavily";
 import {
+  IFirecrawlClient,
+  RealFirecrawlClient,
+  MockFirecrawlClient,
+} from "./firecrawl";
+import {
   IGmailClient,
   RealGmailClient,
   MockGmailClient,
@@ -31,10 +36,25 @@ export function getTavilyClient(): ITavilyClient {
   return new MockTavilyClient();
 }
 
+export function getFirecrawlClient(): IFirecrawlClient {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (apiKey && apiKey.length > 5 && !apiKey.includes("your-")) {
+    return new RealFirecrawlClient(apiKey);
+  }
+  return new MockFirecrawlClient();
+}
+
 export function getGmailClient(tokens?: any, redirectUriOverride?: string): IGmailClient {
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const baseUrl =
+    (process.env.NODE_ENV === "production" && configuredAppUrl?.includes("localhost")
+      ? vercelOrigin || "https://sponfy.vercel.app"
+      : configuredAppUrl) ||
+    vercelOrigin ||
+    "http://localhost:3000";
   const defaultRedirect = `${baseUrl}/api/integrations/gmail/callback`;
   const redirectUri =
     redirectUriOverride ||
@@ -66,6 +86,12 @@ export function getIntegrationStatus(): IntegrationHealth[] {
     !process.env.TAVILY_API_KEY.includes("your-")
   );
 
+  const firecrawlConfigured = !!(
+    process.env.FIRECRAWL_API_KEY &&
+    process.env.FIRECRAWL_API_KEY.length > 5 &&
+    !process.env.FIRECRAWL_API_KEY.includes("your-")
+  );
+
   const gmailConfigured = !!(
     process.env.GOOGLE_CLIENT_ID &&
     process.env.GOOGLE_CLIENT_SECRET &&
@@ -91,6 +117,13 @@ export function getIntegrationStatus(): IntegrationHealth[] {
       service: "tavily",
       isConfigured: tavilyConfigured,
       statusText: tavilyConfigured ? "Connected & Active" : "Demo Mock Mode Active",
+      lastChecked: new Date().toISOString(),
+    },
+    {
+      name: "Firecrawl Web Scraper & Crawler",
+      service: "firecrawl",
+      isConfigured: firecrawlConfigured,
+      statusText: firecrawlConfigured ? "Connected & Active" : "Demo Mock Mode Active",
       lastChecked: new Date().toISOString(),
     },
     {

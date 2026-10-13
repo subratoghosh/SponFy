@@ -17,6 +17,9 @@ export default function DiscoverPage() {
   const [jobActive, setJobActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [results, setResults] = useState<Company[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isExistingOnly, setIsExistingOnly] = useState(false);
+  const [skippedCount, setSkippedCount] = useState(0);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
   const handleSearch = async (prompt: string, count: number) => {
@@ -24,6 +27,8 @@ export default function DiscoverPage() {
     setJobActive(true);
     setCurrentStep(0);
     setResults([]);
+    setHasSearched(true);
+    setIsExistingOnly(false);
 
     try {
       // Step simulation for live progress feel
@@ -40,16 +45,34 @@ export default function DiscoverPage() {
       const data = await res.json();
       setTimeout(() => {
         setCurrentStep(4);
-        setResults(data.candidates || []);
+        const candidates = data.candidates || [];
+        setResults(candidates);
         setJobActive(false);
         setLoading(false);
-        const skippedCount = Array.isArray(data.skipped) ? data.skipped.length : 0;
-        toast(
-          `Added ${data.count ?? 0} new sponsor(s)` +
-            (skippedCount ? `, skipped ${skippedCount} already in the pipeline` : "") +
-            ".",
-          "success"
-        );
+        const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
+        setSkippedCount(skipped);
+        const addedCount = data.count ?? 0;
+        const isExisting = addedCount === 0 && candidates.length > 0;
+        setIsExistingOnly(isExisting);
+
+        if (addedCount > 0) {
+          toast(
+            `Added ${addedCount} new sponsor(s)` +
+              (skipped ? `, skipped ${skipped} already in the pipeline` : "") +
+              ".",
+            "success"
+          );
+        } else if (isExisting) {
+          toast(
+            `Showing ${candidates.length} matching sponsor(s) already in your pipeline.`,
+            "info"
+          );
+        } else {
+          toast(
+            `No new companies found. Try a different search term or industry.`,
+            "info"
+          );
+        }
       }, 2400);
     } catch (err) {
       toast("Discovery search failed", "error");
@@ -94,7 +117,12 @@ export default function DiscoverPage() {
       {loading ? (
         <CandidateListSkeleton />
       ) : (
-        <CandidateList candidates={results} />
+        <CandidateList
+          candidates={results}
+          hasSearched={hasSearched}
+          isExistingOnly={isExistingOnly}
+          skippedCount={skippedCount}
+        />
       )}
 
       {/* CSV Import Modal */}

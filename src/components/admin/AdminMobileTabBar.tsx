@@ -8,12 +8,14 @@ import {
   BarChart3,
   Building2,
   Settings,
+  Users,
   ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ADMIN_MOBILE_TABS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "Users", href: "/admin/users", icon: Users },
   { label: "Showcase", href: "/admin/showcase", icon: Building2 },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },

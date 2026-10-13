@@ -241,7 +241,7 @@ export interface AIJob {
 // Integration Status
 export interface IntegrationHealth {
   name: string;
-  service: "gemini" | "tavily" | "gmail" | "database" | "neon" | "supabase";
+  service: "gemini" | "tavily" | "firecrawl" | "gmail" | "database" | "neon" | "supabase";
   isConfigured: boolean;
   statusText: string;
   lastChecked?: string;
