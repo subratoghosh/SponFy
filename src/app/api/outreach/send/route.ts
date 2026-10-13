@@ -59,6 +59,9 @@ export async function POST(req: Request) {
       draftStatus: draft.status,
       recipient: recipient.recipient,
       suppressed,
+      needsAttention: (draft as any).needsAttention,
+      hasReply: companyMessages.some((m) => m.direction === "inbound"),
+      companyStage: company.stage,
       priorOutbound: companyMessages.filter((m) => m.direction === "outbound"),
       sentInWindow,
       dailyLimit: profile.dailySendLimit,
@@ -76,18 +79,9 @@ export async function POST(req: Request) {
       );
     }
 
-    let activeUserId = draft.userId;
-    try {
-      const { auth } = await import("@/lib/auth");
-      const session = await auth();
-      if (session?.user?.id) activeUserId = session.user.id;
-    } catch {
-      // Running in unit test environment
-    }
-
     let sendResult: { messageId: string; threadId: string };
     try {
-      sendResult = await executeApprovedSend(draft, recipient.recipient, activeUserId);
+      sendResult = await executeApprovedSend(draft, recipient.recipient, draft.userId);
     } catch (err: any) {
       // Nothing went out: give the approval back so the organizer can retry.
       await releaseDraftClaim(draft.id);
