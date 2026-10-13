@@ -1,12 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { EmailDraft, Company } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Save, CheckCircle2, ShieldCheck, Send } from "lucide-react";
+import {
+  RefreshCw,
+  Save,
+  CheckCircle2,
+  Send,
+  FileText,
+  Plus,
+  Bot,
+} from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { useSession } from "next-auth/react";
+import {
+  CustomEmailTemplate,
+  getCustomTemplates,
+  interpolateTemplate,
+} from "@/lib/data/repositories/templates";
+import { TemplateModal } from "./TemplateModal";
 
 interface EmailComposerProps {
   draft: EmailDraft;
@@ -24,10 +39,73 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
   onOpenSendDialog,
 }) => {
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [subject, setSubject] = useState(draft.subject);
   const [body, setBody] = useState(draft.body);
   const [tone, setTone] = useState<"professional" | "enthusiastic" | "value_first" | "short">("professional");
   const [regenerating, setRegenerating] = useState(false);
+
+  // Template State
+  const [templates, setTemplates] = useState<CustomEmailTemplate[]>([]);
+  const [activeSource, setActiveSource] = useState<string>("ai");
+  const [aiDraftBackup, setAiDraftBackup] = useState({ subject: draft.subject, body: draft.body });
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+
+  useEffect(() => {
+    setSubject(draft.subject);
+    setBody(draft.body);
+    setAiDraftBackup({ subject: draft.subject, body: draft.body });
+    setActiveSource("ai");
+  }, [draft.id]);
+
+  useEffect(() => {
+    const list = getCustomTemplates(session?.user?.email ?? undefined);
+    setTemplates(list);
+  }, [session?.user?.email]);
+
+  const handleSelectSource = (sourceId: string) => {
+    setActiveSource(sourceId);
+    if (sourceId === "ai") {
+      setSubject(aiDraftBackup.subject);
+      setBody(aiDraftBackup.body);
+      toast("Restored AI-generated email pitch", "info");
+      return;
+    }
+
+    const tmpl = templates.find((t) => t.id === sourceId);
+    if (!tmpl) return;
+
+    const interpolatedSubject = interpolateTemplate(tmpl.subject, {
+      companyName: company?.name,
+      contactName: company?.contacts?.[0]?.name,
+      eventName: "Our Annual Hackathon & Conference",
+      audienceSize: "1,200",
+      organizerName: session?.user?.name || "Event Convener",
+      industry: company?.industry,
+      fitScore: company?.fitScore,
+    });
+
+    const interpolatedBody = interpolateTemplate(tmpl.body, {
+      companyName: company?.name,
+      contactName: company?.contacts?.[0]?.name,
+      eventName: "Our Annual Hackathon & Conference",
+      audienceSize: "1,200",
+      organizerName: session?.user?.name || "Event Convener",
+      industry: company?.industry,
+      fitScore: company?.fitScore,
+    });
+
+    setSubject(interpolatedSubject);
+    setBody(interpolatedBody);
+    toast(`Loaded custom template: "${tmpl.name}"`, "success");
+  };
+
+  const handleTemplateSaved = (newTmpl: CustomEmailTemplate) => {
+    const list = getCustomTemplates(session?.user?.email ?? undefined);
+    setTemplates(list);
+    handleSelectSource(newTmpl.id);
+    toast("Custom template created and applied!", "success");
+  };
 
   const handleSave = () => {
     onSave(subject, body);
@@ -108,6 +186,54 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
         </span>
       </div>
 
+      {/* Pitch Source & Custom Template Selector */}
+      <div className="p-3.5 bg-butter-panel/80 rounded-2xl border border-green-dark/12 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <FileText className="w-3.5 h-3.5 text-green-mid" />
+            <span className="text-xs font-bold text-green-dark">Pitch Source & Email Templates</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsTemplateModalOpen(true)}
+            className="text-[11px] font-bold text-green-mid hover:text-green-dark flex items-center gap-1 hover:underline cursor-pointer"
+          >
+            <Plus className="w-3 h-3" /> Add / Upload Custom Template
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5">
+          <button
+            type="button"
+            onClick={() => handleSelectSource("ai")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              activeSource === "ai"
+                ? "bg-green-dark text-butter-cream shadow-xs"
+                : "bg-white text-green-dark/80 hover:bg-butter-warm border border-green-dark/10"
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span>AI Pitch (Gemini)</span>
+          </button>
+
+          {templates.map((tmpl) => (
+            <button
+              key={tmpl.id}
+              type="button"
+              onClick={() => handleSelectSource(tmpl.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeSource === tmpl.id
+                  ? "bg-green-dark text-butter-cream shadow-xs"
+                  : "bg-white text-green-dark/80 hover:bg-butter-warm border border-green-dark/10"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>{tmpl.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Subject Line */}
       <Input
         label="Subject Line"
@@ -154,6 +280,13 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
           </Button>
         </div>
       </div>
+
+      <TemplateModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onSaved={handleTemplateSaved}
+        userEmail={session?.user?.email ?? undefined}
+      />
     </div>
   );
 };
