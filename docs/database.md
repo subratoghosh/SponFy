@@ -142,6 +142,7 @@ model Company {
   pipelineValue   Int            @default(0)
   signals         Json           @default("[]") // [{label, url?, date?}] recent public signals
   confidence      Int?                          // 0-100
+  sponsorApproved Boolean        @default(true) // Distinguishes approved pipeline sponsors from unapproved
   researchStatus  ResearchStatus @default(NOT_STARTED)
   nextAction      Json?                         // {action, reason, generatedAt}
   createdAt       DateTime       @default(now())
@@ -211,6 +212,8 @@ model EmailDraft {
   body       String      @db.Text
   quality    Json?       // {personalization, relevance, clarity, cta, professionalism, overall, suggestions[]}
   status     DraftStatus @default(DRAFT)
+  needsAttention  Boolean     @default(false)
+  attentionReason String?
   approvedAt DateTime?
   sentAt     DateTime?
   error      String?
