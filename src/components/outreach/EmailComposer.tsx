@@ -13,6 +13,7 @@ import {
   FileText,
   Plus,
   Bot,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "next-auth/react";
@@ -56,7 +57,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
     setBody(draft.body);
     setAiDraftBackup({ subject: draft.subject, body: draft.body });
     setActiveSource("ai");
-  }, [draft.id]);
+  }, [draft.id, draft.subject, draft.body]);
 
   useEffect(() => {
     const list = getCustomTemplates(session?.user?.email ?? undefined);
@@ -234,6 +235,17 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
         </div>
       </div>
 
+      {draft.needsAttention && (
+        <div className="bg-amber-50 border border-amber-300 rounded-2xl p-3.5 flex items-start gap-2.5 text-amber-900 text-xs">
+          <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">Attention Required:</span>{" "}
+            {draft.attentionReason ||
+              "This draft contains unresolved template variables. Edit the subject or body to replace placeholders before approving."}
+          </div>
+        </div>
+      )}
+
       {/* Subject Line */}
       <Input
         label="Subject Line"
@@ -262,8 +274,10 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
             <Button
               variant="green"
               size="sm"
+              disabled={!!draft.needsAttention}
               onClick={onApprove}
-              className="text-xs font-bold shadow-sm"
+              className="text-xs font-bold shadow-sm disabled:opacity-50"
+              title={draft.needsAttention ? "Resolve placeholders before approving" : undefined}
             >
               <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve Draft
             </Button>
