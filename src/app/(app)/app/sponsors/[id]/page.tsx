@@ -45,7 +45,7 @@ export default function SponsorDetailPage() {
   if (!sponsor) {
     return (
       <div className="p-12 text-center text-text-dim animate-fade-in">
-        <p>Loading sponsor dossier...</p>
+        <p>Loading sponsor details...</p>
       </div>
     );
   }
@@ -66,11 +66,11 @@ export default function SponsorDetailPage() {
           href="/app/sponsors"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-text-dim hover:text-green-dark transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Sponsors Pipeline
+          <ArrowLeft className="w-4 h-4" /> Back to Sponsors
         </Link>
       </div>
 
-      {/* Hero Dossier Header */}
+      {/* Hero Header */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/12 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 rounded-2xl bg-butter-warm flex items-center justify-center text-green-dark font-bold text-xl border border-green-dark/10 shrink-0">

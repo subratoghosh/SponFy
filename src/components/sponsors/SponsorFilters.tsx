@@ -80,7 +80,7 @@ export const SponsorFilters: React.FC<SponsorFiltersProps> = ({
                 : "text-text-dim hover:text-green-dark"
             }`}
           >
-            Kanban
+            Board
           </button>
           <button
             onClick={() => onViewModeChange("table")}

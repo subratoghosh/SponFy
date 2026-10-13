@@ -81,10 +81,10 @@ export default function SponsorsPipelinePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading font-black text-2xl sm:text-3xl text-green-dark">
-            Sponsors Pipeline
+            Sponsors Tracker
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Manage {sponsors.length} target companies across relationship stages.
+            Track and manage {sponsors.length} target companies across relationship stages.
           </p>
         </div>
 
@@ -152,7 +152,7 @@ export default function SponsorsPipelinePage() {
           <EmptyState
             icon={Building2}
             title="No sponsors match your filters"
-            description="No sponsors in your pipeline match your current keyword, stage, or industry criteria."
+            description="No sponsors in your tracker match your current keyword, stage, or industry criteria."
             actionLabel="Reset Filters"
             onAction={() => {
               setSearch("");

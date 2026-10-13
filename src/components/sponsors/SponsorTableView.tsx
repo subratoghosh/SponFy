@@ -99,7 +99,7 @@ export const SponsorTableView: React.FC<SponsorTableViewProps> = ({ sponsors }) 
                 <td className="py-4 px-6 text-right">
                   <Link href={`/app/sponsors/${spon.id}`}>
                     <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
-                      Dossier <ArrowRight className="w-3 h-3 ml-1" />
+                      View Details <ArrowRight className="w-3 h-3 ml-1" />
                     </Button>
                   </Link>
                 </td>
