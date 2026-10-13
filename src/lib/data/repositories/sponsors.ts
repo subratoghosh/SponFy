@@ -3,6 +3,7 @@ import { DEMO_COMPANIES } from "../seed-data";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Stage, ContactStatus, ResearchStatus } from "@prisma/client";
 import { findDuplicateCompany, DuplicateCompanyError, normalizeDomain, normalizeName } from "@/lib/outreach/duplicates";
+export { DuplicateCompanyError };
 import { memoryStore } from "@/lib/data/memory-store";
 
 const sponsorsStoreRef = memoryStore<Company[]>("sponsors", () => process.env.NODE_ENV === "test" ? [...DEMO_COMPANIES] : []);
