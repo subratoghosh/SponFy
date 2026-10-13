@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { EmailDraft, Company } from "@/types";
 import { DraftQueueList } from "@/components/outreach/DraftQueueList";
 import { EmailComposer } from "@/components/outreach/EmailComposer";
 import { QualityScorePanel } from "@/components/outreach/QualityScorePanel";
 import { SafetyChecklist } from "@/components/outreach/SafetyChecklist";
 import { SendConfirmationDialog } from "@/components/outreach/SendConfirmationDialog";
+import { BulkSendModal } from "@/components/outreach/BulkSendModal";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { Send } from "lucide-react";
+import { Send, SendHorizontal, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OutreachSkeleton } from "@/components/skeletons/OutreachSkeleton";
 
@@ -20,9 +22,12 @@ export default function OutreachPage() {
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [bulkSendOpen, setBulkSendOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [selectedDraftIds, setSelectedDraftIds] = useState<string[]>([]);
+  const [approvingBulk, setApprovingBulk] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/outreach/state", { cache: "no-store" });
@@ -31,22 +36,63 @@ export default function OutreachPage() {
       const allDrafts: EmailDraft[] = data.drafts;
       setDrafts(allDrafts);
       setCompanies(data.companies);
-      if (allDrafts.length > 0 && !selectedDraftId) {
-        setSelectedDraftId(allDrafts[0].id);
-      }
+      setSelectedDraftId((prev) => prev || (allDrafts.length > 0 ? allDrafts[0].id : null));
     } catch (err: any) {
       toast(err.message || "Failed to load outreach data", "error");
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const activeDraft = drafts.find((d) => d.id === selectedDraftId) || drafts[0];
   const activeCompany = companies.find((c) => c.id === activeDraft?.companyId);
+
+  const approvedDraftsCount = drafts.filter((d) => d.status === "approved").length;
+
+  const handleToggleDraftSelect = (id: string) => {
+    setSelectedDraftIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllEligible = () => {
+    const eligible = drafts
+      .filter((d) => d.status === "draft" && !d.needsAttention)
+      .map((d) => d.id);
+    setSelectedDraftIds(eligible);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedDraftIds([]);
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedDraftIds.length === 0) return;
+    setApprovingBulk(true);
+    try {
+      const res = await fetch("/api/outreach/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftIds: selectedDraftIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast(`Approved ${data.approvedCount} draft(s)! Ready for dispatch.`, "success");
+        setSelectedDraftIds([]);
+        loadData();
+      } else {
+        toast(data.error || "Bulk approval failed", "error");
+      }
+    } catch {
+      toast("Failed to approve selected drafts", "error");
+    } finally {
+      setApprovingBulk(false);
+    }
+  };
 
   const handleSave = async (subject: string, body: string) => {
     if (!activeDraft) return;
@@ -123,13 +169,27 @@ export default function OutreachPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div>
-        <h1 className="font-heading font-black text-2xl sm:text-3xl text-green-dark">
-          Outreach Approval Hub
-        </h1>
-        <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-          Review personalized pitch drafts, inspect quality metrics, and approve sends with 1-click.
-        </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading font-black text-2xl sm:text-3xl text-green-dark">
+            Outreach Approval Hub
+          </h1>
+          <p className="text-xs sm:text-sm text-text-dim mt-0.5">
+            Review personalized pitch drafts, inspect quality metrics, and approve sends with human-in-the-loop control.
+          </p>
+        </div>
+
+        {approvedDraftsCount > 0 && (
+          <Button
+            variant="butter"
+            size="sm"
+            onClick={() => setBulkSendOpen(true)}
+            className="font-bold text-xs shadow-sm flex items-center gap-1.5"
+          >
+            <SendHorizontal className="w-4 h-4" />
+            Send All Approved ({approvedDraftsCount})
+          </Button>
+        )}
       </div>
 
       {loading ? (
@@ -155,6 +215,12 @@ export default function OutreachPage() {
               onSelectDraft={setSelectedDraftId}
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
+              selectedDraftIds={selectedDraftIds}
+              onToggleDraftSelect={handleToggleDraftSelect}
+              onSelectAllEligible={handleSelectAllEligible}
+              onClearSelection={handleClearSelection}
+              onBulkApprove={handleBulkApprove}
+              approvingBulk={approvingBulk}
             />
           </div>
 
@@ -209,6 +275,16 @@ export default function OutreachPage() {
           loading={sending}
         />
       )}
+
+      {/* Bulk Send Modal */}
+      <BulkSendModal
+        isOpen={bulkSendOpen}
+        onClose={() => setBulkSendOpen(false)}
+        onSuccess={() => {
+          setBulkSendOpen(false);
+          loadData();
+        }}
+      />
     </div>
   );
 }
