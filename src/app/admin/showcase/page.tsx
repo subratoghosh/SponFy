@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Loader2,
   X,
-  Sparkles,
+  Check,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -387,7 +387,7 @@ export default function AdminShowcasePage() {
                               </span>
                               {company.isPartner && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#FEE790] text-[#0C382E] border border-[#0C382E]/10">
-                                  <Sparkles className="w-2.5 h-2.5" />
+                                  <Check className="w-2.5 h-2.5" />
                                   Partner
                                 </span>
                               )}

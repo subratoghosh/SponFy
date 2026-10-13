@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CheckCircle2, Loader2, Sparkles, BrainCircuit } from "lucide-react";
+import { CheckCircle2, Loader2, Lightbulb, BrainCircuit } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface AIWorkStep {
@@ -116,7 +116,7 @@ export const AIWorkProgress: React.FC<AIWorkProgressProps> = ({
 
       {/* Rotating Tip Line (cycles every 4 seconds) */}
       <div className="pt-2 border-t border-green-mid/40 flex items-center gap-2 text-xs text-butter-cream/90 min-h-[32px]">
-        <Sparkles className="w-3.5 h-3.5 text-butter-gold shrink-0 animate-pulse" />
+        <Lightbulb className="w-3.5 h-3.5 text-butter-gold shrink-0 animate-pulse" />
         <p className="transition-opacity duration-300 italic">
           {tips[tipIndex]}
         </p>
