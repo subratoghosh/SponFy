@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DiscoverPromptBox } from "@/components/discover/DiscoverPromptBox";
 import { LiveJobProgress } from "@/components/discover/LiveJobProgress";
 import { CandidateList } from "@/components/discover/CandidateList";
 import { CandidateListSkeleton } from "@/components/skeletons/CandidateListSkeleton";
 import { CSVImportModal } from "@/components/sponsors/CSVImportModal";
-import { Company } from "@/types";
+import { Company, Campaign } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Layers } from "lucide-react";
 
 export default function DiscoverPage() {
   const { toast } = useToast();
@@ -21,6 +21,20 @@ export default function DiscoverPage() {
   const [isExistingOnly, setIsExistingOnly] = useState(false);
   const [skippedCount, setSkippedCount] = useState(0);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/campaigns")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setCampaigns(data.data);
+          setSelectedCampaignId(data.data[0].id);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSearch = async (prompt: string, count: number) => {
     setLoading(true);
@@ -39,8 +53,17 @@ export default function DiscoverPage() {
       const res = await fetch("/api/discover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, targetCount: count }),
+        body: JSON.stringify({
+          prompt,
+          targetCount: count,
+          campaignId: selectedCampaignId || undefined,
+        }),
       });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Discovery request failed with code ${res.status}`);
+      }
 
       const data = await res.json();
       setTimeout(() => {
@@ -69,13 +92,13 @@ export default function DiscoverPage() {
           );
         } else {
           toast(
-            `No new companies found. Try a different search term or industry.`,
+            `No new companies found for this query. Try a broader search term.`,
             "info"
           );
         }
       }, 2400);
-    } catch (err) {
-      toast("Discovery search failed", "error");
+    } catch (err: any) {
+      toast(err?.message || "Discovery search failed", "error");
       setLoading(false);
       setJobActive(false);
     }
@@ -94,7 +117,24 @@ export default function DiscoverPage() {
           </p>
         </div>
 
-        <div>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {campaigns.length > 1 && (
+            <div className="flex items-center gap-1.5 bg-white border border-green-dark/15 rounded-xl px-2.5 py-1 text-xs text-green-dark">
+              <Layers className="w-3.5 h-3.5 text-green-mid" />
+              <select
+                value={selectedCampaignId}
+                onChange={(e) => setSelectedCampaignId(e.target.value)}
+                className="bg-transparent font-semibold focus:outline-none cursor-pointer"
+              >
+                {campaigns.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <Button
             variant="outline"
             size="sm"

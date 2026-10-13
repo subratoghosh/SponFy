@@ -56,25 +56,29 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
       const r = await prisma.campaign.findUnique({
         where: { id },
       });
-      if (!r) return null;
-      return {
-        id: r.id,
-        name: r.name,
-        eventType: r.eventType,
-        audienceSize: r.audienceSize,
-        location: r.location,
-        targetAmount: r.targetAmount,
-        preferredIndustries: r.preferredIndustries,
-        tiers: (r.tiers as any) || [],
-        deckUrl: r.deckUrl || undefined,
-        description: r.description || "",
-        status: r.archived ? "archived" : "active",
-        createdAt: r.createdAt.toISOString(),
-      };
+      if (r) {
+        return {
+          id: r.id,
+          name: r.name,
+          eventType: r.eventType,
+          audienceSize: r.audienceSize,
+          location: r.location,
+          targetAmount: r.targetAmount,
+          preferredIndustries: r.preferredIndustries,
+          tiers: (r.tiers as any) || [],
+          deckUrl: r.deckUrl || undefined,
+          description: r.description || "",
+          status: r.archived ? "archived" : "active",
+          createdAt: r.createdAt.toISOString(),
+        };
+      }
     } catch (err) {
       console.warn("Prisma getCampaignById failed:", err);
-      return null;
     }
+  }
+
+  if (id === DEMO_CAMPAIGN.id || id === "camp-demo-1") {
+    return DEMO_CAMPAIGN;
   }
 
   return campaignsStoreRef.value.find((c) => c.id === id) || null;

@@ -1,28 +1,113 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
 import { getSponsors, addSponsor } from "@/lib/data/repositories/sponsors";
 import { DuplicateCompanyError, normalizeName, normalizeDomain } from "@/lib/outreach/duplicates";
 import { FALLBACK_SPONSOR_CATALOG, DiscoveryCandidate } from "@/lib/discovery/catalog";
 import { getFirecrawlClient } from "@/lib/integrations/factory";
+import { DEMO_CAMPAIGN } from "@/lib/data/seed-data";
+import { Campaign } from "@/types";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
+    let session = null;
+    try {
+      session = await auth();
+    } catch {
+      // outside Next.js request context or unauthenticated
+    }
     const body = await req.json();
     const { campaignId, prompt = "", targetCount = 5 } = body;
 
-    const campaign = await getCampaignById(campaignId || "camp-sponfy-2026");
-    if (!campaign) {
-      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    let campaign: Campaign | null = null;
+
+    // 1. Resolve target campaign
+    if (campaignId) {
+      campaign = await getCampaignById(campaignId);
     }
 
-    // 1. Fetch all existing companies in this campaign to avoid any duplicate proposals
+    if (!campaign && isDatabaseConfigured()) {
+      try {
+        const user = session?.user?.id
+          ? await prisma.user.findUnique({ where: { id: session.user.id } })
+          : await prisma.user.findFirst();
+        const userId = user?.id || "usr-demo-lead";
+
+        // Check if user has an existing active campaign
+        const existingCampaign = await prisma.campaign.findFirst({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+        });
+
+        if (existingCampaign) {
+          campaign = {
+            id: existingCampaign.id,
+            name: existingCampaign.name,
+            eventType: existingCampaign.eventType,
+            audienceSize: existingCampaign.audienceSize,
+            location: existingCampaign.location,
+            targetAmount: existingCampaign.targetAmount,
+            preferredIndustries: existingCampaign.preferredIndustries,
+            tiers: (existingCampaign.tiers as any) || [],
+            deckUrl: existingCampaign.deckUrl || undefined,
+            description: existingCampaign.description || "",
+            status: existingCampaign.archived ? "archived" : "active",
+            createdAt: existingCampaign.createdAt.toISOString(),
+          };
+        } else {
+          // Auto-provision a default campaign for this user in DB
+          const newCamp = await prisma.campaign.create({
+            data: {
+              userId,
+              name: `${user?.name || "Active"} Sponsorship Campaign`,
+              eventType: "Hackathon & Tech Event",
+              audienceSize: 800,
+              location: "Campus Auditorium",
+              targetAmount: 500000,
+              preferredIndustries: ["Developer Tools", "AI & Cloud", "Fintech", "Web3"],
+              tiers: [
+                { name: "Title Sponsor", amount: 150000, deliverables: ["Keynote", "Branded Track", "Hiring Booth"], slots: 1 },
+                { name: "Gold Sponsor", amount: 75000, deliverables: ["Workshop", "Swag Kits"], slots: 3 },
+              ],
+              description: "Flagship annual developer hackathon and student builder gathering.",
+            },
+          });
+
+          campaign = {
+            id: newCamp.id,
+            name: newCamp.name,
+            eventType: newCamp.eventType,
+            audienceSize: newCamp.audienceSize,
+            location: newCamp.location,
+            targetAmount: newCamp.targetAmount,
+            preferredIndustries: newCamp.preferredIndustries,
+            tiers: (newCamp.tiers as any) || [],
+            deckUrl: newCamp.deckUrl || undefined,
+            description: newCamp.description || "",
+            status: "active",
+            createdAt: newCamp.createdAt.toISOString(),
+          };
+        }
+      } catch (dbErr) {
+        console.warn("Failed resolving/creating user campaign in Prisma:", dbErr);
+      }
+    }
+
+    if (!campaign) {
+      campaign = DEMO_CAMPAIGN;
+    }
+
+    // 2. Fetch all existing companies in this campaign to avoid any duplicate proposals
     const existing = await getSponsors(campaign.id);
     const existingNames = new Set(existing.map((c) => normalizeName(c.name)));
     const existingDomains = new Set(existing.map((c) => normalizeDomain(c.website)).filter(Boolean));
 
     let candidates: DiscoveryCandidate[] = [];
 
-    // 2. Natural Language Processing Engine via Google Gemini 2.0 Flash
+    // 3. Natural Language Processing Engine via Google Gemini 3.8 Flash
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey && geminiKey.length > 10 && !geminiKey.includes("your-")) {
       try {
@@ -54,17 +139,20 @@ Return a STRICT JSON array matching this format:
 ]`;
 
         const response = await ai.models.generateContent({
-          model: "gemini-2.0-flash",
+          model: "gemini-3.8-flash",
           contents: nlpPrompt,
           config: {
             responseMimeType: "application/json",
           },
         });
 
-        const text = response.text || "[]";
+        let text = response.text?.trim() || "[]";
+        if (text.startsWith("```")) {
+          text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+        }
+
         const parsed = JSON.parse(text);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Filter out any candidates that might still collide with existing
           candidates = parsed.filter(
             (c: any) =>
               c.name &&
@@ -78,11 +166,10 @@ Return a STRICT JSON array matching this format:
       }
     }
 
-    // 3. Web Scraping & Search Signals via Firecrawl (if candidates found or needed)
+    // 4. Web Scraping & Search Signals via Firecrawl (if candidates found or needed)
     const firecrawl = getFirecrawlClient();
     if (firecrawl.isConfigured() && candidates.length > 0) {
       try {
-        // Enrich first 2 candidates with live web scrape signals if missing
         for (const cand of candidates.slice(0, 2)) {
           if (!cand.signals || cand.signals.length === 0) {
             const searchResults = await firecrawl.search(`${cand.name} student developer program hackathon`, 2);
@@ -96,14 +183,13 @@ Return a STRICT JSON array matching this format:
       }
     }
 
-    // 4. Robust Fallback Catalog (Deduplicated against pipeline)
+    // 5. Robust Fallback Catalog (Deduplicated against pipeline)
     if (candidates.length < targetCount) {
       const cleanPrompt = prompt.toLowerCase().trim();
       const filteredCatalog = FALLBACK_SPONSOR_CATALOG.filter((c) => {
         const isNotDup = !existingNames.has(normalizeName(c.name)) && !existingDomains.has(normalizeDomain(c.website));
         if (!isNotDup) return false;
 
-        // If user entered specific keywords, rank matching companies higher
         if (cleanPrompt) {
           const textToMatch = `${c.name} ${c.industry} ${c.description} ${c.signals.join(" ")}`.toLowerCase();
           return cleanPrompt.split(" ").some((w: string) => w.length > 2 && textToMatch.includes(w));
@@ -111,7 +197,6 @@ Return a STRICT JSON array matching this format:
         return true;
       });
 
-      // If prompt filter was too restrictive, relax to any non-duplicate
       const availableFromCatalog =
         filteredCatalog.length > 0
           ? filteredCatalog
@@ -127,7 +212,7 @@ Return a STRICT JSON array matching this format:
       }
     }
 
-    // 5. Add discovered candidates to the pipeline
+    // 6. Add discovered candidates to the pipeline
     const added = [];
     const skipped: { name: string; reason: string; existingId?: string }[] = [];
 
@@ -161,7 +246,7 @@ Return a STRICT JSON array matching this format:
           skipped.push({ name: c.name, reason: "Already in this campaign's pipeline", existingId: err.existingId });
           continue;
         }
-        throw err;
+        console.warn("addSponsor error for candidate:", c.name, err);
       }
     }
 
@@ -176,6 +261,8 @@ Return a STRICT JSON array matching this format:
       count: added.length,
       candidates: added.length > 0 ? added : existingMatches,
       skipped,
+      campaignId: campaign.id,
+      campaignName: campaign.name,
       alreadyInPipelineCount: existingMatches.length,
       existingTotal: existing.length,
     });

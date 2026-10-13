@@ -2,7 +2,7 @@ import { Company, PipelineStage, Contact } from "@/types";
 import { DEMO_COMPANIES } from "../seed-data";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Stage, ContactStatus, ResearchStatus } from "@prisma/client";
-import { findDuplicateCompany, DuplicateCompanyError } from "@/lib/outreach/duplicates";
+import { findDuplicateCompany, DuplicateCompanyError, normalizeDomain, normalizeName } from "@/lib/outreach/duplicates";
 import { memoryStore } from "@/lib/data/memory-store";
 
 const sponsorsStoreRef = memoryStore<Company[]>("sponsors", () => process.env.NODE_ENV === "test" ? [...DEMO_COMPANIES] : []);
@@ -288,7 +288,7 @@ export async function updateSponsor(id: string, updates: Partial<Company>): Prom
   return sponsorsStoreRef.value[idx];
 }
 
-export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "updatedAt">): Promise<Company> {
+export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "updatedAt"> & { userId?: string }): Promise<Company> {
   // Duplicate-outreach rule: one record per company per campaign, so two
   // teammates can never each own (and email) the same sponsor.
   const existing = await getSponsors(company.campaignId);
@@ -299,8 +299,22 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
 
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      let userId = company.userId;
+      if (!userId && company.campaignId) {
+        const camp = await prisma.campaign.findUnique({ where: { id: company.campaignId } });
+        if (camp) {
+          userId = camp.userId;
+        }
+      }
+      if (!userId) {
+        const user = await prisma.user.findFirst();
+        userId = user?.id || "usr-demo-lead";
+      }
+
+      const domain = company.website
+        ? normalizeDomain(company.website)
+        : normalizeName(company.name).replace(/\s+/g, "") + ".com";
+
       const dbStage = company.stage ? STAGE_MAP[company.stage] || "DISCOVERED" : "DISCOVERED";
       const created = await prisma.company.create({
         data: {
@@ -308,6 +322,7 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
           campaignId: company.campaignId,
           name: company.name,
           website: company.website,
+          domain,
           industry: company.industry,
           description: company.description || "",
           stage: dbStage,
