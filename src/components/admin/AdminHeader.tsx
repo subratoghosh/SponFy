@@ -13,7 +13,7 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ adminUser, title, subtitle }: AdminHeaderProps) {
   return (
-    <header className="bg-white border-b border-[#0C382E]/10 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sticky top-0 z-30 shadow-xs">
+    <header className="bg-white border-b border-[#0C382E]/10 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky top-0 z-30 shadow-xs">
       <div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-[#0C382E]/60">
@@ -35,29 +35,29 @@ export function AdminHeader({ adminUser, title, subtitle }: AdminHeaderProps) {
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         {/* Workspace Quick Link */}
         <Link
           href="/app"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#0C382E]/15 text-[#0C382E] hover:bg-[#FAF4E6] transition-all"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg border border-[#0C382E]/15 text-[#0C382E] hover:bg-[#FAF4E6] transition-all shrink-0"
         >
           <ExternalLink className="w-3.5 h-3.5" />
           <span>User View</span>
         </Link>
 
         {/* Administrator Profile Pill */}
-        <div className="flex items-center gap-2.5 px-3 py-1.5 bg-[#FAF4E6] border border-[#0C382E]/15 rounded-xl">
-          <div className="w-7 h-7 rounded-lg bg-[#0C382E] text-white flex items-center justify-center font-bold text-xs">
+        <div className="flex items-center gap-2 sm:gap-2.5 px-2.5 sm:px-3 py-1.5 bg-[#FAF4E6] border border-[#0C382E]/15 rounded-xl min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-[#0C382E] text-white flex items-center justify-center font-bold text-xs shrink-0">
             {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : <ShieldCheck className="w-4 h-4 text-[#FFF0B3]" />}
           </div>
-          <div className="text-left">
+          <div className="text-left min-w-0">
             <div className="text-xs font-bold text-[#0C382E] flex items-center gap-1">
-              <span>{adminUser?.name || "Platform Admin"}</span>
-              <span className="text-[10px] bg-[#0C382E] text-[#FFF0B3] px-1.5 py-0.2 rounded font-mono font-semibold">
+              <span className="truncate">{adminUser?.name || "Platform Admin"}</span>
+              <span className="text-[10px] bg-[#0C382E] text-[#FFF0B3] px-1.5 py-0.2 rounded font-mono font-semibold shrink-0">
                 ADMIN
               </span>
             </div>
-            <div className="text-[10px] text-neutral-500 font-mono truncate max-w-[150px]">
+            <div className="text-[10px] text-neutral-500 font-mono truncate max-w-[120px] sm:max-w-[150px]">
               {adminUser?.email || "admin@sponfy.dev"}
             </div>
           </div>

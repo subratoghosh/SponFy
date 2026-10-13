@@ -12,15 +12,23 @@ import {
   Menu,
   X,
   Radio,
+  FolderKanban,
+  Users,
+  Activity,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 
 const ADMIN_NAV_ITEMS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "Campaigns", href: "/admin/campaigns", icon: FolderKanban },
+  { label: "User Governance", href: "/admin/users", icon: Users },
   { label: "Showcase Companies", href: "/admin/showcase", icon: Building2 },
   { label: "Admin Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { label: "System Activity", href: "/admin/activity", icon: Activity },
   { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "User View", href: "/app", icon: ArrowLeft },
 ];
 
 export function AdminSidebar() {
@@ -115,16 +123,16 @@ export function AdminSidebar() {
   return (
     <>
       {/* Mobile Top Header trigger */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-green-dark border-b border-green-mid/40 px-4 py-3 flex items-center justify-between text-white">
-        <div className="flex items-center gap-2">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-green-dark border-b border-green-mid/40 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between text-white gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <SponfyBrand href="/admin" size="sm" theme="dark" />
-          <span className="text-xs bg-butter-cream text-green-dark font-bold px-2 py-0.5 rounded-md">
+          <span className="text-[10px] sm:text-xs bg-butter-cream text-green-dark font-bold px-2 py-0.5 rounded-md shrink-0">
             ADMIN
           </span>
         </div>
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-1.5 rounded-lg bg-green-mid/40 text-butter-cream hover:bg-green-mid/70"
+          className="p-1.5 rounded-lg bg-green-mid/40 text-butter-cream hover:bg-green-mid/70 shrink-0 cursor-pointer"
           aria-label="Open Admin Menu"
         >
           <Menu className="w-5 h-5" />

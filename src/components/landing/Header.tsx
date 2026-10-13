@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
@@ -18,16 +18,25 @@ const NAV_ITEMS = [
 ];
 
 export const Header: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolledPast, setIsScrolledPast] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [introActive, setIntroActive] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
 
-  // Collapsible on all marketing pages when scrolled past on sm and up
-  const isCollapsible = isScrolledPast;
+  useEffect(() => {
+    const updateMedia = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    updateMedia();
+    window.addEventListener("resize", updateMedia);
+    return () => window.removeEventListener("resize", updateMedia);
+  }, []);
+
+  // Collapsible on all marketing pages when scrolled past on md and up
+  const isCollapsible = isDesktop && isScrolledPast;
   const isCollapsed = isCollapsible && !isExpanded;
 
   // Trigger detection: IntersectionObserver on "/" for hero, scroll distance (160px / 100px) on other pages
@@ -235,11 +244,11 @@ export const Header: React.FC = () => {
           className={cn(
             "relative pointer-events-auto bg-green-dark border-2 border-butter-cream/85 hover:border-butter-cream ring-1 ring-butter-cream/30 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex items-center transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
             isCollapsed
-              ? "w-full sm:max-w-[48px] sm:w-[48px] sm:h-[48px] sm:p-0 sm:justify-center px-6 py-2.5 justify-between overflow-hidden"
-              : "w-full max-w-[1240px] sm:max-w-[1240px] sm:h-[52px] px-6 py-2.5 justify-between overflow-visible"
+              ? "w-full md:max-w-[48px] md:w-[48px] md:h-[48px] md:p-0 md:justify-center px-4 sm:px-6 py-2 sm:py-2.5 justify-between overflow-hidden"
+              : "w-full max-w-[1240px] md:h-[52px] px-4 sm:px-6 py-2 sm:py-2.5 justify-between overflow-visible"
           )}
         >
-          {/* Collapsed state 48px hamburger trigger on sm+ when past trigger threshold */}
+          {/* Collapsed state 48px hamburger trigger on md+ when past trigger threshold */}
           {isCollapsible && (
             <button
               type="button"
@@ -248,7 +257,7 @@ export const Header: React.FC = () => {
               onClick={handleHamburgerToggle}
               onFocus={handleFocus}
               className={cn(
-                "hidden sm:flex absolute right-0 top-0 w-[48px] h-[48px] items-center justify-center text-butter-cream rounded-full focus:outline-none transition-opacity duration-300 ease-in-out motion-reduce:transition-none z-10",
+                "hidden md:flex absolute right-0 top-0 w-[48px] h-[48px] items-center justify-center text-butter-cream rounded-full focus:outline-none transition-opacity duration-300 ease-in-out motion-reduce:transition-none z-10",
                 isCollapsed
                   ? "opacity-100 pointer-events-auto"
                   : "opacity-0 pointer-events-none"
@@ -264,7 +273,7 @@ export const Header: React.FC = () => {
             className={cn(
               "w-full flex items-center justify-between transition-all ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none motion-reduce:delay-0 shrink-0",
               isCollapsed
-                ? "sm:opacity-0 sm:translate-x-2 sm:pointer-events-none duration-[200ms] delay-0"
+                ? "md:opacity-0 md:translate-x-2 md:pointer-events-none duration-[200ms] delay-0"
                 : "opacity-100 translate-x-0 duration-[400ms] delay-[200ms]"
             )}
           >
@@ -306,76 +315,22 @@ export const Header: React.FC = () => {
             </div>
 
             {/* CTA & Actions */}
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center shrink-0">
               <Link href="/login" tabIndex={isCollapsed ? -1 : undefined}>
                 <Button
                   variant="butter"
                   size="sm"
                   tabIndex={isCollapsed ? -1 : undefined}
-                  className="font-black uppercase tracking-wider text-xs px-4 py-1.5 shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
+                  className="font-black uppercase tracking-wider text-xs px-3.5 sm:px-4 py-1.5 shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
                 >
                   LOGIN
                   <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
             </div>
-
-            {/* Mobile Hamburger Trigger (screens < sm) */}
-            <div className="flex sm:hidden items-center gap-2">
-              <Link href="/login">
-                <Button variant="butter" size="sm" className="text-xs px-3 py-1.5 font-bold">
-                  LOGIN
-                </Button>
-              </Link>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label="Toggle navigation menu"
-                className="p-2 text-butter-cream hover:bg-green-mid rounded-full transition-colors"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
           </div>
         </nav>
       </div>
-
-      {/* Mobile Drawer (screens < sm) */}
-      {mobileMenuOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-2xs z-40 sm:hidden pointer-events-auto"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="fixed inset-x-4 top-20 bg-green-dark border-2 border-butter-cream/50 rounded-3xl p-6 shadow-2xl z-50 flex flex-col gap-2.5 text-center sm:hidden animate-fade-in pointer-events-auto max-h-[80vh] overflow-y-auto">
-            {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "text-base font-semibold py-2.5 px-4 rounded-xl transition-colors border",
-                    isActive
-                      ? "bg-green-mid text-butter-cream border-butter-cream/60 shadow-sm"
-                      : "text-butter-cream/80 hover:text-butter-cream hover:bg-green-mid/40 border-transparent"
-                  )}
-                >
-                  {item.name}
-                </Link>
-              );
-            })}
-            <div className="pt-2 flex flex-col gap-2.5 border-t border-green-mid/40 mt-1">
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="butter" className="w-full justify-center font-black uppercase tracking-wider text-xs shadow-md">
-                  LOGIN
-                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </>
-      )}
     </header>
   );
 };
