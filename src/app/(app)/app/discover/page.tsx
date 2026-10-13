@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { DiscoverPromptBox } from "@/components/discover/DiscoverPromptBox";
 import { LiveJobProgress } from "@/components/discover/LiveJobProgress";
-import { CandidateList } from "@/components/discover/CandidateList";
+import { CandidateList, CandidateItem } from "@/components/discover/CandidateList";
 import { CandidateListSkeleton } from "@/components/skeletons/CandidateListSkeleton";
 import { CSVImportModal } from "@/components/sponsors/CSVImportModal";
-import { Company, Campaign } from "@/types";
+import { Campaign } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, Layers } from "lucide-react";
@@ -16,13 +16,25 @@ export default function DiscoverPage() {
   const [loading, setLoading] = useState(false);
   const [jobActive, setJobActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [results, setResults] = useState<Company[]>([]);
+  const [results, setResults] = useState<CandidateItem[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
-  const [isExistingOnly, setIsExistingOnly] = useState(false);
-  const [skippedCount, setSkippedCount] = useState(0);
+  const [approving, setApproving] = useState(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
+
+  const loadSavedResults = (campId?: string) => {
+    const url = campId ? `/api/discover/results?campaignId=${encodeURIComponent(campId)}` : "/api/discover/results";
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setResults(data.data);
+          if (data.data.length > 0) setHasSearched(true);
+        }
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetch("/api/campaigns")
@@ -30,19 +42,24 @@ export default function DiscoverPage() {
       .then((data) => {
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {
           setCampaigns(data.data);
-          setSelectedCampaignId(data.data[0].id);
+          const firstId = data.data[0].id;
+          setSelectedCampaignId(firstId);
+          loadSavedResults(firstId);
         }
       })
       .catch(() => {});
   }, []);
 
+  const handleCampaignChange = (newCampId: string) => {
+    setSelectedCampaignId(newCampId);
+    loadSavedResults(newCampId);
+  };
+
   const handleSearch = async (prompt: string, count: number) => {
     setLoading(true);
     setJobActive(true);
     setCurrentStep(0);
-    setResults([]);
     setHasSearched(true);
-    setIsExistingOnly(false);
 
     try {
       // Step simulation for live progress feel
@@ -72,35 +89,107 @@ export default function DiscoverPage() {
         setResults(candidates);
         setJobActive(false);
         setLoading(false);
-        const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
-        setSkippedCount(skipped);
-        const addedCount = data.count ?? 0;
-        const isExisting = addedCount === 0 && candidates.length > 0;
-        setIsExistingOnly(isExisting);
 
-        if (addedCount > 0) {
+        if (candidates.length > 0) {
           toast(
-            `Added ${addedCount} new sponsor(s)` +
-              (skipped ? `, skipped ${skipped} already in the pipeline` : "") +
-              ".",
+            `Discovered ${candidates.length} prospective sponsor(s)! Review and select companies to approve for outreach.`,
             "success"
           );
-        } else if (isExisting) {
-          toast(
-            `Showing ${candidates.length} matching sponsor(s) already in your pipeline.`,
-            "info"
-          );
         } else {
-          toast(
-            `No new companies found for this query. Try a broader search term.`,
-            "info"
-          );
+          toast("No new companies found for this query. Try a broader search term.", "info");
         }
-      }, 2400);
+      }, 2200);
     } catch (err: any) {
       toast(err?.message || "Discovery search failed", "error");
       setLoading(false);
       setJobActive(false);
+    }
+  };
+
+  const handleApproveSelected = async (candidateIds: string[]) => {
+    if (!selectedCampaignId) {
+      toast("Select an active campaign first", "error");
+      return;
+    }
+    setApproving(true);
+    try {
+      const res = await fetch("/api/sponsors/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId,
+          candidateIds,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Approval failed");
+      }
+
+      toast(
+        `Approved ${data.approvedCount} sponsor(s) into your pipeline!` +
+          (data.alreadyApprovedCount ? ` (${data.alreadyApprovedCount} already tracked)` : ""),
+        "success"
+      );
+
+      // Refresh list
+      loadSavedResults(selectedCampaignId);
+    } catch (err: any) {
+      toast(err.message || "Failed to approve candidates", "error");
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const handleApproveAll = async () => {
+    if (!selectedCampaignId) {
+      toast("Select an active campaign first", "error");
+      return;
+    }
+    setApproving(true);
+    try {
+      const res = await fetch("/api/sponsors/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId,
+          all: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Approval failed");
+      }
+
+      toast(
+        `Approved all ${data.approvedCount} sponsor(s) into your pipeline!` +
+          (data.alreadyApprovedCount ? ` (${data.alreadyApprovedCount} already tracked)` : ""),
+        "success"
+      );
+
+      // Refresh list
+      loadSavedResults(selectedCampaignId);
+    } catch (err: any) {
+      toast(err.message || "Failed to approve candidates", "error");
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const handleClearResults = async () => {
+    if (!selectedCampaignId) return;
+    try {
+      const res = await fetch(`/api/discover/results?campaignId=${encodeURIComponent(selectedCampaignId)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setResults([]);
+        toast("Cleared discovery candidate list. Saved pipeline sponsors remain untouched.", "info");
+      }
+    } catch {
+      toast("Failed to clear results", "error");
     }
   };
 
@@ -123,7 +212,7 @@ export default function DiscoverPage() {
               <Layers className="w-3.5 h-3.5 text-green-mid" />
               <select
                 value={selectedCampaignId}
-                onChange={(e) => setSelectedCampaignId(e.target.value)}
+                onChange={(e) => handleCampaignChange(e.target.value)}
                 className="bg-transparent font-semibold focus:outline-none cursor-pointer"
               >
                 {campaigns.map((c) => (
@@ -160,8 +249,10 @@ export default function DiscoverPage() {
         <CandidateList
           candidates={results}
           hasSearched={hasSearched}
-          isExistingOnly={isExistingOnly}
-          skippedCount={skippedCount}
+          onApproveSelected={handleApproveSelected}
+          onApproveAll={handleApproveAll}
+          onClearResults={handleClearResults}
+          approving={approving}
         />
       )}
 
@@ -170,7 +261,7 @@ export default function DiscoverPage() {
         isOpen={isCsvModalOpen}
         onClose={() => setIsCsvModalOpen(false)}
         onSuccess={() => {
-          toast("CSV companies loaded! Redirecting to pipeline...", "success");
+          toast("CSV companies loaded into tracker!", "success");
           window.location.href = "/app/sponsors";
         }}
       />
