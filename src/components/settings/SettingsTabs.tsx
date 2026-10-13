@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   User,
   Mail,
@@ -46,24 +46,7 @@ export function SettingsTabs() {
   const [gmailStatus, setGmailStatus] = useState<any>({ connected: false });
   const [gmailLoading, setGmailLoading] = useState(false);
 
-  useEffect(() => {
-    loadSettings();
-
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab');
-      if (tab === 'gmail') setActiveTab('gmail');
-      if (urlParams.get('connected') === 'success') {
-        toast('Gmail inbox successfully connected! Outreach will send from your email.', 'success');
-      } else if (urlParams.get('connected') === 'mock') {
-        toast('Demo Gmail simulation mode active.', 'info');
-      } else if (urlParams.get('error')) {
-        toast(`Connection failed: ${urlParams.get('error')}`, 'error');
-      }
-    }
-  }, [session]);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     const userIdentifier = session?.user?.id || session?.user?.email;
     const p = await settingsRepository.getProfile(userIdentifier || undefined);
     if (session?.user) {
@@ -84,7 +67,24 @@ export function SettingsTabs() {
     } catch {
       // fallback
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    loadSettings();
+
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      if (tab === 'gmail') setActiveTab('gmail');
+      if (urlParams.get('connected') === 'success') {
+        toast('Gmail inbox successfully connected! Outreach will send from your email.', 'success');
+      } else if (urlParams.get('connected') === 'mock') {
+        toast('Demo Gmail simulation mode active.', 'info');
+      } else if (urlParams.get('error')) {
+        toast(`Connection failed: ${urlParams.get('error')}`, 'error');
+      }
+    }
+  }, [loadSettings]);
 
   const handleDeleteTemplate = (id: string) => {
     deleteCustomTemplate(id, session?.user?.email ?? undefined);

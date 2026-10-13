@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { getSponsorById } from "@/lib/data/repositories/sponsors";
 import { Company } from "@/types";
@@ -40,7 +40,7 @@ export default function SponsorDetailPage() {
     "research" | "fit_score" | "contacts" | "outreach" | "timeline"
   >("research");
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
@@ -54,11 +54,11 @@ export default function SponsorDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   const handleSaveFunding = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Company, EmailDraft } from "@/types";
 import { getDraftByCompanyId } from "@/lib/data/repositories/outreach";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,13 @@ export const OutreachTab: React.FC<{ company: Company }> = ({ company }) => {
   const [generating, setGenerating] = useState(false);
   const [tone, setTone] = useState<"professional" | "enthusiastic" | "value_first" | "short">("professional");
 
-  const loadDraft = () => {
+  const loadDraft = useCallback(() => {
     getDraftByCompanyId(company.id).then(setDraft);
-  };
+  }, [company.id]);
 
   useEffect(() => {
     loadDraft();
-  }, [company.id]);
+  }, [loadDraft]);
 
   const handleGenerate = async () => {
     setGenerating(true);

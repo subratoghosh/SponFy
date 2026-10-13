@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getSponsors, updateSponsorStage } from "@/lib/data/repositories/sponsors";
 import { Company, PipelineStage } from "@/types";
 import { KanbanBoard } from "@/components/sponsors/KanbanBoard";
@@ -28,7 +28,7 @@ export default function SponsorsPipelinePage() {
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
-  const loadSponsors = () => {
+  const loadSponsors = useCallback(() => {
     setLoading(true);
     getSponsors()
       .then((data) => {
@@ -39,11 +39,11 @@ export default function SponsorsPipelinePage() {
         setSponsors(cleanData);
       })
       .finally(() => setLoading(false));
-  };
+  }, [session]);
 
   useEffect(() => {
     loadSponsors();
-  }, [session]);
+  }, [loadSponsors]);
 
   const handleStageChange = async (sponsorId: string, targetStage: PipelineStage) => {
     try {

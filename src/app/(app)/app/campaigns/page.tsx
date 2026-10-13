@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { CampaignCard } from "@/components/campaigns/CampaignCard";
 import { CreateCampaignModal } from "@/components/campaigns/CreateCampaignModal";
@@ -39,7 +39,7 @@ export default function CampaignsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true);
     getCampaigns()
       .then((data) => {
@@ -50,7 +50,7 @@ export default function CampaignsPage() {
         setCampaigns(cleanData);
       })
       .finally(() => setLoading(false));
-  };
+  }, [session]);
 
   const handleDeleteCampaign = async (id: string) => {
     if (!window.confirm("Are you sure you want to remove this campaign? This action only removes the campaign from your workspace.")) {
@@ -64,7 +64,7 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     loadData();
-  }, [session]);
+  }, [loadData]);
 
   const eventTypes = useMemo(() => {
     const types = new Set(campaigns.map((c) => c.eventType).filter(Boolean));
