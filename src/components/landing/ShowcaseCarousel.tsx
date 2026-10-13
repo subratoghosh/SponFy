@@ -71,7 +71,7 @@ export const ShowcaseCarousel: React.FC<ShowcaseCarouselProps> = ({ companies = 
           </div>
 
           {companies.length > 3 && (
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrev}
@@ -181,6 +181,27 @@ export const ShowcaseCarousel: React.FC<ShowcaseCarouselProps> = ({ companies = 
             );
           })}
         </div>
+        {/* Mobile Navigation Controls (Below Dossier Cards) */}
+        {companies.length > 1 && (
+          <div className="flex md:hidden items-center justify-center gap-4 mt-8 pb-4">
+            <button
+              type="button"
+              onClick={handlePrev}
+              aria-label="Previous showcase sponsor"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-2xs"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="Next showcase sponsor"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white border border-green-dark/15 flex items-center justify-center text-green-dark hover:bg-butter-cream hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-2xs"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

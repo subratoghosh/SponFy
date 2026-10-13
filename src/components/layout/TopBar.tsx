@@ -14,6 +14,10 @@ import {
   Settings,
   ShieldCheck,
   Database,
+  Compass,
+  Clock,
+  BarChart3,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCampaigns } from "@/lib/data/repositories/campaigns";
@@ -77,24 +81,25 @@ export const TopBar: React.FC = () => {
     .slice(0, 2) || "OR";
 
   return (
-    <header className="h-16 bg-butter-panel/90 backdrop-blur-md border-b border-green-dark/10 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
+    <header className="h-16 bg-butter-panel/90 backdrop-blur-md border-b border-green-dark/10 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-30">
       {/* Left: Mobile Brand & Campaign Switcher */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile-only logo */}
-        <div className="lg:hidden">
+        <div className="lg:hidden shrink-0">
           <SponfyBrand href="/" size="sm" theme="light" />
         </div>
 
         {/* Campaign Switcher */}
-        <div className="relative" ref={campaignRef}>
+        <div className="relative min-w-0" ref={campaignRef}>
           <button
             onClick={() => setCampaignDropdownOpen(!campaignDropdownOpen)}
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white border border-green-dark/15 hover:border-green-dark/30 transition-colors shadow-sm text-left cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3 py-1.5 rounded-xl bg-white border border-green-dark/15 hover:border-green-dark/30 transition-colors shadow-sm text-left cursor-pointer min-w-0 max-w-[110px] xs:max-w-[140px] sm:max-w-[200px]"
+            title={selectedCampaign?.name || "Active Campaign"}
           >
-            <div className="w-7 h-7 rounded-lg bg-butter-cream flex items-center justify-center text-green-dark font-bold text-xs shrink-0">
-              <FolderKanban className="w-4 h-4" />
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-butter-cream flex items-center justify-center text-green-dark font-bold text-xs shrink-0">
+              <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div className="hidden sm:block">
+            <div className="hidden sm:block min-w-0">
               <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block leading-none">
                 Active Campaign
               </span>
@@ -102,7 +107,7 @@ export const TopBar: React.FC = () => {
                 {selectedCampaign?.name || (campaigns.length === 0 ? "No Active Campaign" : "Select Campaign")}
               </span>
             </div>
-            <ChevronDown className="w-4 h-4 text-text-muted ml-1" />
+            <ChevronDown className="w-3.5 h-3.5 text-text-muted shrink-0 ml-0.5 sm:ml-1" />
           </button>
 
           {/* Campaign Dropdown */}
@@ -155,43 +160,42 @@ export const TopBar: React.FC = () => {
         </div>
       </div>
 
-        {/* Right: Mode Badge & Interactive User Profile Menu */}
-      <div className="flex items-center gap-2.5 sm:gap-3">
+      {/* Right: Mode Badge & Interactive User Profile Menu */}
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Admin Console Quick Button */}
         {isAdmin && (
           <Link
             href="/admin"
-            className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5 transition-all"
+            className="p-1.5 sm:px-2.5 sm:py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5 transition-all shrink-0"
             title="Open Admin Console"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
-            <span className="hidden sm:inline">Admin Console</span>
-            <span className="sm:hidden">Admin</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+            <span className="hidden sm:inline">Admin</span>
           </Link>
         )}
 
         {/* Workspace Mode Badge */}
         {isDemo ? (
-          <span className="px-2.5 py-1 rounded-full bg-butter-cream text-green-dark border border-butter-gold text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-            <span className="hidden xs:inline">Demo Mode</span>
-            <span className="xs:hidden">Demo</span>
+          <span className="px-2 py-1 sm:px-2.5 rounded-full bg-butter-cream text-green-dark border border-butter-gold text-[10px] sm:text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
+            <span className="hidden sm:inline">Demo Mode</span>
+            <span className="sm:hidden hidden min-[380px]:inline">Demo</span>
           </span>
         ) : (
-          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-            <span>Workspace</span>
+          <span className="px-2 py-1 sm:px-2.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] sm:text-[11px] font-bold tracking-wide shadow-2xs flex items-center gap-1.5 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
+            <span className="hidden min-[380px]:inline">Workspace</span>
           </span>
         )}
 
         {/* User Profile Dropdown Button */}
-        <div className="relative" ref={profileRef}>
+        <div className="relative shrink-0" ref={profileRef}>
           <button
             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="flex items-center gap-2 p-1 sm:px-2 sm:py-1 rounded-full sm:rounded-2xl hover:bg-white/80 border border-transparent hover:border-green-dark/10 transition-all cursor-pointer"
+            className="flex items-center gap-1 sm:gap-2 p-0.5 sm:px-2 sm:py-1 rounded-full sm:rounded-2xl hover:bg-white/80 border border-transparent hover:border-green-dark/10 transition-all cursor-pointer"
             aria-label="User profile and account settings"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-green-dark text-butter-cream flex items-center justify-center font-black text-xs shadow-sm hover:ring-2 hover:ring-butter-cream transition-all shrink-0">
+            <div className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full bg-green-dark text-butter-cream flex items-center justify-center font-black text-xs shadow-sm hover:ring-2 hover:ring-butter-cream transition-all shrink-0">
               {initials}
             </div>
             <div className="hidden md:block text-left pr-1">
@@ -207,7 +211,7 @@ export const TopBar: React.FC = () => {
 
           {/* User Profile Dropdown Menu */}
           {profileDropdownOpen && (
-            <div className="absolute top-12 right-0 w-72 bg-white rounded-2xl shadow-dropdown border border-green-dark/15 p-3 z-50 animate-fade-in space-y-3">
+            <div className="absolute top-12 right-0 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-dropdown border border-green-dark/15 p-3 z-50 animate-fade-in space-y-3">
               {/* Profile Card Header */}
               <div className="p-3 rounded-xl bg-butter-bg/60 border border-green-dark/10 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-green-dark text-butter-cream flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
@@ -240,8 +244,8 @@ export const TopBar: React.FC = () => {
                 </div>
               </div>
 
-              {/* Navigation Links */}
-              <div className="space-y-1 pt-1 text-xs font-bold text-green-dark">
+              {/* Navigation Links (including all items previously under More) */}
+              <div className="space-y-1 pt-1 text-xs font-bold text-green-dark max-h-[55vh] overflow-y-auto">
                 {isAdmin && (
                   <Link
                     href="/admin"
@@ -249,7 +253,7 @@ export const TopBar: React.FC = () => {
                     className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300/60 transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4 h-4 text-amber-600" />
+                      <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
                       <span>Admin Console</span>
                     </div>
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-amber-200 text-amber-800">
@@ -262,20 +266,52 @@ export const TopBar: React.FC = () => {
                   onClick={() => setProfileDropdownOpen(false)}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
                 >
-                  <FolderKanban className="w-4 h-4 text-green-mid" />
+                  <FolderKanban className="w-4 h-4 text-green-mid shrink-0" />
                   <span>Campaign Initiatives</span>
+                </Link>
+                <Link
+                  href="/app/discover"
+                  onClick={() => setProfileDropdownOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
+                >
+                  <Compass className="w-4 h-4 text-green-mid shrink-0" />
+                  <span>Discover Sponsors</span>
+                </Link>
+                <Link
+                  href="/app/followups"
+                  onClick={() => setProfileDropdownOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
+                >
+                  <Clock className="w-4 h-4 text-green-mid shrink-0" />
+                  <span>Follow-up Sequences</span>
+                </Link>
+                <Link
+                  href="/app/analytics"
+                  onClick={() => setProfileDropdownOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
+                >
+                  <BarChart3 className="w-4 h-4 text-green-mid shrink-0" />
+                  <span>Analytics & KPIs</span>
                 </Link>
                 <Link
                   href="/app/settings"
                   onClick={() => setProfileDropdownOpen(false)}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
                 >
-                  <Settings className="w-4 h-4 text-green-mid" />
+                  <Settings className="w-4 h-4 text-green-mid shrink-0" />
                   <span>Settings & Preferences</span>
+                </Link>
+                <Link
+                  href="/"
+                  onClick={() => setProfileDropdownOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
+                >
+                  <Home className="w-4 h-4 text-green-mid shrink-0" />
+                  <span>Landing Overview</span>
                 </Link>
                 {!isDemo && (
                   <div className="px-3 py-1.5 flex items-center gap-2 text-[11px] text-emerald-800 font-medium">
-                    <Database className="w-3.5 h-3.5 text-emerald-600" />
+                    <Database className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Your data is stored securely</span>
                   </div>
                 )}

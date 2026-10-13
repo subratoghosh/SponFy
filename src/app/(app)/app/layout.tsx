@@ -21,7 +21,7 @@ export default async function AppLayout({
         <Sidebar />
 
         {/* Right Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 pb-24 lg:pb-8">
+        <div className="flex-1 flex flex-col min-w-0 pb-[calc(88px+env(safe-area-inset-bottom,0px))] lg:pb-8">
           <TopBar />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] w-full mx-auto">
             {children}
