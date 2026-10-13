@@ -3,7 +3,7 @@
 import React from "react";
 import { Company } from "@/types";
 import { formatCurrencyINR } from "@/lib/utils";
-import { Building2, TrendingUp, Check, ExternalLink, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import { Building2, TrendingUp, Check, ExternalLink, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -28,15 +28,15 @@ export const CandidateList: React.FC<CandidateListProps> = ({
           <AlertCircle className="w-6 h-6 text-green-mid" />
         </div>
         <h3 className="font-heading font-extrabold text-lg text-green-dark">
-          All Searched Companies Are Already In Your Pipeline
+          All Searched Companies Are Already Tracked
         </h3>
         <p className="text-xs sm:text-sm text-text-dim max-w-md mx-auto">
-          We scanned candidate targets, but matching companies have already been tracked in your pipeline. Try searching for a different tech niche, programming language, or cloud service.
+          We scanned candidate targets, but matching companies are already in your sponsor tracker. Try searching for a different tech niche, programming language, or cloud service.
         </p>
         <div className="pt-2">
           <Link href="/app/sponsors">
             <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
-              Open Sponsors Kanban Pipeline <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              Open Sponsors Tracker <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </Link>
         </div>
@@ -50,16 +50,16 @@ export const CandidateList: React.FC<CandidateListProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h3 className="font-heading font-extrabold text-lg text-green-dark">
-              {isExistingOnly ? "Matched Pipeline Sponsors" : "Discovered Candidates"} ({candidates.length})
+              {isExistingOnly ? "Matching Tracked Sponsors" : "Discovered Sponsors"} ({candidates.length})
             </h3>
             {isExistingOnly && (
               <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-300">
-                Already in Pipeline
+                Already Tracked
               </span>
             )}
             {!isExistingOnly && (
               <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-emerald-600" />
+                <Check className="w-3 h-3 text-emerald-600" />
                 Newly Added
               </span>
             )}
@@ -67,12 +67,12 @@ export const CandidateList: React.FC<CandidateListProps> = ({
           <p className="text-xs text-text-dim mt-0.5">
             {isExistingOnly
               ? "These high-fit sponsors match your query and are already active in your campaign."
-              : "Ranked by AI relevance fit score, student developer program history, and hackathon sponsorship synergy."}
+              : "Ranked by fit score, student developer program history, and event sponsorship synergy."}
           </p>
         </div>
         <Link href="/app/sponsors">
           <Button variant="glass" size="sm" className="text-xs font-bold shrink-0">
-            View in Kanban Pipeline <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            View in Sponsors Tracker <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </Link>
       </div>
@@ -145,7 +145,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
 
               <Link href={`/app/sponsors/${company.id}`}>
                 <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
-                  View Dossier <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                  View Details <ArrowRight className="w-3.5 h-3.5 ml-1" />
                 </Button>
               </Link>
             </div>

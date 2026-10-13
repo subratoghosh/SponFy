@@ -21,7 +21,7 @@ export const TimelineTab: React.FC<{ company: Company }> = ({ company }) => {
     },
     {
       title: "Company Discovered & Profile Sourced",
-      desc: "Initial dossier scraped and indexed via Tavily",
+      desc: "Initial company research scraped and indexed via Tavily",
       time: company.createdAt,
       icon: CheckCircle2,
     },

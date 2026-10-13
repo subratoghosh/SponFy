@@ -139,9 +139,9 @@ export default function OutreachPage() {
           icon={Send}
           title="No outreach drafts generated yet"
           description="SponFy generates high-converting, personalized email pitches for discovered sponsors with safety checks. Find sponsors and generate your first pitch."
-          actionLabel="View Sponsors Pipeline"
+          actionLabel="View Sponsors Tracker"
           actionHref="/app/sponsors"
-          secondaryActionLabel="Discover Sponsors with AI"
+          secondaryActionLabel="Discover Sponsors"
           secondaryActionHref="/app/discover"
         />
       ) : (

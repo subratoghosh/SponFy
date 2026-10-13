@@ -41,7 +41,7 @@ export const ResearchTab: React.FC<{ company: Company; onRefresh: () => void }> 
       <div className="bg-white rounded-2xl p-5 border border-green-dark/12 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h3 className="font-heading font-extrabold text-lg text-green-dark">
-            AI Research Dossier & Web Citations
+            Company Research & Web Citations
           </h3>
           <p className="text-xs text-text-dim">
             Multi-source intelligence gathered via Tavily & classified by Gemini

@@ -19,7 +19,7 @@ export const LiveJobProgress: React.FC<LiveJobProgressProps> = ({ active, step }
     { label: "Extracting official student and developer track initiatives", countText: step >= 1 ? "14 tracks parsed" : undefined, icon: Globe },
     { label: "Filtering non-public contacts and suppressing blacklisted domains", countText: step >= 2 ? "12 verified safe" : undefined, icon: ShieldCheck },
     { label: "Calculating 7-factor explainable relevance fit scores", countText: step >= 3 ? "Scores 72–98" : undefined, icon: BrainCircuit },
-    { label: "Persisting cited sponsor dossiers to campaign pipeline", countText: step >= 4 ? "Pipeline updated" : undefined, icon: Database },
+    { label: "Saving verified sponsor profiles to tracker", countText: step >= 4 ? "Tracker updated" : undefined, icon: Database },
   ];
 
   return (
