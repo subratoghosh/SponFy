@@ -9,10 +9,7 @@ export default async function OverviewPage() {
   const session = await auth();
   const isDemoUser = session?.user?.email === "demo@sponfy.dev";
 
-  const [rawAnalytics, rawCampaigns] = await Promise.all([
-    getAnalyticsData(),
-    getCampaigns(),
-  ]);
+  const rawCampaigns = await getCampaigns();
 
   // Remove preloaded demo campaign for real users
   const userCampaigns = isDemoUser
@@ -24,7 +21,12 @@ export default async function OverviewPage() {
   const activeCampaign = userCampaigns[0] || null;
   const campaignName = activeCampaign?.name || "Your Workspace";
 
-  // For real users without campaigns, start completely from zero
+  const rawAnalytics = await getAnalyticsData(
+    activeCampaign?.id,
+    session?.user?.id
+  );
+
+  // For real users, strictly use their real campaign data
   const analytics = isDemoUser
     ? rawAnalytics
     : userCampaigns.length === 0
@@ -52,11 +54,13 @@ export default async function OverviewPage() {
       }
     : rawAnalytics;
 
-  const demoInsights = [
-    "Developer Tools and Cloud companies in your pipeline have an 82% positive reply rate — 2.4x higher than FMCG brands.",
-    "Outreach pitches sent between 10:00 AM and 11:30 AM IST showed a 40% faster reply turnaround from DevRel managers.",
-    "Postman and Razorpay have active negotiations totaling ₹1.6 Lakhs; closing both achieves 52% of your target.",
-  ];
+  const demoInsights = isDemoUser
+    ? [
+        "Developer Tools and Cloud companies in your pipeline have an 82% positive reply rate — 2.4x higher than FMCG brands.",
+        "Outreach pitches sent between 10:00 AM and 11:30 AM IST showed a 40% faster reply turnaround from DevRel managers.",
+        "Postman and Razorpay have active negotiations totaling ₹1.6 Lakhs; closing both achieves 52% of your target.",
+      ]
+    : [];
 
   return (
     <CampaignDashboardView
