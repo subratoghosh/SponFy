@@ -235,7 +235,7 @@ Return a STRICT JSON array matching this format:
             { factor: "Financial Capability", points: 8, maxPoints: 10, reason: "Standard track budget tier", positive: true },
             { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "National reach", positive: true },
           ],
-          pipelineValue: c.pipelineValue || 50000,
+          pipelineValue: 0,
           signals: c.signals || ["Developer Track Sponsor", "API Grants"],
           confidence: 90,
           researchStatus: "pending",
