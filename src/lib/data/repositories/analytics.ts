@@ -4,7 +4,7 @@ import { getReplyAnalyses } from "./replies";
 import { getCampaigns, getCampaignById } from "./campaigns";
 import { PIPELINE_STAGES } from "@/lib/config/pipeline";
 
-export async function getAnalyticsData(campaignId?: string) {
+export async function getAnalyticsData(campaignId?: string, userId?: string) {
   if (typeof window !== "undefined") {
     try {
       const url = campaignId ? `/api/analytics?campaignId=${encodeURIComponent(campaignId)}` : "/api/analytics";
@@ -21,7 +21,7 @@ export async function getAnalyticsData(campaignId?: string) {
   }
 
   const [sponsors, drafts, replies, campaigns] = await Promise.all([
-    getSponsors(campaignId),
+    getSponsors(campaignId, userId),
     getDrafts(),
     getReplyAnalyses(),
     campaignId ? getCampaignById(campaignId).then((c) => (c ? [c] : [])) : getCampaigns(),
