@@ -49,7 +49,7 @@ const PIPELINE_STAGE_MAP: Record<string, PipelineStage> = {
   LOST: "Lost",
 };
 
-export async function getSponsors(campaignId?: string): Promise<Company[]> {
+export async function getSponsors(campaignId?: string, userId?: string): Promise<Company[]> {
   if (typeof window !== "undefined") {
     try {
       const url = campaignId ? `/api/sponsors?campaignId=${encodeURIComponent(campaignId)}` : "/api/sponsors";
@@ -68,8 +68,15 @@ export async function getSponsors(campaignId?: string): Promise<Company[]> {
 
   if (isDatabaseConfigured()) {
     try {
+      const where: any = {};
+      if (campaignId) {
+        where.campaignId = campaignId;
+      } else if (userId) {
+        where.userId = userId;
+      }
+
       const companies = await prisma.company.findMany({
-        where: campaignId ? { campaignId } : undefined,
+        where: Object.keys(where).length > 0 ? where : undefined,
         include: {
           contacts: true,
           report: true,
@@ -133,6 +140,20 @@ export async function getSponsors(campaignId?: string): Promise<Company[]> {
 }
 
 export async function getSponsorById(id: string): Promise<Company | null> {
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch(`/api/sponsors/${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Client fetch /api/sponsors/[id] failed:", e);
+    }
+  }
+
   if (isDatabaseConfigured()) {
     try {
       const c = await prisma.company.findUnique({
