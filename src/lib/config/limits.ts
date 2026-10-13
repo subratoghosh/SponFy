@@ -3,14 +3,14 @@ export const SYSTEM_LIMITS = {
   DEFAULT_DAILY_SEND_CAP: 30,
   MAX_DAILY_SEND_CAP: 100,
 
-  // Follow-up defaults
-  DEFAULT_FIRST_FOLLOWUP_DELAY_DAYS: 4,
-  DEFAULT_SECOND_FOLLOWUP_DELAY_DAYS: 7,
+  // Follow-up defaults (2 days after initial send, 2 days after follow-up 1)
+  DEFAULT_FIRST_FOLLOWUP_DELAY_DAYS: 2,
+  DEFAULT_SECOND_FOLLOWUP_DELAY_DAYS: 2,
   MAX_FOLLOWUP_COUNT: 2,
 
   // Anti-spam / duplicate-outreach guards (enforced server-side in lib/outreach/send-guard.ts)
   // A company may receive 1 initial email + MAX_FOLLOWUP_COUNT follow-ups, then never again.
-  MIN_DAYS_BETWEEN_TOUCHES: 4,
+  MIN_DAYS_BETWEEN_TOUCHES: 2,
   SEND_CAP_WINDOW_HOURS: 24,
 
   // Serverless execution constraints

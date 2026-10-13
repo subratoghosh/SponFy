@@ -105,6 +105,8 @@ export interface EmailDraft {
   body: string;
   quality: EmailQuality;
   status: DraftStatus;
+  needsAttention?: boolean;
+  attentionReason?: string;
   approvedAt?: string;
   createdAt: string;
 }
@@ -155,6 +157,8 @@ export interface Company {
   pipelineValue: number;
   signals: string[];
   confidence: number;
+  domain?: string | null;
+  sponsorApproved?: boolean;
   researchStatus: "pending" | "completed" | "failed";
   contacts?: Contact[];
   sources?: SourceItem[];
