@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Mail, RefreshCw, Inbox } from 'lucide-react';
 import { getInboundThreads } from '@/lib/data/repositories/replies';
 import { getSponsors } from '@/lib/data/repositories/sponsors';
@@ -25,11 +25,7 @@ export default function RepliesPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [threads, comps] = await Promise.all([
@@ -38,13 +34,15 @@ export default function RepliesPage() {
       ]);
       setThreadItems(threads);
       setCompanies(comps);
-      if (threads.length > 0 && !selectedMessageId) {
-        setSelectedMessageId(threads[0].message.id);
-      }
+      setSelectedMessageId((prev) => prev || (threads.length > 0 ? threads[0].message.id : null));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSync = async () => {
     setIsSyncing(true);
