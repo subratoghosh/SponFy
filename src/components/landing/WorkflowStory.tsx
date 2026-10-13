@@ -5,7 +5,7 @@ import {
   Search,
   Compass,
   TrendingUp,
-  Sparkles,
+  FileEdit,
   Send,
   Inbox,
   CheckCircle2,
@@ -57,7 +57,7 @@ const WORKFLOW_STEPS: WorkflowNode[] = [
     title: "Personalise",
     shortDesc: "Contextual Email Personalization",
     details: "Drafts high-converting, non-cliché emails referencing the company's actual hackathon challenge tracks.",
-    icon: Sparkles,
+    icon: FileEdit,
     previewType: "personalise",
   },
   {
@@ -130,33 +130,6 @@ export const WorkflowStory: React.FC = () => {
           </p>
         </div>
 
-        {/* Step Navigation Pill Bar (Interactive On Click) */}
-        <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto no-scrollbar pb-6 mb-12">
-          {WORKFLOW_STEPS.map((step, idx) => {
-            const Icon = step.icon;
-            const isActive = activeStep === idx;
-            return (
-              <button
-                key={step.step}
-                type="button"
-                onClick={() => setActiveStep(idx)}
-                className={cn(
-                  "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 cursor-pointer border",
-                  isActive
-                    ? "bg-green-dark text-butter-cream border-green-dark shadow-sm scale-105"
-                    : "bg-white text-green-dark/70 border-green-dark/10 hover:border-green-dark/30 hover:bg-butter-warm/60"
-                )}
-                aria-label={`View step ${step.step}: ${step.title}`}
-              >
-                <span className="w-5 h-5 rounded-full bg-butter-warm/80 text-green-dark flex items-center justify-center text-[10px] font-black">
-                  {step.step}
-                </span>
-                <Icon className="w-3.5 h-3.5" />
-                <span>{step.title}</span>
-              </button>
-            );
-          })}
-        </div>
 
         {/* Connected Visual Flow (Nodes joined by SVG connector line) */}
         <div className="relative">
@@ -315,7 +288,7 @@ export const WorkflowStory: React.FC = () => {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2 text-xs font-bold text-green-dark">
                     <Building2 className="w-4 h-4 text-green-mid" />
-                    <span>Nimbus APIs — Cited Dossier Evidence</span>
+                    <span>Nimbus APIs — Cited Research Evidence</span>
                   </div>
                   <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                     2 Sources Verified
