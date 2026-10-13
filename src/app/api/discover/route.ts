@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
-import { getSponsors, addSponsor } from "@/lib/data/repositories/sponsors";
-import { DuplicateCompanyError, normalizeName, normalizeDomain } from "@/lib/outreach/duplicates";
+import { getSponsors } from "@/lib/data/repositories/sponsors";
+import { saveDiscoveryResults } from "@/lib/data/repositories/discovery-results";
+import { normalizeName, normalizeDomain } from "@/lib/outreach/duplicates";
 import { FALLBACK_SPONSOR_CATALOG, DiscoveryCandidate } from "@/lib/discovery/catalog";
 import { getFirecrawlClient } from "@/lib/integrations/factory";
 import { DEMO_CAMPAIGN } from "@/lib/data/seed-data";
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
     } catch {
       // outside Next.js request context or unauthenticated
     }
+    const userId = session?.user?.id || "usr-demo-lead";
     const body = await req.json();
     const { campaignId, prompt = "", targetCount = 5 } = body;
 
@@ -212,58 +214,36 @@ Return a STRICT JSON array matching this format:
       }
     }
 
-    // 6. Add discovered candidates to the pipeline
-    const added = [];
-    const skipped: { name: string; reason: string; existingId?: string }[] = [];
+    // 6. Save discovered candidates separately from approved sponsor records
+    const candidatePayloads = candidates.slice(0, targetCount).map((c) => ({
+      name: c.name,
+      website: c.website,
+      domain: normalizeDomain(c.website),
+      industry: c.industry,
+      description: c.description,
+      fitScore: c.fitScore || 88,
+      pipelineValue: 0,
+      signals: c.signals || ["Developer Track Sponsor", "API Grants"],
+      confidence: 90,
+      scoreBreakdown: [
+        { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: "High synergy with technical student builders", positive: true },
+        { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} students in ${campaign.location}`, positive: true },
+        { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Developer tooling integration track", positive: true },
+        { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of tech hackathons", positive: true },
+        { factor: "Student Program History", points: 13, maxPoints: 15, reason: "Free developer allowances", positive: true },
+        { factor: "Financial Capability", points: 8, maxPoints: 10, reason: "Standard track budget tier", positive: true },
+        { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "National reach", positive: true },
+      ],
+    }));
 
-    for (const c of candidates.slice(0, targetCount)) {
-      try {
-        const spon = await addSponsor({
-          campaignId: campaign.id,
-          name: c.name,
-          website: c.website,
-          industry: c.industry,
-          description: c.description,
-          stage: "Discovered",
-          fitScore: c.fitScore || 88,
-          scoreBreakdown: [
-            { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: "High synergy with technical student builders", positive: true },
-            { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} students in ${campaign.location}`, positive: true },
-            { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Developer tooling integration track", positive: true },
-            { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of tech hackathons", positive: true },
-            { factor: "Student Program History", points: 13, maxPoints: 15, reason: "Free developer allowances", positive: true },
-            { factor: "Financial Capability", points: 8, maxPoints: 10, reason: "Standard track budget tier", positive: true },
-            { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "National reach", positive: true },
-          ],
-          pipelineValue: 0,
-          signals: c.signals || ["Developer Track Sponsor", "API Grants"],
-          confidence: 90,
-          researchStatus: "pending",
-        });
-        added.push(spon);
-      } catch (err) {
-        if (err instanceof DuplicateCompanyError) {
-          skipped.push({ name: c.name, reason: "Already in this campaign's pipeline", existingId: err.existingId });
-          continue;
-        }
-        console.warn("addSponsor error for candidate:", c.name, err);
-      }
-    }
-
-    // If all candidates happened to be in pipeline, retrieve existing matching records to show in UI
-    const existingMatches =
-      added.length === 0 && skipped.length > 0
-        ? existing.filter((ex) => skipped.some((sk) => normalizeName(sk.name) === normalizeName(ex.name)))
-        : [];
+    const saved = await saveDiscoveryResults(userId, campaign.id, candidatePayloads, prompt);
 
     return NextResponse.json({
       success: true,
-      count: added.length,
-      candidates: added.length > 0 ? added : existingMatches,
-      skipped,
+      count: saved.length,
+      candidates: saved,
       campaignId: campaign.id,
       campaignName: campaign.name,
-      alreadyInPipelineCount: existingMatches.length,
       existingTotal: existing.length,
     });
   } catch (err: any) {
