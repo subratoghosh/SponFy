@@ -27,51 +27,17 @@ export const SponsorsKanbanSkeleton: React.FC = () => {
         </div>
       </div>
 
-      {/* Kanban Board Columns (horizontal scrollable on mobile) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 overflow-x-auto pb-4">
-        {[
-          "Discovered",
-          "Researched",
-          "Qualified",
-          "Contacted",
-          "Replied",
-          "Committed",
-        ].map((title, colIdx) => (
-          <div
-            key={colIdx}
-            className="flex flex-col min-w-[260px] md:min-w-0 rounded-2xl bg-butter-bg/40 border border-green-dark/10 p-3.5 space-y-3"
-          >
-            {/* Column Header */}
-            <div className="flex items-center justify-between px-1">
-              <span className="font-heading font-bold text-xs uppercase tracking-wider text-green-dark/60">
-                {title}
-              </span>
-              <Skeleton className="h-4 w-5 rounded-full" />
-            </div>
+      {/* Criteria Button Skeletons */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-9 gap-2.5">
+        {[...Array(9)].map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-2xl" />
+        ))}
+      </div>
 
-            {/* Draggable card skeletons inside column */}
-            <div className="space-y-3 flex-1">
-              {[...Array(colIdx % 2 === 0 ? 3 : 2)].map((_, cardIdx) => (
-                <div
-                  key={cardIdx}
-                  className="p-3.5 rounded-xl bg-white border border-green-dark/10 shadow-sm space-y-2.5"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-7 w-7 rounded-lg" />
-                      <Skeleton className="h-4 w-20" />
-                    </div>
-                    <Skeleton className="h-4 w-12 rounded-full" />
-                  </div>
-                  <Skeleton className="h-3 w-4/5" />
-                  <div className="flex items-center justify-between pt-1 border-t border-green-dark/5">
-                    <Skeleton className="h-3.5 w-16" />
-                    <Skeleton className="h-4 w-10" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Card Grid Skeletons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <Skeleton key={i} className="h-44 rounded-2xl" />
         ))}
       </div>
     </div>
