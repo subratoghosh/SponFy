@@ -8,7 +8,6 @@ import {
   Target,
   Brain,
   BarChart3,
-  HelpCircle,
   ArrowRight,
 } from "lucide-react";
 
@@ -42,14 +41,6 @@ const FEATURE_MODULES = [
     tag: "Human Approval Gate",
     description:
       "Classifies incoming brand replies by intent and objections while guaranteeing zero emails leave without explicit organizer approval.",
-  },
-  {
-    title: "Knowledge Base & FAQ",
-    href: "/faq",
-    icon: HelpCircle,
-    tag: "Safety & Privacy",
-    description:
-      "Answers about official Google OAuth, Do Not Contact lists, spam protection, and institutional campus reputational safety.",
   },
 ];
 

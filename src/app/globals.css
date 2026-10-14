@@ -42,15 +42,38 @@
   --radius-pill: 30px;
 }
 
+html {
+  background-color: #0C382E;
+}
+
 body {
-  background-color: var(--butter-bg);
-  background-image: url("/texture.svg");
-  background-repeat: repeat;
+  background-color: #0C382E;
   color: var(--text-main);
   font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+}
+
+body.bg-butter-bg,
+body[class*="bg-butter-bg"] {
+  background-color: var(--butter-bg);
+  background-image: url("/texture.svg");
+  background-repeat: repeat;
+}
+
+.overscroll-y-contain {
+  overscroll-behavior-y: contain;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
 }
 
 /* Decent simple texture background for all butter page sections */

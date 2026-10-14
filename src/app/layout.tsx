@@ -1,6 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Outfit, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  themeColor: "#0C382E",
+  colorScheme: "light",
+};
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -55,6 +60,8 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SplashScreen } from "@/components/ui/SplashScreen";
+import { OfflineScreen } from "@/components/ui/OfflineScreen";
 
 export default function RootLayout({
   children,
@@ -67,7 +74,11 @@ export default function RootLayout({
       className={`${fraunces.variable} ${outfit.variable} ${jakarta.variable} ${space.variable}`}
     >
       <body className="min-h-screen bg-butter-bg text-text-main selection:bg-butter-cream selection:text-green-dark">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <SplashScreen />
+          <OfflineScreen />
+        </AuthProvider>
       </body>
     </html>
   );
