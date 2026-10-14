@@ -317,13 +317,53 @@ Return ONLY a valid JSON array:
 
         const parsed = JSON.parse(text);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          candidates = parsed.filter(
+          const rawCandidates = parsed.filter(
             (c: any) =>
               c.name &&
               c.website &&
               !existingNames.has(normalizeName(c.name)) &&
               !existingDomains.has(normalizeDomain(c.website))
           );
+
+          // Run Grok / Fast Relevance verification
+          const { getGrokVerifier } = await import("@/lib/discovery/grok");
+          const { filterCandidateRelevance } = await import("@/lib/discovery/relevance");
+          const grokVerifier = getGrokVerifier();
+
+          const verifiedCandidates = [];
+          for (const cand of rawCandidates) {
+            // First run deterministic fast filter
+            const fastVerdict = await filterCandidateRelevance(
+              cand,
+              prompt,
+              campaign.preferredIndustries
+            );
+
+            if (fastVerdict.verdict === "IRRELEVANT") {
+              continue;
+            }
+
+            // If Grok is configured, independently audit candidate
+            if (grokVerifier.isConfigured()) {
+              const grokVerdict = await grokVerifier.verifyCandidate(
+                cand,
+                prompt,
+                {
+                  eventType: campaign.eventType,
+                  audienceSize: campaign.audienceSize,
+                  location: campaign.location,
+                }
+              );
+
+              if (grokVerdict.decision === "IRRELEVANT") {
+                continue;
+              }
+            }
+
+            verifiedCandidates.push(cand);
+          }
+
+          candidates = verifiedCandidates;
         }
       } catch (geminiErr: any) {
         console.error("AI live structuring error:", geminiErr?.message || geminiErr);

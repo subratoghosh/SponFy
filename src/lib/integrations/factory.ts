@@ -104,12 +104,50 @@ export function getIntegrationStatus(): IntegrationHealth[] {
     !process.env.DATABASE_URL.includes("placeholder")
   );
 
+  const hunterConfigured = !!(
+    process.env.HUNTER_API_KEY &&
+    process.env.HUNTER_API_KEY.length > 5 &&
+    !process.env.HUNTER_API_KEY.includes("your-")
+  );
+
+  const zeroBounceConfigured = !!(
+    process.env.ZEROBOUNCE_API_KEY &&
+    process.env.ZEROBOUNCE_API_KEY.length > 5 &&
+    !process.env.ZEROBOUNCE_API_KEY.includes("your-")
+  );
+
+  const groqConfigured = !!(
+    process.env.GROQ_API_KEY &&
+    process.env.GROQ_API_KEY.length > 5 &&
+    !process.env.GROQ_API_KEY.includes("your-")
+  );
+
+  const grokConfigured = !!(
+    process.env.XAI_API_KEY &&
+    process.env.XAI_API_KEY.length > 5 &&
+    !process.env.XAI_API_KEY.includes("your-")
+  );
+
+  const relevanceLlmConfigured = groqConfigured || grokConfigured;
+  const relevanceLabel = groqConfigured
+    ? "Connected via Groq (Llama 3.3)"
+    : grokConfigured
+    ? "Connected via xAI (Grok)"
+    : "Optional (Groq / xAI Ready)";
+
   return [
     {
       name: "AI Intelligence Engine",
       service: "gemini",
       isConfigured: geminiConfigured,
       statusText: geminiConfigured ? "Connected & Active" : "Automated Engine Ready",
+      lastChecked: new Date().toISOString(),
+    },
+    {
+      name: "LLM Relevance Verification",
+      service: "groq" as any,
+      isConfigured: relevanceLlmConfigured,
+      statusText: relevanceLabel,
       lastChecked: new Date().toISOString(),
     },
     {
@@ -120,10 +158,17 @@ export function getIntegrationStatus(): IntegrationHealth[] {
       lastChecked: new Date().toISOString(),
     },
     {
-      name: "Web Intelligence & Verification",
-      service: "firecrawl",
-      isConfigured: firecrawlConfigured,
-      statusText: firecrawlConfigured ? "Connected & Active" : "Verification Engine Ready",
+      name: "Hunter Email Verification",
+      service: "hunter" as any,
+      isConfigured: hunterConfigured,
+      statusText: hunterConfigured ? "Connected & Active" : "Needs API Key",
+      lastChecked: new Date().toISOString(),
+    },
+    {
+      name: "ZeroBounce Secondary Verification",
+      service: "zerobounce" as any,
+      isConfigured: zeroBounceConfigured,
+      statusText: zeroBounceConfigured ? "Connected & Active" : "Needs API Key",
       lastChecked: new Date().toISOString(),
     },
     {
