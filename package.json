@@ -23,6 +23,8 @@
     "@neondatabase/serverless": "^1.2.0",
     "@prisma/adapter-neon": "^6.19.3",
     "@prisma/client": "^6.19.3",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.7",
     "googleapis": "^146.0.0",
