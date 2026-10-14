@@ -31,7 +31,8 @@ describe("M1 Foundation Tests", () => {
     it("rejects or throws on tampered ciphertext", () => {
       const cipher = encrypt("secret-token-to-tamper");
       const [iv, tag, content] = cipher.split(":");
-      const tamperedContent = content.slice(0, -2) + "ff";
+      const lastChar = content.slice(-1);
+      const tamperedContent = content.slice(0, -1) + (lastChar === "a" ? "b" : "a");
       const tamperedCipher = `${iv}:${tag}:${tamperedContent}`;
 
       expect(() => decrypt(tamperedCipher)).toThrow();
