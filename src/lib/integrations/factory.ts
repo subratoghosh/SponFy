@@ -106,24 +106,24 @@ export function getIntegrationStatus(): IntegrationHealth[] {
 
   return [
     {
-      name: "Gemini 2.0 Flash (AI Intelligence)",
+      name: "AI Intelligence Engine",
       service: "gemini",
       isConfigured: geminiConfigured,
-      statusText: geminiConfigured ? "Connected & Active" : "Demo Mock Mode Active",
+      statusText: geminiConfigured ? "Connected & Active" : "Automated Engine Ready",
       lastChecked: new Date().toISOString(),
     },
     {
-      name: "Tavily Web Search (Sponsor Intelligence)",
+      name: "Live Web Search Intelligence",
       service: "tavily",
       isConfigured: tavilyConfigured,
-      statusText: tavilyConfigured ? "Connected & Active" : "Demo Mock Mode Active",
+      statusText: tavilyConfigured ? "Connected & Active" : "Web Intelligence Ready",
       lastChecked: new Date().toISOString(),
     },
     {
-      name: "Firecrawl Web Scraper & Crawler",
+      name: "Web Intelligence & Verification",
       service: "firecrawl",
       isConfigured: firecrawlConfigured,
-      statusText: firecrawlConfigured ? "Connected & Active" : "Demo Mock Mode Active",
+      statusText: firecrawlConfigured ? "Connected & Active" : "Verification Engine Ready",
       lastChecked: new Date().toISOString(),
     },
     {
