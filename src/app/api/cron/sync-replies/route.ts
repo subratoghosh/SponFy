@@ -9,9 +9,12 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Forward to internal sync handler
+    // Forward to internal sync handler with Bearer token
     const syncRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/replies/sync`, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${cronSecret}`,
+      },
     });
     const data = await syncRes.json();
     return NextResponse.json({ cronExecuted: true, result: data });
