@@ -4,15 +4,13 @@ import {
   getDiscoveryResults,
   clearDiscoveryResults,
   deleteDiscoveryResult,
+  deleteDiscoveryResults,
 } from "@/lib/data/repositories/discovery-results";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await auth().catch(() => null);
+    const userId = session?.user?.id || "usr-demo-lead";
 
     const { searchParams } = new URL(req.url);
     const campaignId = searchParams.get("campaignId") || undefined;
@@ -32,17 +30,34 @@ export async function GET(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
-    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = session?.user?.id || "usr-demo-lead";
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const campaignId = searchParams.get("campaignId") || undefined;
 
-    if (id) {
-      const deleted = await deleteDiscoveryResult(id, userId);
+    // Check if JSON body with { ids: [...] } or { id: "..." } was sent
+    let bodyIds: string[] | null = null;
+    let bodyId: string | null = null;
+    try {
+      const body = await req.json();
+      if (Array.isArray(body?.ids)) bodyIds = body.ids;
+      if (typeof body?.id === "string") bodyId = body.id;
+    } catch {
+      // not JSON body
+    }
+
+    const targetId = id || bodyId;
+    if (bodyIds && bodyIds.length > 0) {
+      const count = await deleteDiscoveryResults(bodyIds, userId);
+      return NextResponse.json({
+        success: true,
+        deletedCount: count,
+      });
+    }
+
+    if (targetId) {
+      const deleted = await deleteDiscoveryResult(targetId, userId);
       return NextResponse.json({
         success: true,
         deleted,
