@@ -138,7 +138,18 @@ export async function POST(req: Request) {
     } catch {
       // outside Next.js request context or unauthenticated
     }
-    const userId = session?.user?.id || "usr-demo-lead";
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized. Please sign in to discover sponsors." }, { status: 401 });
+    }
+
+    // Rate limiting: 5 requests/minute/user
+    const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+    const rateLimit = await checkRateLimit("discover", userId);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit);
+    }
+
     const body = await req.json();
     const { campaignId, prompt = "", targetCount = 5 } = body;
 
