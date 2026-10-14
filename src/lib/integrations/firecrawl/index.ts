@@ -109,22 +109,22 @@ export class MockFirecrawlClient implements IFirecrawlClient {
     return [
       {
         url: "https://github.com/education",
-        title: "GitHub Education - Student Developer Pack & Campus Grants",
-        description: "Official student programs, hackathon sponsorship kits, and GitHub developer access for university builders.",
+        title: "GitHub Education - Developer Tools & Community Grants",
+        description: "Official developer programs, partner sponsorship kits, and GitHub developer access for builders.",
       },
       {
         url: "https://postman.com/student-program",
-        title: "Postman Student Programs & API Hackathon Sponsorship",
-        description: "API platform supporting student hackathons with track bounties, swag packs, and certification awards.",
+        title: "Postman Programs & API Event Sponsorship",
+        description: "API platform supporting developer events and conferences with track bounties, swag packs, and certification awards.",
       },
     ].slice(0, limit);
   }
 
   async scrapeUrl(url: string) {
     return {
-      markdown: "# Sponsor Program\n\nWe love supporting student builders, hackathons, and developer tracks.",
-      title: "Developer Community Sponsorship",
-      description: "Student developer support and hackathon grants.",
+      markdown: "# Sponsor Program\n\nWe love supporting builders, tech conferences, and innovation tracks.",
+      title: "Developer & Community Sponsorship",
+      description: "Developer community support and event partnership grants.",
     };
   }
 }

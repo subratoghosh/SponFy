@@ -136,7 +136,7 @@ export default function SignupPage() {
               </div>
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Free for accredited student societies and hackathons</span>
+                <span>Free for community organizations and launch campaigns</span>
               </div>
             </div>
           </div>

@@ -229,7 +229,7 @@ export default function DiscoverPage() {
             AI Sponsor Discovery Studio
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Hunt companies with active student programs, hackathon budgets, and tech synergy.
+            Discover companies with active sponsorship budgets, partner programs, and campaign synergy.
           </p>
         </div>
 

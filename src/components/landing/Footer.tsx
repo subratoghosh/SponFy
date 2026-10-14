@@ -129,7 +129,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-xs sm:text-sm">
               <li>
                 <Link href="/app" className="footer-link">
-                  College Hackathons
+                  Tech & Innovation Summits
                 </Link>
               </li>
               <li>

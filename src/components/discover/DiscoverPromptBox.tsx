@@ -14,15 +14,15 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
   loading,
 }) => {
   const [prompt, setPrompt] = useState(
-    "Find 20 cloud, developer tools and fintech companies sponsoring Indian student hackathons with ₹50k+ budgets"
+    "Find 20 cloud, developer tools and fintech companies with active event and campaign sponsorship budgets"
   );
   const [count, setCount] = useState(20);
 
   const samplePrompts = [
-    { text: "Find 20 cloud, developer tools and fintech companies sponsoring Indian student hackathons with ₹50k+ budgets", count: 20 },
-    { text: "Find top 15 Web3 & AI companies actively sponsoring Indian college hackathons", count: 15 },
-    { text: "Find 10 SaaS and dev tool companies with student ambassador programs", count: 10 },
-    { text: "Find 10 fintech and developer API platforms with active hackathon grants", count: 10 },
+    { text: "Find 20 cloud, developer tools and fintech companies with active event and campaign sponsorship budgets", count: 20 },
+    { text: "Find top 15 Web3 & AI companies actively sponsoring tech events, conferences, and campaigns", count: 15 },
+    { text: "Find 10 SaaS and enterprise software companies with brand partnership programs", count: 10 },
+    { text: "Find 10 fintech and developer API platforms with active partnership grants", count: 10 },
   ];
 
   const countOptions = [5, 10, 15, 20, 25];

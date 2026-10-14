@@ -247,7 +247,7 @@ export class MockGeminiClient implements IGeminiClient {
           factor: "Event Type Match",
           points: 14,
           maxPoints: 15,
-          reason: `Regular sponsor of national collegiate hackathons`,
+          reason: `Regular sponsor of national conferences and partner campaigns`,
           positive: true,
         },
         {
@@ -272,7 +272,7 @@ export class MockGeminiClient implements IGeminiClient {
           positive: true,
         },
       ],
-      summaryReason: `${companyName} exhibits strong developer alignment with active student programs and high willingness to sponsor collegiate hackathons.`,
+      summaryReason: `${companyName} exhibits strong category alignment with active community programs and high willingness to sponsor relevant partner campaigns.`,
     };
   }
 

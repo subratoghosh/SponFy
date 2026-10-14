@@ -183,7 +183,7 @@ export interface SponsorshipTier {
 export interface Campaign {
   id: string;
   name: string;
-  eventType: string; // "Hackathon" | "Cultural Event" | "Tech Symposium" | "Organization"
+  eventType: string; // "Conference & Summit" | "Campaign" | "Cultural Event" | "Organization"
   audienceSize: number;
   location: string;
   targetAmount: number;

@@ -34,7 +34,7 @@ Best regards,
 
 Hope you're having a great week!
 
-At {{event_name}}, we are hosting a major hackathon with {{audience_size}}+ attendees building cutting-edge applications.
+At {{event_name}}, we are hosting a premier event and innovation campaign with {{audience_size}}+ attendees building cutting-edge applications.
 
 We'd love to partner with {{company_name}} to host a dedicated sponsor challenge track where developers build directly with your platform and APIs. This provides unmatched hands-on adoption, product feedback, and talent visibility.
 

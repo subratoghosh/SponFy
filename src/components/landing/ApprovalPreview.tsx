@@ -73,7 +73,7 @@ export const ApprovalPreview: React.FC = () => {
               {/* Email Body Snippet */}
               <div className="p-4 bg-white rounded-xl border border-green-dark/12 text-xs text-text-dim space-y-2 italic hover:border-green-dark/25 transition-colors">
                 <p>
-                  "Given Acme Cloud's active commitment to student developers, we would love to invite your team as a Gold Tier track partner for our upcoming hackathon..."
+                  "Given Acme Cloud's active commitment to community partnerships, we would love to invite your team as a Gold Tier partner for our upcoming flagship campaign..."
                 </p>
               </div>
             </div>

@@ -681,7 +681,7 @@ export default function AdminShowcasePage() {
                   rows={3}
                   value={formData.shortDescription}
                   onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                  placeholder="Describe why sponsors or hackathon organizers approach this company..."
+                  placeholder="Describe why sponsors or campaign organizers approach this company..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#0C382E]/20 text-sm focus:outline-none focus:ring-2 focus:ring-[#0C382E]/20"
                 />
                 {formErrors.shortDescription && (

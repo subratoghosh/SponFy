@@ -40,7 +40,7 @@ export const TopBar: React.FC = () => {
       const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
       const cleanData = isDemo
         ? data
-        : data.filter((c) => c.name !== "SponFy Hackathon 2026" && c.id !== "camp-demo-1");
+        : data.filter((c) => c.name !== "SponFy Hackathon 2026" && c.name !== "SponFy Flagship Campaign 2026" && c.id !== "camp-demo-1" && c.id !== "camp-sponfy-2026");
       setCampaigns(cleanData);
       if (cleanData.length > 0) {
         setSelectedCampaign(cleanData[0]);

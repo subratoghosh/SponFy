@@ -32,22 +32,22 @@ async function fetchLiveWebIntelligence(
 
   const queries: string[] = [
     userPrompt.trim(),
-    `${userPrompt} student hackathon sponsorship grants India 2025 2026`,
+    `${userPrompt} sponsorship partnership grants India 2025 2026`,
   ];
 
   // Add category-tailored query if prompt mentions specific industries
   const promptLower = userPrompt.toLowerCase();
   const sectors: string[] = [];
   if (/(cloud|infrastructure|devops|aws|azure|gcp)/i.test(promptLower)) sectors.push("cloud");
-  if (/(developer tools|devtools|api|database|git)/i.test(promptLower)) sectors.push("developer tools");
+  if (/(developer tools|devtools|api|database|git|software)/i.test(promptLower)) sectors.push("software and developer tools");
   if (/(fintech|payments|banking|upi)/i.test(promptLower)) sectors.push("fintech");
   if (/(ai|machine learning|llm|generative)/i.test(promptLower)) sectors.push("AI startups");
   if (/(web3|crypto|blockchain|defi)/i.test(promptLower)) sectors.push("web3");
 
   if (sectors.length > 0) {
-    queries.push(`${sectors.join(" ")} companies sponsoring hackathons student developer programs India`);
+    queries.push(`${sectors.join(" ")} companies sponsoring events programs campaigns India`);
   } else {
-    queries.push("top tech startups and companies sponsoring student hackathons India developer relations");
+    queries.push("top tech companies sponsoring events partner programs campaigns India");
   }
 
   const tasks: Promise<any>[] = [];
@@ -181,16 +181,16 @@ export async function POST(req: Request) {
             data: {
               userId,
               name: `${user?.name || "Active"} Sponsorship Campaign`,
-              eventType: "Hackathon & Tech Event",
+              eventType: "Flagship Event & Campaign",
               audienceSize: 800,
-              location: "Campus Auditorium",
+              location: "Auditorium / City Venue",
               targetAmount: 500000,
-              preferredIndustries: ["Developer Tools", "AI & Cloud", "Fintech", "Web3"],
+              preferredIndustries: ["Developer Tools", "AI & Cloud", "Fintech", "Software"],
               tiers: [
-                { name: "Title Sponsor", amount: 150000, deliverables: ["Keynote", "Branded Track", "Hiring Booth"], slots: 1 },
+                { name: "Title Sponsor", amount: 150000, deliverables: ["Keynote", "Branded Track", "Exhibition Booth"], slots: 1 },
                 { name: "Gold Sponsor", amount: 75000, deliverables: ["Workshop", "Swag Kits"], slots: 3 },
               ],
-              description: "Flagship annual developer hackathon and student builder gathering.",
+              description: "Flagship annual industry gathering and innovation campaign.",
             },
           });
 
@@ -253,13 +253,13 @@ export async function POST(req: Request) {
         const existingListSample = Array.from(existingNames).slice(0, 30).join(", ");
         const searchContext = liveWebSnippets.slice(0, 25).map((s) => `- [${s.title}](${s.url}): ${s.content}`).join("\n");
 
-        const extractionPrompt = `You are an elite sponsorship scout and market intelligence engine for collegiate hackathons and tech events.
-Target Event: "${campaign.name}" (${campaign.eventType}, ${campaign.audienceSize} students in ${campaign.location}, Budget: ₹${campaign.targetAmount}).
-Preferred Industries: ${campaign.preferredIndustries?.join(", ") || "Developer Tools, AI, Cloud, Fintech"}.
-User Query: "${prompt || "Find prospective sponsors with active student developer or hackathon programs"}".
+        const extractionPrompt = `You are an elite sponsorship scout and market intelligence engine for event campaigns, conferences, and organizations.
+Target Campaign: "${campaign.name}" (${campaign.eventType}, ${campaign.audienceSize} attendees in ${campaign.location}, Budget: ₹${campaign.targetAmount}).
+Preferred Industries: ${campaign.preferredIndustries?.join(", ") || "Developer Tools, AI, Cloud, Fintech, Software"}.
+User Query: "${prompt || "Find prospective sponsors with active partnership or sponsorship programs"}".
 
 REAL-TIME WEB SEARCH INTELLIGENCE (Retrieved live via web search):
-${searchContext || "No live web search results available. Use your comprehensive knowledge of active tech companies and student hackathon sponsors."}
+${searchContext || "No live web search results available. Use your comprehensive knowledge of active companies and event sponsors."}
 
 Deduplication Rule:
 Do NOT suggest any of these existing companies:
@@ -274,7 +274,7 @@ STRICT JSON OUTPUT REQUIREMENTS:
 2. Every company MUST be a real, authentic company with a valid website URL starting with https://.
 3. Provide realistic sponsorship budget (pipelineValue) in INR between 40000 and 150000.
 4. Provide realistic fitScore between 84 and 98.
-5. Provide 2-3 specific signals highlighting their student developer program, campus hackathon history, or developer API track sponsorship.
+5. Provide 2-3 specific signals highlighting their sponsorship history, event partnerships, or community grants.
 
 Return ONLY a valid JSON array:
 [
@@ -282,7 +282,7 @@ Return ONLY a valid JSON array:
     "name": "<Company Name>",
     "website": "https://<real-domain>",
     "industry": "<Industry category>",
-    "description": "<2 sentences explaining their product and why they sponsor student hackathons>",
+    "description": "<2 sentences explaining their product and why they sponsor relevant campaigns>",
     "fitScore": <integer 84-98>,
     "pipelineValue": <budget in INR between 40000 and 150000>,
     "signals": ["<Signal 1>", "<Signal 2>"]
@@ -362,19 +362,19 @@ Return ONLY a valid JSON array:
         website: c.website,
         domain: normalizeDomain(c.website),
         industry: c.industry || "Technology",
-        description: c.description || `${c.name} actively supports developer communities and collegiate hackathon tracks.`,
+        description: c.description || `${c.name} actively supports event partnerships, community initiatives, and sponsor programs.`,
         fitScore: baseFit,
         pipelineValue: budgetInINR,
-        signals: c.signals && c.signals.length > 0 ? c.signals : ["Student Developer Program", "Hackathon Challenge Track"],
+        signals: c.signals && c.signals.length > 0 ? c.signals : ["Active Sponsorship Program", "Community Partner Grant"],
         confidence: 93,
         scoreBreakdown: [
-          { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: `Direct synergy with ${c.industry || "technology"} student developers`, positive: true },
+          { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: `Direct synergy with ${c.industry || "technology"} domain and audience`, positive: true },
           { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} attendees in ${campaign.location}`, positive: true },
-          { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Natural fit for technical challenge tracks and API adoption", positive: true },
-          { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of collegiate hackathons and tech symposiums", positive: true },
-          { factor: "Student Program History", points: 13, maxPoints: 15, reason: "Provides student credits, developer toolkits, and swag kits", positive: true },
+          { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Natural fit for branding, activation, and campaign deliverables", positive: true },
+          { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of industry summits, conferences, and campaigns", positive: true },
+          { factor: "Sponsorship History", points: 13, maxPoints: 15, reason: "Provides direct sponsorship grants, credits, and partner deliverables", positive: true },
           { factor: "Financial Capability", points: 8, maxPoints: 10, reason: `Target sponsorship budget ₹${(budgetInINR / 1000).toFixed(0)}k`, positive: true },
-          { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "Strong collegiate builder reach in India", positive: true },
+          { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "Strong audience reach and activation in India", positive: true },
         ],
       };
     });

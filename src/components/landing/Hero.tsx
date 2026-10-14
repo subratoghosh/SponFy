@@ -247,7 +247,7 @@ export const Hero: React.FC = () => {
                 <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
                   <div>
-                    <span className="font-bold">+15 pts:</span> Established history of hackathon track sponsorships.
+                    <span className="font-bold">+15 pts:</span> Established history of event & campaign sponsorships.
                   </div>
                 </div>
               </div>

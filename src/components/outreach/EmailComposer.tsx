@@ -79,7 +79,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
     const interpolatedSubject = interpolateTemplate(tmpl.subject, {
       companyName: company?.name,
       contactName: company?.contacts?.[0]?.name,
-      eventName: "Our Annual Hackathon & Conference",
+      eventName: "Our Annual Flagship Campaign",
       audienceSize: "1,200",
       organizerName: session?.user?.name || "Event Convener",
       industry: company?.industry,
@@ -89,7 +89,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
     const interpolatedBody = interpolateTemplate(tmpl.body, {
       companyName: company?.name,
       contactName: company?.contacts?.[0]?.name,
-      eventName: "Our Annual Hackathon & Conference",
+      eventName: "Our Annual Flagship Campaign",
       audienceSize: "1,200",
       organizerName: session?.user?.name || "Event Convener",
       industry: company?.industry,

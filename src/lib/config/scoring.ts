@@ -87,7 +87,7 @@ export const SCORING_FACTORS: ScoringFactorWeight[] = [
     key: "eventTypeRelevance",
     label: "Event-Type Relevance",
     weight: SCORING_WEIGHTS.eventTypeRelevance,
-    description: "Relevance of event type (hackathon, fest, tech conference) to company mission",
+    description: "Relevance of event or campaign format (conference, summit, festival, campaign) to company mission",
   },
   {
     key: "studentPrograms",

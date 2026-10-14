@@ -36,7 +36,7 @@ export const INITIAL_SHOWCASE_COMPANIES: ShowcaseCompany[] = [
     websiteUrl: "https://orbitpay.com",
     logoUrl: null,
     industry: "Fintech & Payments",
-    shortDescription: "Full-stack payment infrastructure with startup and campus hackathon grants.",
+    shortDescription: "Full-stack payment infrastructure with startup and community partnership grants.",
     sortOrder: 2,
     isVisible: true,
     isPartner: false,

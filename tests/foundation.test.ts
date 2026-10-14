@@ -70,7 +70,7 @@ describe("M1 Foundation Tests", () => {
     it("provides seeded demo campaign and companies without database credentials", async () => {
       const campaigns = await mockRepositories.campaigns.list("demo-user");
       expect(campaigns.length).toBeGreaterThan(0);
-      expect(campaigns[0].name).toContain("SponFy Hackathon");
+      expect(campaigns[0].name).toContain("SponFy");
 
       const companies = await mockRepositories.sponsors.list("demo-user");
       expect(companies.length).toBeGreaterThan(15);

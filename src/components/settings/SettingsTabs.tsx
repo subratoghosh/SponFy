@@ -592,7 +592,7 @@ export function SettingsTabs() {
                 <div>
                   <h4 className="text-xs font-bold text-[#0C382E]">Reset Demo Campaign Data</h4>
                   <p className="text-[11px] text-[#0C382E]/60">
-                    Restores the default &quot;SponFy Hackathon 2026&quot; campaign with 24 sponsors and full message history.
+                    Restores the default &quot;SponFy Flagship Campaign 2026&quot; with 24 sponsors and full message history.
                   </p>
                 </div>
                 <Button
