@@ -23,7 +23,7 @@ import { SponfyBrand } from "@/components/ui/SponfyBrand";
 const ADMIN_NAV_ITEMS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
   { label: "Campaigns", href: "/admin/campaigns", icon: FolderKanban },
-  { label: "User Governance", href: "/admin/users", icon: Users },
+  { label: "User Management", href: "/admin/users", icon: Users },
   { label: "Showcase Companies", href: "/admin/showcase", icon: Building2 },
   { label: "Admin Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "System Activity", href: "/admin/activity", icon: Activity },

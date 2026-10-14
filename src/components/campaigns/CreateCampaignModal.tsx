@@ -28,7 +28,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
 
   const [formData, setFormData] = useState({
     name: "",
-    eventType: "Hackathon",
+    eventType: "Tech Conference & Summit",
     audienceSize: 500,
     location: "Bengaluru, India",
     targetAmount: 300000,
@@ -120,11 +120,12 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
               value={formData.eventType}
               onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
             >
-              <option value="Hackathon">Collegiate Hackathon</option>
-              <option value="Cultural Event">Cultural & Arts Event</option>
-              <option value="Tech Symposium">Technical Symposium</option>
-              <option value="Student Club">Student Chapter / Club</option>
-              <option value="Summit">E-Cell / Startup Summit</option>
+              <option value="Tech Conference & Summit">Tech Conference & Summit</option>
+              <option value="Innovation Challenge">Innovation Challenge & Sprint</option>
+              <option value="Cultural Event">Cultural & Arts Festival</option>
+              <option value="Community Initiative">Community & Chapter Initiative</option>
+              <option value="Startup Summit">Startup & Entrepreneurship Summit</option>
+              <option value="Brand Partnership Campaign">Brand & Creator Campaign</option>
             </Select>
             <Textarea
               label="Event Description"

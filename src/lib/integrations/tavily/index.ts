@@ -22,7 +22,7 @@ export class RealTavilyClient implements ITavilyClient {
 
   async searchSponsorshipInfo(companyName: string, website: string) {
     try {
-      const query = `"${companyName}" sponsorship hackathon student developer programs partnership contact`;
+      const query = `"${companyName}" sponsorship partnership event programs grants contact`;
       const res = await fetch("https://api.tavily.com/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,27 +86,27 @@ export class MockTavilyClient implements ITavilyClient {
       sources: [
         {
           id: `src-mock-1`,
-          url: `${website || "https://example.com"}/student-program`,
-          title: `${companyName} Student Developer Community & Hackathons`,
-          snippet: `${companyName} offers API credits, swag kits, and prize sponsorship for university hackathons across India.`,
+          url: `${website || "https://example.com"}/community-program`,
+          title: `${companyName} Community & Event Sponsorships`,
+          snippet: `${companyName} offers credits, partner packages, and sponsorship grants for technology events and industry campaigns.`,
         },
         {
           id: `src-mock-2`,
-          url: `${website || "https://example.com"}/developers`,
-          title: `${companyName} Developer Documentation & Ecosystem Grants`,
-          snippet: `Empowering campus builders with dedicated developer toolkits, workshops, and mentor support.`,
+          url: `${website || "https://example.com"}/partners`,
+          title: `${companyName} Partner Network & Ecosystem Grants`,
+          snippet: `Empowering event organizers and builders with dedicated toolkits, workshops, and partner support.`,
         },
       ],
       sections: {
-        overview: `${companyName} is a market leader with dedicated developer relations programs targeting university student builders across India.`,
+        overview: `${companyName} is a market leader with dedicated partnership programs targeting professional and builder communities.`,
         productsAndServices: ["Core Cloud & Developer Tools", "API Platform", "Developer Workspaces"],
-        targetAudience: "Full-stack developers, engineering students, tech founders.",
-        recentInitiatives: ["Campus Hackathon Tour 2026", "Developer Certification Bounties"],
-        studentDeveloperPrograms: ["Campus Leader Network", "Student Developer Grants"],
-        sponsorshipOpportunities: ["Best Use Track Prize (₹50k+)", "Swag packs for all attendees", "API Workshop slot"],
-        suggestedAngle: `Highlight 800 engineering students building full-stack products who will directly adopt ${companyName}'s tools.`,
+        targetAudience: "Full-stack developers, engineering professionals, founders.",
+        recentInitiatives: ["National Partner Tour 2026", "Ecosystem Innovation Bounties"],
+        studentDeveloperPrograms: ["Community Leader Network", "Builder Grants"],
+        sponsorshipOpportunities: ["Partner Track Prize (₹50k+)", "Branded booth packages", "Workshop slot"],
+        suggestedAngle: `Highlight 800 high-intent attendees and builders who will directly adopt ${companyName}'s products.`,
       },
-      recommendedAngle: `Pitch the 'Best Integration with ${companyName}' track to onboard 800 hackers into their developer ecosystem.`,
+      recommendedAngle: `Pitch the 'Best Innovation with ${companyName}' track to onboard attendees into their ecosystem.`,
     };
   }
 }

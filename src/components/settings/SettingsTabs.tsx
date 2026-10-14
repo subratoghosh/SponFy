@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   User,
   Mail,
@@ -14,6 +14,8 @@ import {
   Trash2,
   Lock,
   Cpu,
+  FileText,
+  Upload,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,10 +25,19 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/toast';
 import { useSession } from 'next-auth/react';
 import { settingsRepository } from '@/lib/data/repositories/settings';
+import {
+  CustomEmailTemplate,
+  getCustomTemplates,
+  deleteCustomTemplate,
+} from '@/lib/data/repositories/templates';
+import { TemplateModal } from '@/components/outreach/TemplateModal';
 
 export function SettingsTabs() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<'profile' | 'gmail' | 'limits' | 'suppression' | 'data'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'gmail' | 'templates' | 'limits' | 'suppression' | 'data'>('profile');
+  const [templates, setTemplates] = useState<CustomEmailTemplate[]>([]);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<CustomEmailTemplate | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [suppressionList, setSuppressionList] = useState<any[]>([]);
   const [newSuppressionEmail, setNewSuppressionEmail] = useState('');
@@ -34,6 +45,29 @@ export function SettingsTabs() {
   const [dailyLimit, setDailyLimit] = useState(30);
   const [gmailStatus, setGmailStatus] = useState<any>({ connected: false });
   const [gmailLoading, setGmailLoading] = useState(false);
+
+  const loadSettings = useCallback(async () => {
+    const userIdentifier = session?.user?.id || session?.user?.email;
+    const p = await settingsRepository.getProfile(userIdentifier || undefined);
+    if (session?.user) {
+      if (!p.fullName && session.user.name) p.fullName = session.user.name;
+      if (!p.email && session.user.email) p.email = session.user.email;
+    }
+    setProfile(p);
+    const supp = await settingsRepository.getSuppressionList();
+    setSuppressionList(supp);
+    const tmpls = getCustomTemplates(session?.user?.email ?? undefined);
+    setTemplates(tmpls);
+    try {
+      const res = await fetch('/api/integrations/gmail/status');
+      if (res.ok) {
+        const g = await res.json();
+        setGmailStatus(g);
+      }
+    } catch {
+      // fallback
+    }
+  }, [session]);
 
   useEffect(() => {
     loadSettings();
@@ -50,27 +84,12 @@ export function SettingsTabs() {
         toast(`Connection failed: ${urlParams.get('error')}`, 'error');
       }
     }
-  }, [session]);
+  }, [loadSettings]);
 
-  const loadSettings = async () => {
-    const userIdentifier = session?.user?.id || session?.user?.email;
-    const p = await settingsRepository.getProfile(userIdentifier || undefined);
-    if (session?.user) {
-      if (!p.fullName && session.user.name) p.fullName = session.user.name;
-      if (!p.email && session.user.email) p.email = session.user.email;
-    }
-    setProfile(p);
-    const supp = await settingsRepository.getSuppressionList();
-    setSuppressionList(supp);
-    try {
-      const res = await fetch('/api/integrations/gmail/status');
-      if (res.ok) {
-        const g = await res.json();
-        setGmailStatus(g);
-      }
-    } catch {
-      // fallback
-    }
+  const handleDeleteTemplate = (id: string) => {
+    deleteCustomTemplate(id, session?.user?.email ?? undefined);
+    setTemplates(getCustomTemplates(session?.user?.email ?? undefined));
+    toast('Template removed successfully', 'info');
   };
 
   const handleConnectGmail = () => {
@@ -127,6 +146,7 @@ export function SettingsTabs() {
       <div className="w-full md:w-64 space-y-1 shrink-0">
         {[
           { id: 'profile', label: 'Profile & Signature', icon: User },
+          { id: 'templates', label: 'Custom Email Templates', icon: FileText },
           { id: 'gmail', label: 'Gmail OAuth & AI Keys', icon: Mail },
           { id: 'limits', label: 'Safety & Sending Limits', icon: Sliders },
           { id: 'suppression', label: 'Do-Not-Contact List', icon: ShieldAlert },
@@ -171,7 +191,6 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Full Name</label>
                     <Input
                       value={profile.fullName ?? ''}
-                      placeholder="e.g. Alex Morgan"
                       onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                       className="text-xs"
                     />
@@ -180,7 +199,6 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Organizer Title</label>
                     <Input
                       value={profile.title ?? ''}
-                      placeholder="e.g. Head of Sponsorships"
                       onChange={(e) => setProfile({ ...profile, title: e.target.value })}
                       className="text-xs"
                     />
@@ -192,7 +210,6 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Organization / College</label>
                     <Input
                       value={profile.organization ?? ''}
-                      placeholder="e.g. Stanford ACM, DevFest 2026"
                       onChange={(e) => setProfile({ ...profile, organization: e.target.value })}
                       className="text-xs"
                     />
@@ -201,7 +218,6 @@ export function SettingsTabs() {
                     <label className="text-xs font-semibold text-[#0C382E] mb-1 block">Sender Email (Gmail connected)</label>
                     <Input
                       value={profile.email ?? ''}
-                      placeholder="connect your email in Gmail tab or enter email"
                       onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                       className="text-xs bg-[#FAF4E6]/50"
                     />
@@ -213,7 +229,6 @@ export function SettingsTabs() {
                   <Textarea
                     rows={4}
                     value={profile.signature ?? ''}
-                    placeholder="Enter your custom email closing, sign-off, and contact details..."
                     onChange={(e) => setProfile({ ...profile, signature: e.target.value })}
                     className="text-xs font-mono"
                   />
@@ -227,6 +242,93 @@ export function SettingsTabs() {
               </form>
             </CardContent>
           </Card>
+        )}
+
+        {/* Custom Email Templates Tab */}
+        {activeTab === 'templates' && (
+          <div className="space-y-6">
+            <Card className="bg-[#FFFFFF] border-[#0C382E]/10 shadow-sm">
+              <CardHeader className="pb-4 border-b border-[#0C382E]/5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-base font-heading font-bold text-[#0C382E]">
+                      Custom Email Pitch Templates
+                    </CardTitle>
+                    <p className="text-xs text-[#0C382E]/60">
+                      Save, upload, and reuse multiple email pitch formats. You can choose between AI-generated drafts or any of these templates during outreach.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditingTemplate(null);
+                      setIsTemplateModalOpen(true);
+                    }}
+                    className="bg-[#0C382E] text-[#FFF0B3] hover:bg-[#0C382E]/90 text-xs font-bold gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    New / Upload Template
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                {templates.length === 0 ? (
+                  <div className="p-8 text-center bg-[#FAF4E6]/50 rounded-2xl border border-[#0C382E]/10 space-y-2">
+                    <FileText className="w-8 h-8 text-[#0C382E]/40 mx-auto" />
+                    <h4 className="text-sm font-bold text-[#0C382E]">No custom templates yet</h4>
+                    <p className="text-xs text-[#0C382E]/60 max-w-sm mx-auto">
+                      Create or upload your own email outreach formats with dynamic tags like {"{{company_name}}"} and {"{{event_name}}"}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {templates.map((tmpl) => (
+                      <div
+                        key={tmpl.id}
+                        className="p-4 rounded-2xl bg-[#FFFDF6] border border-[#0C382E]/10 hover:border-[#0C382E]/30 transition-all space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-[#0C382E]" />
+                            <h4 className="font-bold text-sm text-[#0C382E]">{tmpl.name}</h4>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingTemplate(tmpl);
+                                setIsTemplateModalOpen(true);
+                              }}
+                              className="text-xs font-bold text-[#0C382E] hover:underline px-2 py-1 rounded hover:bg-[#FAF4E6]"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTemplate(tmpl.id)}
+                              className="text-xs text-red-600 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                              title="Delete template"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-[#0C382E]/80">
+                          <span className="font-bold text-[#0C382E] mr-1.5">Subject:</span>
+                          <span className="font-mono bg-[#FAF4E6] px-1.5 py-0.5 rounded text-[11px]">
+                            {tmpl.subject}
+                          </span>
+                        </div>
+
+                        <div className="p-3 bg-[#FAF4E6]/60 rounded-xl border border-[#0C382E]/6 text-[11px] font-mono text-[#0C382E]/80 line-clamp-3 whitespace-pre-line">
+                          {tmpl.body}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Gmail & AI Keys Tab */}
@@ -328,17 +430,43 @@ export function SettingsTabs() {
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
                     <div className="flex items-center gap-2">
                       <Cpu className="w-4 h-4 text-[#0C382E]" />
-                      <span className="text-xs font-bold text-[#0C382E]">Google Gemini 2.5 Flash</span>
+                      <span className="text-xs font-bold text-[#0C382E]">AI Core Intelligence Engine</span>
                     </div>
-                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Fallback Mock Ready</Badge>
+                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Automated Ready</Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
                     <div className="flex items-center gap-2">
                       <ExternalLink className="w-4 h-4 text-[#0C382E]" />
-                      <span className="text-xs font-bold text-[#0C382E]">Tavily Live Web Search</span>
+                      <span className="text-xs font-bold text-[#0C382E]">Live Web Search & Intelligence</span>
                     </div>
-                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Cited Extractor Ready</Badge>
+                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Web Intelligence Ready</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#0C382E]" />
+                      <div>
+                        <span className="text-xs font-bold text-[#0C382E] block">Hunter.io Verification Layer</span>
+                        <span className="text-[11px] text-[#0C382E]/60">Primary email finding & deliverability check</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white border border-[#0C382E]/10 text-[#0C382E]">
+                      HUNTER_API_KEY
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#0C382E]" />
+                      <div>
+                        <span className="text-xs font-bold text-[#0C382E] block">ZeroBounce Secondary Verification</span>
+                        <span className="text-[11px] text-[#0C382E]/60">Selective verification for catch-all & risky mailboxes</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white border border-[#0C382E]/10 text-[#0C382E]">
+                      ZEROBOUNCE_API_KEY
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -490,7 +618,7 @@ export function SettingsTabs() {
                 <div>
                   <h4 className="text-xs font-bold text-[#0C382E]">Reset Demo Campaign Data</h4>
                   <p className="text-[11px] text-[#0C382E]/60">
-                    Restores the default &quot;SponFy Hackathon 2026&quot; campaign with 24 sponsors and full message history.
+                    Restores the default &quot;SponFy Flagship Campaign 2026&quot; with 24 sponsors and full message history.
                   </p>
                 </div>
                 <Button
@@ -506,6 +634,20 @@ export function SettingsTabs() {
           </Card>
         )}
       </div>
+
+      <TemplateModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => {
+          setIsTemplateModalOpen(false);
+          setEditingTemplate(null);
+        }}
+        initialTemplate={editingTemplate}
+        onSaved={() => {
+          setTemplates(getCustomTemplates(session?.user?.email ?? undefined));
+          toast('Template saved successfully!', 'success');
+        }}
+        userEmail={session?.user?.email ?? undefined}
+      />
     </div>
   );
 }

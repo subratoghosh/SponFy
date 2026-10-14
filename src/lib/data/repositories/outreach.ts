@@ -350,6 +350,28 @@ export async function releaseDraftClaim(id: string): Promise<void> {
   }
 }
 
+export async function deleteDraftsByCompanyId(companyId: string): Promise<number> {
+  if (isDatabaseConfigured()) {
+    try {
+      const res = await prisma.emailDraft.deleteMany({
+        where: {
+          companyId,
+          status: { in: ["DRAFT", "APPROVED"] },
+        },
+      });
+      return res.count;
+    } catch (err) {
+      console.warn("Prisma deleteDraftsByCompanyId failed:", err);
+    }
+  }
+
+  const initialLen = draftsStoreRef.value.length;
+  draftsStoreRef.value = draftsStoreRef.value.filter(
+    (d) => !(d.companyId === companyId && (d.status === "draft" || d.status === "approved"))
+  );
+  return initialLen - draftsStoreRef.value.length;
+}
+
 /** Number of outbound emails the workspace sent since `since` (for the daily cap). */
 export async function countOutboundSince(since: Date): Promise<number> {
   const all = await getMessages();

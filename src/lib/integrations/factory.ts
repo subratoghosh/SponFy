@@ -9,6 +9,11 @@ import {
   MockTavilyClient,
 } from "./tavily";
 import {
+  IFirecrawlClient,
+  RealFirecrawlClient,
+  MockFirecrawlClient,
+} from "./firecrawl";
+import {
   IGmailClient,
   RealGmailClient,
   MockGmailClient,
@@ -31,10 +36,25 @@ export function getTavilyClient(): ITavilyClient {
   return new MockTavilyClient();
 }
 
+export function getFirecrawlClient(): IFirecrawlClient {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (apiKey && apiKey.length > 5 && !apiKey.includes("your-")) {
+    return new RealFirecrawlClient(apiKey);
+  }
+  return new MockFirecrawlClient();
+}
+
 export function getGmailClient(tokens?: any, redirectUriOverride?: string): IGmailClient {
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const baseUrl =
+    (process.env.NODE_ENV === "production" && configuredAppUrl?.includes("localhost")
+      ? vercelOrigin || "https://sponfy.vercel.app"
+      : configuredAppUrl) ||
+    vercelOrigin ||
+    "http://localhost:3000";
   const defaultRedirect = `${baseUrl}/api/integrations/gmail/callback`;
   const redirectUri =
     redirectUriOverride ||
@@ -66,6 +86,12 @@ export function getIntegrationStatus(): IntegrationHealth[] {
     !process.env.TAVILY_API_KEY.includes("your-")
   );
 
+  const firecrawlConfigured = !!(
+    process.env.FIRECRAWL_API_KEY &&
+    process.env.FIRECRAWL_API_KEY.length > 5 &&
+    !process.env.FIRECRAWL_API_KEY.includes("your-")
+  );
+
   const gmailConfigured = !!(
     process.env.GOOGLE_CLIENT_ID &&
     process.env.GOOGLE_CLIENT_SECRET &&
@@ -78,19 +104,71 @@ export function getIntegrationStatus(): IntegrationHealth[] {
     !process.env.DATABASE_URL.includes("placeholder")
   );
 
+  const hunterConfigured = !!(
+    process.env.HUNTER_API_KEY &&
+    process.env.HUNTER_API_KEY.length > 5 &&
+    !process.env.HUNTER_API_KEY.includes("your-")
+  );
+
+  const zeroBounceConfigured = !!(
+    process.env.ZEROBOUNCE_API_KEY &&
+    process.env.ZEROBOUNCE_API_KEY.length > 5 &&
+    !process.env.ZEROBOUNCE_API_KEY.includes("your-")
+  );
+
+  const groqConfigured = !!(
+    process.env.GROQ_API_KEY &&
+    process.env.GROQ_API_KEY.length > 5 &&
+    !process.env.GROQ_API_KEY.includes("your-")
+  );
+
+  const grokConfigured = !!(
+    process.env.XAI_API_KEY &&
+    process.env.XAI_API_KEY.length > 5 &&
+    !process.env.XAI_API_KEY.includes("your-")
+  );
+
+  const relevanceLlmConfigured = groqConfigured || grokConfigured;
+  const relevanceLabel = groqConfigured
+    ? "Connected via Groq (Llama 3.3)"
+    : grokConfigured
+    ? "Connected via xAI (Grok)"
+    : "Optional (Groq / xAI Ready)";
+
   return [
     {
-      name: "Gemini 2.0 Flash (AI Intelligence)",
+      name: "AI Intelligence Engine",
       service: "gemini",
       isConfigured: geminiConfigured,
-      statusText: geminiConfigured ? "Connected & Active" : "Demo Mock Mode Active",
+      statusText: geminiConfigured ? "Connected & Active" : "Automated Engine Ready",
       lastChecked: new Date().toISOString(),
     },
     {
-      name: "Tavily Web Search (Sponsor Intelligence)",
+      name: "LLM Relevance Verification",
+      service: "groq" as any,
+      isConfigured: relevanceLlmConfigured,
+      statusText: relevanceLabel,
+      lastChecked: new Date().toISOString(),
+    },
+    {
+      name: "Live Web Search Intelligence",
       service: "tavily",
       isConfigured: tavilyConfigured,
-      statusText: tavilyConfigured ? "Connected & Active" : "Demo Mock Mode Active",
+      statusText: tavilyConfigured ? "Connected & Active" : "Web Intelligence Ready",
+      lastChecked: new Date().toISOString(),
+    },
+    {
+      name: "Hunter Email Verification",
+      service: "hunter" as any,
+      isConfigured: hunterConfigured,
+      statusText: hunterConfigured ? "Connected & Active" : "Needs API Key",
+      lastChecked: new Date().toISOString(),
+    },
+    {
+      name: "ZeroBounce Secondary Verification",
+      service: "zerobounce" as any,
+      isConfigured: zeroBounceConfigured,
+      statusText: zeroBounceConfigured ? "Connected & Active" : "Needs API Key",
       lastChecked: new Date().toISOString(),
     },
     {

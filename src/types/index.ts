@@ -105,6 +105,8 @@ export interface EmailDraft {
   body: string;
   quality: EmailQuality;
   status: DraftStatus;
+  needsAttention?: boolean;
+  attentionReason?: string;
   approvedAt?: string;
   createdAt: string;
 }
@@ -155,6 +157,8 @@ export interface Company {
   pipelineValue: number;
   signals: string[];
   confidence: number;
+  domain?: string | null;
+  sponsorApproved?: boolean;
   researchStatus: "pending" | "completed" | "failed";
   contacts?: Contact[];
   sources?: SourceItem[];
@@ -179,7 +183,7 @@ export interface SponsorshipTier {
 export interface Campaign {
   id: string;
   name: string;
-  eventType: string; // "Hackathon" | "Cultural Event" | "Tech Symposium" | "Organization"
+  eventType: string; // "Conference & Summit" | "Campaign" | "Cultural Event" | "Organization"
   audienceSize: number;
   location: string;
   targetAmount: number;
@@ -241,7 +245,7 @@ export interface AIJob {
 // Integration Status
 export interface IntegrationHealth {
   name: string;
-  service: "gemini" | "tavily" | "gmail" | "database" | "neon" | "supabase";
+  service: "gemini" | "tavily" | "firecrawl" | "gmail" | "database" | "neon" | "supabase";
   isConfigured: boolean;
   statusText: string;
   lastChecked?: string;

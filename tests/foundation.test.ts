@@ -61,8 +61,8 @@ describe("M1 Foundation Tests", () => {
     it("enforces safe default send cap and follow-up thresholds", () => {
       expect(SYSTEM_LIMITS.DEFAULT_DAILY_SEND_CAP).toBe(30);
       expect(SYSTEM_LIMITS.MAX_FOLLOWUP_COUNT).toBe(2);
-      expect(SYSTEM_LIMITS.DEFAULT_FIRST_FOLLOWUP_DELAY_DAYS).toBe(4);
-      expect(SYSTEM_LIMITS.DEFAULT_SECOND_FOLLOWUP_DELAY_DAYS).toBe(7);
+      expect(SYSTEM_LIMITS.DEFAULT_FIRST_FOLLOWUP_DELAY_DAYS).toBe(2);
+      expect(SYSTEM_LIMITS.DEFAULT_SECOND_FOLLOWUP_DELAY_DAYS).toBe(2);
     });
   });
 
@@ -70,7 +70,7 @@ describe("M1 Foundation Tests", () => {
     it("provides seeded demo campaign and companies without database credentials", async () => {
       const campaigns = await mockRepositories.campaigns.list("demo-user");
       expect(campaigns.length).toBeGreaterThan(0);
-      expect(campaigns[0].name).toContain("SponFy Hackathon");
+      expect(campaigns[0].name).toContain("SponFy");
 
       const companies = await mockRepositories.sponsors.list("demo-user");
       expect(companies.length).toBeGreaterThan(15);

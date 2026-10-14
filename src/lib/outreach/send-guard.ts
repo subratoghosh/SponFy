@@ -26,7 +26,13 @@ export type GuardFailure = {
     | "suppressed"
     | "touch_cap_reached"
     | "too_soon"
-    | "daily_cap_reached";
+    | "daily_cap_reached"
+    | "needs_attention"
+    | "reply_received"
+    | "stage_halted"
+    | "verification_invalid"
+    | "verification_disposable"
+    | "verification_risky";
   error: string;
 };
 
@@ -86,6 +92,11 @@ export interface SendGuardInput {
   draftStatus: DraftStatus | string;
   recipient: string;
   suppressed: boolean;
+  needsAttention?: boolean;
+  hasReply?: boolean;
+  companyStage?: string;
+  verificationStatus?: string;
+  senderHealthAtRisk?: boolean;
   /** Outbound messages already sent to this company (any email in its history). */
   priorOutbound: { sentAt: string }[];
   /** Outbound messages sent by the whole workspace inside the cap window. */
@@ -103,6 +114,31 @@ export function evaluateSend(input: SendGuardInput): GuardResult {
   }
   if (input.draftStatus !== "approved") {
     return fail(403, "not_approved", "Blocked: this draft has not been approved by a human organizer.");
+  }
+  if (input.needsAttention) {
+    return fail(422, "needs_attention", "Blocked: this draft contains unresolved placeholders or requires attention before sending.");
+  }
+
+  // 1b. Email verification gate
+  if (input.verificationStatus === "INVALID") {
+    return fail(422, "verification_invalid", `Blocked: ${input.recipient} is confirmed invalid and undeliverable.`);
+  }
+  if (input.verificationStatus === "DISPOSABLE") {
+    return fail(422, "verification_disposable", `Blocked: ${input.recipient} is a temporary/disposable address.`);
+  }
+  if (input.verificationStatus === "RISKY" && input.senderHealthAtRisk) {
+    return fail(422, "verification_risky", `Blocked: ${input.recipient} has high spam risk and sender health is currently AT_RISK.`);
+  }
+
+  // 2. Reply received / stage halted guard for follow-ups
+  if (input.priorOutbound.length > 0) {
+    if (input.hasReply) {
+      return fail(409, "reply_received", "Blocked: recipient has already replied. Follow-up outreach is halted.");
+    }
+    const HALTED_STAGES = new Set(["Replied", "Interested", "Negotiation", "Committed", "Lost"]);
+    if (input.companyStage && HALTED_STAGES.has(input.companyStage)) {
+      return fail(409, "stage_halted", `Blocked: company stage is "${input.companyStage}". Follow-up outreach is halted.`);
+    }
   }
 
   // 3. Suppression list.

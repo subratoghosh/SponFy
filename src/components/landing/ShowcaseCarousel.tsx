@@ -63,7 +63,7 @@ export const ShowcaseCarousel: React.FC<ShowcaseCarouselProps> = ({ companies = 
               Types of companies sponsors approach
             </span>
             <h2 className="heading-font text-3xl sm:text-4xl font-extrabold text-green-dark mt-3">
-              Curated Sponsor Intelligence Dossiers
+              Curated Sponsor Company Profiles
             </h2>
             <p className="text-sm text-text-dim mt-1">
               Curated profiles illustrating developer, cloud, and collegiate sponsorship capacity.
@@ -173,7 +173,7 @@ export const ShowcaseCarousel: React.FC<ShowcaseCarouselProps> = ({ companies = 
                   </div>
                   <Link href="/login" className="shrink-0">
                     <span className="font-bold text-green-dark group-hover/card:text-green-mid inline-flex items-center gap-1 transition-colors whitespace-nowrap">
-                      View Dossier <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/card:translate-x-1" />
+                      View Profile <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/card:translate-x-1" />
                     </span>
                   </Link>
                 </div>

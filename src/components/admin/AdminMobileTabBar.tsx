@@ -8,6 +8,7 @@ import {
   FolderKanban,
   Building2,
   BarChart3,
+  Users,
   ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ import {
 const ADMIN_MOBILE_TABS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
   { label: "Campaigns", href: "/admin/campaigns", icon: FolderKanban },
+  { label: "Users", href: "/admin/users", icon: Users },
   { label: "Showcase", href: "/admin/showcase", icon: Building2 },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "App", href: "/app", icon: ArrowLeft },

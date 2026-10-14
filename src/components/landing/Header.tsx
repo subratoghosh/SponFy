@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import { Menu, ArrowRight } from "lucide-react";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 import { LogoIntro } from "./LogoIntro";
@@ -18,6 +19,8 @@ const NAV_ITEMS = [
 ];
 
 export const Header: React.FC = () => {
+  const { status } = useSession();
+  const isAuthenticated = status === "authenticated";
   const [isScrolledPast, setIsScrolledPast] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [introActive, setIntroActive] = useState(false);
@@ -316,17 +319,31 @@ export const Header: React.FC = () => {
 
             {/* CTA & Actions */}
             <div className="flex items-center shrink-0">
-              <Link href="/login" tabIndex={isCollapsed ? -1 : undefined}>
-                <Button
-                  variant="butter"
-                  size="sm"
-                  tabIndex={isCollapsed ? -1 : undefined}
-                  className="font-black uppercase tracking-wider text-xs px-3.5 sm:px-4 py-1.5 shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
-                >
-                  LOGIN
-                  <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link href="/app" tabIndex={isCollapsed ? -1 : undefined}>
+                  <Button
+                    variant="butter"
+                    size="sm"
+                    tabIndex={isCollapsed ? -1 : undefined}
+                    className="font-black uppercase tracking-wider text-xs px-3.5 sm:px-4 py-1.5 shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
+                  >
+                    WORKSPACE
+                    <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/login" tabIndex={isCollapsed ? -1 : undefined}>
+                  <Button
+                    variant="butter"
+                    size="sm"
+                    tabIndex={isCollapsed ? -1 : undefined}
+                    className="font-black uppercase tracking-wider text-xs px-3.5 sm:px-4 py-1.5 shadow-md hover:scale-105 hover:shadow-[0_4px_16px_rgba(255,240,179,0.4)] transition-all duration-150 group"
+                  >
+                    LOGIN
+                    <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </nav>

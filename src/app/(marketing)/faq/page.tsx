@@ -28,7 +28,7 @@ export default function FAQPage() {
                 Need a custom setup for your organization or campaign?
               </h3>
               <p className="text-text-dim text-sm sm:text-base leading-relaxed">
-                Whether you run an 8,000-attendee cultural extravaganza or a 36-hour flagship hackathon, our campus advisors are ready to walk through your campaign setup.
+                Whether you run an 8,000-attendee cultural festival or a high-impact national conference, our campaign advisors are ready to walk through your setup.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">

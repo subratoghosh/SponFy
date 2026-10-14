@@ -39,7 +39,7 @@ export default async function ShowcasePage() {
                 Developer & Audience Fit
               </h3>
               <p className="text-text-dim text-xs sm:text-sm leading-relaxed">
-                Matches the sponsor's target developers (e.g. AI, Web3, Cloud, Fintech) with your hackathon's registered participant tracks.
+                Matches the sponsor's target domain (e.g. AI, Web3, Cloud, Fintech) with your campaign's target audience and tracks.
               </p>
             </div>
 

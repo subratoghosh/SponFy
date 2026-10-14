@@ -101,9 +101,9 @@ export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
       icon: Calendar,
     },
     {
-      label: "Active Pipeline",
+      label: "Target Sponsorship",
       value: formatCurrencyINR(summary.pipelineAmount),
-      subtext: "Total Value in Funnel",
+      subtext: "Active Outreach Value",
       icon: Scale,
     },
     {
@@ -111,7 +111,6 @@ export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
       value: formatCurrencyINR(summary.committedAmount),
       subtext: `${summary.committedCount} Closed Sponsors`,
       icon: DollarSign,
-      highlight: true,
     },
   ];
 
@@ -244,11 +243,7 @@ export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
         {kpiItems.map((item, idx) => (
           <div
             key={idx}
-            className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 hover:-translate-y-1 hover:shadow-hover flex flex-col justify-between min-w-0 h-full ${
-              item.highlight
-                ? "bg-butter-panel border-green-dark/20 shadow-sm"
-                : "bg-white border-green-dark/10 shadow-xs"
-            }`}
+            className="p-3.5 sm:p-4 rounded-2xl border border-green-dark/10 bg-white shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-hover flex flex-col justify-between min-w-0 h-full"
           >
             <div>
               <div className="flex items-start justify-between gap-1 mb-2 min-w-0">

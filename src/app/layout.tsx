@@ -41,8 +41,8 @@ export const metadata: Metadata = {
     template: "%s | SponFy",
   },
   description:
-    "Find, research and win event sponsors for campaigns, hackathons, and organizations — with AI that asks before it sends.",
-  keywords: ["sponsorship", "hackathon", "campaign", "AI outreach", "student community", "sponsor research", "SponFy"],
+    "Find, research and win sponsors for campaigns, conferences, summits, and organizations — with AI that asks before it sends.",
+  keywords: ["sponsorship", "campaign", "events", "conferences", "AI outreach", "brand partnerships", "sponsor research", "SponFy"],
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },

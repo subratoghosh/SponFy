@@ -18,6 +18,7 @@ import { TodayActionQueue } from "./TodayActionQueue";
 import { PipelineSummary } from "./PipelineSummary";
 import { ActivityFeed } from "./ActivityFeed";
 import { AIInsightCard } from "./AIInsightCard";
+import { SenderHealthCard } from "./SenderHealthCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,7 @@ export function CampaignDashboardView({
   const tabs: { id: TabType; label: string; icon: any; count?: number }[] = [
     { id: "all", label: "Overview", icon: LayoutDashboard },
     { id: "queue", label: "Action Queue", icon: CheckSquare, count: actionQueue ? actionQueue.length : 0 },
-    { id: "pipeline", label: "Pipeline & Stages", icon: BarChart3 },
+    { id: "pipeline", label: "Outreach Stages", icon: BarChart3 },
     { id: "insights", label: "Live Intel & Feed", icon: Activity, count: activities ? activities.length : 0 },
   ];
 
@@ -173,7 +174,8 @@ export function CampaignDashboardView({
               <PipelineSummary stagesData={analytics.pipelineValueByStage} />
               {!isFocusMode && <ActivityFeed activities={activities} />}
             </div>
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-4 space-y-6">
+              <SenderHealthCard />
               <AIInsightCard insights={insights} />
             </div>
           </div>

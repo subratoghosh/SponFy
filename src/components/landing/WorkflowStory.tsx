@@ -5,7 +5,7 @@ import {
   Search,
   Compass,
   TrendingUp,
-  Sparkles,
+  FileEdit,
   Send,
   Inbox,
   CheckCircle2,
@@ -56,8 +56,8 @@ const WORKFLOW_STEPS: WorkflowNode[] = [
     step: "04",
     title: "Personalise",
     shortDesc: "Contextual Email Personalization",
-    details: "Drafts high-converting, non-cliché emails referencing the company's actual hackathon challenge tracks.",
-    icon: Sparkles,
+    details: "Drafts high-converting, non-cliché emails referencing the company's actual sponsorship and partner initiatives.",
+    icon: FileEdit,
     previewType: "personalise",
   },
   {
@@ -126,37 +126,10 @@ export const WorkflowStory: React.FC = () => {
             Steps to find sponsorship — from prospectus to closed partner
           </h2>
           <p className="text-sm sm:text-base text-text-dim leading-relaxed">
-            A single, continuous visual flow designed for student organizers and hackathon conveners. Every action is verified, cited, and human-approved.
+            A single, continuous visual flow designed for organizers and campaign leaders. Every action is verified, cited, and human-approved.
           </p>
         </div>
 
-        {/* Step Navigation Pill Bar (Interactive On Click) */}
-        <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto no-scrollbar pb-6 mb-12">
-          {WORKFLOW_STEPS.map((step, idx) => {
-            const Icon = step.icon;
-            const isActive = activeStep === idx;
-            return (
-              <button
-                key={step.step}
-                type="button"
-                onClick={() => setActiveStep(idx)}
-                className={cn(
-                  "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 cursor-pointer border",
-                  isActive
-                    ? "bg-green-dark text-butter-cream border-green-dark shadow-sm scale-105"
-                    : "bg-white text-green-dark/70 border-green-dark/10 hover:border-green-dark/30 hover:bg-butter-warm/60"
-                )}
-                aria-label={`View step ${step.step}: ${step.title}`}
-              >
-                <span className="w-5 h-5 rounded-full bg-butter-warm/80 text-green-dark flex items-center justify-center text-[10px] font-black">
-                  {step.step}
-                </span>
-                <Icon className="w-3.5 h-3.5" />
-                <span>{step.title}</span>
-              </button>
-            );
-          })}
-        </div>
 
         {/* Connected Visual Flow (Nodes joined by SVG connector line) */}
         <div className="relative">
@@ -284,7 +257,7 @@ export const WorkflowStory: React.FC = () => {
                 <div className="p-4 bg-butter-warm/60 rounded-2xl border border-green-dark/10 flex items-center gap-3">
                   <Search className="w-4 h-4 text-green-dark shrink-0" />
                   <span className="text-xs sm:text-sm font-semibold text-green-dark italic truncate">
-                    &quot;Find cloud, developer tools, and fintech companies sponsoring collegiate hackathons in India&quot;
+                    &quot;Find cloud, developer tools, and fintech companies sponsoring tech events and campaigns in India&quot;
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -315,7 +288,7 @@ export const WorkflowStory: React.FC = () => {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2 text-xs font-bold text-green-dark">
                     <Building2 className="w-4 h-4 text-green-mid" />
-                    <span>Nimbus APIs — Cited Dossier Evidence</span>
+                    <span>Nimbus APIs — Cited Research Evidence</span>
                   </div>
                   <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                     2 Sources Verified
@@ -327,7 +300,7 @@ export const WorkflowStory: React.FC = () => {
                     <span className="font-mono text-text-dim truncate">https://nimbus.dev/community/campus-grants-2026</span>
                   </div>
                   <blockquote className="text-text-main italic border-l-2 border-green-mid pl-2.5 my-1">
-                    &quot;Nimbus APIs sponsors ₹75,000 for college hackathon challenge tracks with API credits and mentorship.&quot;
+                    &quot;Nimbus APIs sponsors ₹75,000 for tech event partner tracks with API credits and mentorship.&quot;
                   </blockquote>
                 </div>
               </div>
@@ -373,7 +346,7 @@ export const WorkflowStory: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs text-text-dim leading-relaxed p-3 bg-white rounded-xl border border-green-dark/8 font-sans">
-                  &quot;Hi Alex, I loved Nimbus APIs recent launch of developer bounties for student builders. We are convening 600+ engineers for SponFy Hackathon 2026, and would love to propose a dedicated <strong>Nimbus Cloud Challenge Track</strong> with cash bounties...&quot;
+                  &quot;Hi Alex, I loved Nimbus APIs recent launch of developer partner programs. We are convening 600+ builders for SponFy Flagship Campaign 2026, and would love to propose a dedicated <strong>Nimbus Cloud Partner Track</strong> with sponsorship bounties...&quot;
                 </p>
               </div>
             )}

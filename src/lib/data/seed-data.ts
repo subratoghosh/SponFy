@@ -12,8 +12,8 @@ import {
 
 export const DEMO_CAMPAIGN: Campaign = {
   id: "camp-sponfy-2026",
-  name: "SponFy Hackathon 2026",
-  eventType: "Hackathon",
+  name: "SponFy Flagship Campaign 2026",
+  eventType: "Tech Summit & Campaign",
   audienceSize: 800,
   location: "Surat, Gujarat, India",
   targetAmount: 500000,
@@ -67,9 +67,9 @@ export const DEMO_CAMPAIGN: Campaign = {
       ],
     },
   ],
-  deckUrl: "https://sponfy.dev/decks/sponfy-hackathon-2026.pdf",
+  deckUrl: "https://sponfy.dev/decks/sponfy-campaign-2026.pdf",
   description:
-    "A 36-hour premier national hackathon bringing together 800 top engineering students from across India in Surat to build cutting-edge AI, Web3, and developer tools applications.",
+    "A premier national technology summit and campaign bringing together 800 top builders from across India to showcase cutting-edge AI, Web3, and software applications.",
   status: "active",
   createdAt: "2026-08-10T10:00:00Z",
 };

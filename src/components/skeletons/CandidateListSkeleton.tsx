@@ -7,7 +7,7 @@ export const CandidateListSkeleton: React.FC = () => {
     <div className="space-y-4 animate-fade-in" aria-busy="true">
       <div className="flex items-center gap-2 text-xs font-semibold text-[#0C382E] p-3 rounded-xl bg-[#FAF4E6] border border-[#0C382E]/10">
         <RefreshCw className="w-4 h-4 text-emerald-600 animate-spin" />
-        <span>Researching companies with campus & hackathon sponsorship budgets...</span>
+        <span>Researching companies with active sponsorship & partnership budgets...</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

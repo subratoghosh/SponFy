@@ -140,7 +140,7 @@ export function computeFitScore(
     audienceReason = `Targets large audiences (500+); aligns with ${audience} attendees`;
   } else if (scale === "medium" && audience >= 200 && audience <= 800) {
     audiencePts = maxAudience;
-    audienceReason = `Specializes in mid-scale hackathons; aligns with ${audience} attendees`;
+    audienceReason = `Specializes in mid-scale events & campaigns; aligns with ${audience} attendees`;
   } else if (scale === "small" && audience <= 300) {
     audiencePts = maxAudience;
     audienceReason = `Supports focused grassroots events (${audience} attendees)`;

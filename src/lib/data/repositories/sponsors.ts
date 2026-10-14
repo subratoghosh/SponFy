@@ -2,7 +2,8 @@ import { Company, PipelineStage, Contact } from "@/types";
 import { DEMO_COMPANIES } from "../seed-data";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Stage, ContactStatus, ResearchStatus } from "@prisma/client";
-import { findDuplicateCompany, DuplicateCompanyError } from "@/lib/outreach/duplicates";
+import { findDuplicateCompany, DuplicateCompanyError, normalizeDomain, normalizeName } from "@/lib/outreach/duplicates";
+export { DuplicateCompanyError };
 import { memoryStore } from "@/lib/data/memory-store";
 
 const sponsorsStoreRef = memoryStore<Company[]>("sponsors", () => process.env.NODE_ENV === "test" ? [...DEMO_COMPANIES] : []);
@@ -49,7 +50,7 @@ const PIPELINE_STAGE_MAP: Record<string, PipelineStage> = {
   LOST: "Lost",
 };
 
-export async function getSponsors(campaignId?: string): Promise<Company[]> {
+export async function getSponsors(campaignId?: string, userId?: string): Promise<Company[]> {
   if (typeof window !== "undefined") {
     try {
       const url = campaignId ? `/api/sponsors?campaignId=${encodeURIComponent(campaignId)}` : "/api/sponsors";
@@ -68,8 +69,15 @@ export async function getSponsors(campaignId?: string): Promise<Company[]> {
 
   if (isDatabaseConfigured()) {
     try {
+      const where: any = {};
+      if (campaignId) {
+        where.campaignId = campaignId;
+      } else if (userId) {
+        where.userId = userId;
+      }
+
       const companies = await prisma.company.findMany({
-        where: campaignId ? { campaignId } : undefined,
+        where: Object.keys(where).length > 0 ? where : undefined,
         include: {
           contacts: true,
           report: true,
@@ -133,6 +141,20 @@ export async function getSponsors(campaignId?: string): Promise<Company[]> {
 }
 
 export async function getSponsorById(id: string): Promise<Company | null> {
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch(`/api/sponsors/${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Client fetch /api/sponsors/[id] failed:", e);
+    }
+  }
+
   if (isDatabaseConfigured()) {
     try {
       const c = await prisma.company.findUnique({
@@ -288,7 +310,7 @@ export async function updateSponsor(id: string, updates: Partial<Company>): Prom
   return sponsorsStoreRef.value[idx];
 }
 
-export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "updatedAt">): Promise<Company> {
+export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "updatedAt"> & { userId?: string }): Promise<Company> {
   // Duplicate-outreach rule: one record per company per campaign, so two
   // teammates can never each own (and email) the same sponsor.
   const existing = await getSponsors(company.campaignId);
@@ -299,8 +321,22 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
 
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      let userId = company.userId;
+      if (!userId && company.campaignId) {
+        const camp = await prisma.campaign.findUnique({ where: { id: company.campaignId } });
+        if (camp) {
+          userId = camp.userId;
+        }
+      }
+      if (!userId) {
+        const user = await prisma.user.findFirst();
+        userId = user?.id || "usr-demo-lead";
+      }
+
+      const domain = company.website
+        ? normalizeDomain(company.website)
+        : normalizeName(company.name).replace(/\s+/g, "") + ".com";
+
       const dbStage = company.stage ? STAGE_MAP[company.stage] || "DISCOVERED" : "DISCOVERED";
       const created = await prisma.company.create({
         data: {
@@ -308,6 +344,7 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
           campaignId: company.campaignId,
           name: company.name,
           website: company.website,
+          domain,
           industry: company.industry,
           description: company.description || "",
           stage: dbStage,
@@ -402,3 +439,29 @@ export async function addContact(companyId: string, contact: Omit<Contact, "id" 
   company.contacts.push(newContact);
   return newContact;
 }
+
+export async function removeSponsor(companyId: string): Promise<boolean> {
+  const { deleteDraftsByCompanyId } = await import("./outreach");
+  await deleteDraftsByCompanyId(companyId);
+
+  if (isDatabaseConfigured()) {
+    try {
+      // Delete the company record (contacts, sources, research report cascade deleted)
+      // Historical sent messages and suppression records remain preserved independently
+      await prisma.company.delete({
+        where: { id: companyId },
+      });
+      return true;
+    } catch (err) {
+      console.warn("Prisma removeSponsor failed, falling back to memory store:", err);
+    }
+  }
+
+  const idx = sponsorsStoreRef.value.findIndex((c) => c.id === companyId);
+  if (idx !== -1) {
+    sponsorsStoreRef.value.splice(idx, 1);
+    return true;
+  }
+  return false;
+}
+

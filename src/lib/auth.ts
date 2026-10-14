@@ -13,6 +13,18 @@ if (!process.env.AUTH_SECRET && process.env.NODE_ENV !== "production") {
   process.env.AUTH_SECRET = "sponfy-dev-auth-secret-super-safe-fallback-32chars";
 }
 
+// In production or on Vercel, strip any accidental 'localhost' AUTH_URL/NEXTAUTH_URL
+// so NextAuth trustHost automatically uses the deployed production domain (e.g. sponfy.vercel.app)
+if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+  if (process.env.AUTH_URL?.includes("localhost")) {
+    delete process.env.AUTH_URL;
+  }
+  if (process.env.NEXTAUTH_URL?.includes("localhost")) {
+    delete process.env.NEXTAUTH_URL;
+  }
+}
+
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",

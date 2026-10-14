@@ -4,7 +4,7 @@ import { getReplyAnalyses } from "./replies";
 import { getCampaigns, getCampaignById } from "./campaigns";
 import { PIPELINE_STAGES } from "@/lib/config/pipeline";
 
-export async function getAnalyticsData(campaignId?: string) {
+export async function getAnalyticsData(campaignId?: string, userId?: string) {
   if (typeof window !== "undefined") {
     try {
       const url = campaignId ? `/api/analytics?campaignId=${encodeURIComponent(campaignId)}` : "/api/analytics";
@@ -21,7 +21,7 @@ export async function getAnalyticsData(campaignId?: string) {
   }
 
   const [sponsors, drafts, replies, campaigns] = await Promise.all([
-    getSponsors(campaignId),
+    getSponsors(campaignId, userId),
     getDrafts(),
     getReplyAnalyses(),
     campaignId ? getCampaignById(campaignId).then((c) => (c ? [c] : [])) : getCampaigns(),
@@ -121,8 +121,8 @@ export async function getAnalyticsData(campaignId?: string) {
   // 5. Followup Lift
   const followupLift = [
     { channel: "Initial Email", responses: Math.round(repliesCount * 0.6), share: 60 },
-    { channel: "Follow-up 1 (Day 4)", responses: Math.round(repliesCount * 0.3), share: 30 },
-    { channel: "Follow-up 2 (Day 7)", responses: Math.round(repliesCount * 0.1), share: 10 },
+    { channel: "Follow-up 1 (+2 days)", responses: Math.round(repliesCount * 0.3), share: 30 },
+    { channel: "Follow-up 2 (+2 days)", responses: Math.round(repliesCount * 0.1), share: 10 },
   ];
 
   // 6. Intent Distribution

@@ -35,7 +35,7 @@ export async function POST(
   const features: CompanyFeatures = {
     industry: sponsor.industry,
     targetScale: "all",
-    supportedEventTypes: [campaign.eventType || "Hackathon"],
+    supportedEventTypes: [campaign.eventType || "Event & Campaign"],
     hasStudentPrograms:
       sponsor.signals.some((s) => s.toLowerCase().includes("student") || s.toLowerCase().includes("grant") || s.toLowerCase().includes("campus")) ||
       (sponsor.researchReport?.sections?.studentDeveloperPrograms?.length ?? 0) > 0,
@@ -44,7 +44,7 @@ export async function POST(
       (sponsor.signals.find((s) => s.toLowerCase().includes("student") || s.toLowerCase().includes("grant")) ?? undefined),
     locationAlignment: [campaign.location, "India", "Global"],
     pastSponsorshipSignals:
-      sponsor.signals.some((s) => s.toLowerCase().includes("sponsor") || s.toLowerCase().includes("hackathon")) ||
+      sponsor.signals.some((s) => s.toLowerCase().includes("sponsor") || s.toLowerCase().includes("partner") || s.toLowerCase().includes("grant")) ||
       (sponsor.researchReport?.sections?.sponsorshipOpportunities?.length ?? 0) > 0,
     pastSponsorshipEvidence:
       sponsor.researchReport?.sections?.sponsorshipOpportunities?.[0] ||

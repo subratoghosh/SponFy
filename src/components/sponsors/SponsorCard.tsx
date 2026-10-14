@@ -41,7 +41,7 @@ export const SponsorCard: React.FC<SponsorCardProps> = ({ sponsor, onDragStart }
 
         {/* Pipeline Value & Contact */}
         <div className="pt-2 border-t border-green-dark/6 flex items-center justify-between text-xs">
-          <span className="text-[11px] text-text-muted font-medium">Pipeline:</span>
+          <span className="text-[11px] text-text-muted font-medium">Value:</span>
           <span className="stat-font font-bold text-green-dark">
             {formatCurrencyINR(sponsor.pipelineValue || 0)}
           </span>

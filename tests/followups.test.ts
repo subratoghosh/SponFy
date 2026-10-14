@@ -5,6 +5,9 @@ vi.mock("@/lib/prisma", () => ({
   default: {},
   isDatabaseConfigured: () => false,
 }));
+vi.mock("@/lib/auth", () => ({
+  auth: async () => ({ user: { id: "usr-demo-lead", email: "demo@sponfy.dev" } }),
+}));
 
 import { computeFollowups, buildFollowupDraft, delayForNextTouch, MAX_TOUCHES } from "@/lib/outreach/followups";
 import { SYSTEM_LIMITS } from "@/lib/config/limits";
@@ -54,8 +57,8 @@ describe("follow-up rules", () => {
     expect(item.nextTouch).toBe(2);
   });
 
-  it("uses the longer delay for follow-up 2, counted from follow-up 1", () => {
-    expect(run({ messages: [out(20), out(5)] })[0].state).toBe("waiting");
+  it("uses the configured delay for follow-up 2, counted from follow-up 1", () => {
+    expect(run({ messages: [out(20), out(1)] })[0].state).toBe("waiting");
     const [item] = run({ messages: [out(20), out(SYSTEM_LIMITS.DEFAULT_SECOND_FOLLOWUP_DELAY_DAYS + 1)] });
     expect(item.state).toBe("due");
     expect(item.nextTouch).toBe(3);

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { CampaignCard } from "@/components/campaigns/CampaignCard";
 import { CreateCampaignModal } from "@/components/campaigns/CreateCampaignModal";
-import { getCampaigns } from "@/lib/data/repositories/campaigns";
+import { getCampaigns, deleteCampaign } from "@/lib/data/repositories/campaigns";
 import { Campaign } from "@/types";
 import {
   Plus,
@@ -17,6 +17,7 @@ import {
   MapPin,
   TrendingUp,
   ArrowRight,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -38,22 +39,32 @@ export default function CampaignsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true);
     getCampaigns()
       .then((data) => {
         const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
         const cleanData = isDemo
           ? data
-          : data.filter((c) => c.name !== "SponFy Hackathon 2026" && c.id !== "camp-demo-1");
+          : data.filter((c) => c.name !== "SponFy Hackathon 2026" && c.name !== "SponFy Flagship Campaign 2026" && c.id !== "camp-demo-1" && c.id !== "camp-sponfy-2026");
         setCampaigns(cleanData);
       })
       .finally(() => setLoading(false));
+  }, [session]);
+
+  const handleDeleteCampaign = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this campaign? This action only removes the campaign from your workspace.")) {
+      return;
+    }
+    const success = await deleteCampaign(id);
+    if (success) {
+      setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    }
   };
 
   useEffect(() => {
     loadData();
-  }, [session]);
+  }, [loadData]);
 
   const eventTypes = useMemo(() => {
     const types = new Set(campaigns.map((c) => c.eventType).filter(Boolean));
@@ -87,7 +98,7 @@ export default function CampaignsPage() {
             Campaigns
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Manage your campaigns, hackathons, and event sponsorship initiatives.
+            Manage your campaigns, conferences, and event sponsorship initiatives.
           </p>
         </div>
         <Button
@@ -224,7 +235,7 @@ export default function CampaignsPage() {
           title={campaigns.length === 0 ? "No campaigns created yet" : "No matching campaigns"}
           description={
             campaigns.length === 0
-              ? "Create your first campaign, hackathon, or event sponsorship initiative to start discovering high-fit sponsors."
+              ? "Create your first campaign or event sponsorship initiative to start discovering high-fit sponsors."
               : "Try adjusting your search terms or filter options above."
           }
           actionLabel={campaigns.length === 0 ? "Create First Campaign" : undefined}
@@ -233,7 +244,11 @@ export default function CampaignsPage() {
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
           {filteredCampaigns.map((camp) => (
-            <CampaignCard key={camp.id} campaign={camp} />
+            <CampaignCard
+              key={camp.id}
+              campaign={camp}
+              onDelete={handleDeleteCampaign}
+            />
           ))}
         </div>
       ) : (
@@ -294,13 +309,23 @@ export default function CampaignsPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <Link
-                        href="/app"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-green-dark hover:text-green-mid"
-                      >
-                        <span>Manage</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href="/app"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-green-dark hover:text-green-mid"
+                        >
+                          <span>Manage</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCampaign(camp.id)}
+                          title="Remove Campaign"
+                          className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

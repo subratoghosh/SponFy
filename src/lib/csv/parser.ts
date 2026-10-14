@@ -256,7 +256,7 @@ export function mapCSVToCompanyInputs(rows: Record<string, string>[]): ParsedCom
 export function generateSampleCSV(): string {
   return [
     'Company Name,Website,Industry,Description,Estimated Value (INR),Stage,Contact Name,Contact Email,Contact Role',
-    'Postman,https://www.postman.com,Developer Tools,"API platform supporting student hackathons and technical API tracks",75000,Discovered,Sneha Rao,sneha.rao@postman.com,Developer Relations Lead',
+    'Postman,https://www.postman.com,Developer Tools,"API platform supporting developer events and technical challenge tracks",75000,Discovered,Sneha Rao,sneha.rao@postman.com,Developer Relations Lead',
     'Razorpay,https://razorpay.com,Fintech & Payments,"Payment gateway provider with active college startup grants",100000,Contacted,Kunal Patel,kunal.p@razorpay.com,Campus Partnerships Manager',
     'GitHub,https://github.com,Developer Tools,"GitHub Campus Experts and student developer pack partner",150000,Discovered,Sarah Jenkins,sjenkins@github.com,Global Education Lead',
     'Hasura,https://hasura.io,Cloud & Infrastructure,"Instant GraphQL database backend track prizes",50000,Discovered,Rohan Roy,rohan@hasura.io,Community Engineer',

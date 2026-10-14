@@ -30,7 +30,7 @@ export const ContactsTab: React.FC<{ company: Company; onUpdate: () => void }> =
 
     try {
       await addContact(company.id, newContact);
-      toast("Contact added to sponsor dossier", "success");
+      toast("Contact added to sponsor profile", "success");
       setModalOpen(false);
       onUpdate();
     } catch {

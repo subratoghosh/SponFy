@@ -122,8 +122,8 @@ export async function GET(request: NextRequest) {
     // 5. Followup Lift
     const followupLift = [
       { channel: "Initial Email", responses: Math.round(repliesCount * 0.6), share: 60 },
-      { channel: "Follow-up 1 (Day 4)", responses: Math.round(repliesCount * 0.3), share: 30 },
-      { channel: "Follow-up 2 (Day 7)", responses: Math.round(repliesCount * 0.1), share: 10 },
+      { channel: "Follow-up 1 (+2 days)", responses: Math.round(repliesCount * 0.3), share: 30 },
+      { channel: "Follow-up 2 (+2 days)", responses: Math.round(repliesCount * 0.1), share: 10 },
     ];
 
     // 6. Intent Distribution

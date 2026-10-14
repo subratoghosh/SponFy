@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 
@@ -25,10 +25,10 @@ export const Dialog: React.FC<DialogProps> = ({
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (onClose) onClose();
     if (onOpenChange) onOpenChange(false);
-  };
+  }, [onClose, onOpenChange]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,7 +44,7 @@ export const Dialog: React.FC<DialogProps> = ({
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
     };
-  }, [open]);
+  }, [open, handleClose]);
 
   if (!open) return null;
 

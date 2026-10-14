@@ -33,7 +33,7 @@ const faqs: FAQItem[] = [
   {
     question: "Can I use SponFy for cultural events, sports meets, or organizations?",
     answer:
-      "Yes! SponFy is designed for all event formats, including tech conferences, hackathons, cultural events, sports tournaments, entrepreneurship summits, and organizations.",
+      "Yes! SponFy is designed for all event formats and initiatives, including tech conferences, brand campaigns, cultural festivals, sports tournaments, entrepreneurship summits, and non-profits.",
   },
   {
     question: "Can I test SponFy without configuring any API keys?",

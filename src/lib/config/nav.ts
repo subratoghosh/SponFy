@@ -9,8 +9,8 @@ export interface NavItem {
 export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Overview", href: "/app", icon: "LayoutDashboard", description: "Daily metrics & priority actions" },
   { label: "Campaigns", href: "/app/campaigns", icon: "FolderKanban", description: "Event campaigns & goals" },
-  { label: "Sponsors", href: "/app/sponsors", icon: "Building2", description: "Pipeline kanban & prospect table" },
-  { label: "Discover", href: "/app/discover", icon: "Compass", description: "AI prospective sponsor discovery" },
+  { label: "Sponsors", href: "/app/sponsors", icon: "Building2", description: "Sponsors board & table" },
+  { label: "Discover", href: "/app/discover", icon: "Compass", description: "Find prospective sponsors" },
   { label: "Outreach", href: "/app/outreach", icon: "Send", description: "Draft approval & Gmail dispatch" },
   { label: "Replies", href: "/app/replies", icon: "MailQuestion", description: "Reply intelligence inbox" },
   { label: "Follow-ups", href: "/app/follow-ups", icon: "Clock", description: "Sequenced follow-up queue" },

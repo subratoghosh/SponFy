@@ -23,17 +23,17 @@ export const PipelineSummary: React.FC<PipelineSummaryProps> = ({ stagesData }) 
       <div className="flex items-center justify-between border-b border-green-dark/10 pb-4">
         <div>
           <h3 className="font-heading font-extrabold text-lg text-green-dark">
-            Pipeline Stage Distribution
+            Sponsors Stage Distribution
           </h3>
           <p className="text-xs text-text-dim">
             {totalCount === 0
-              ? "No sponsors currently in pipeline"
+              ? "No sponsors currently tracked"
               : `${totalCount} active sponsors across key negotiation milestones`}
           </p>
         </div>
         <Link href="/app/sponsors">
           <Button variant="glass" size="sm" className="text-xs font-bold">
-            Kanban Board <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            Sponsors Board <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </Link>
       </div>
@@ -44,7 +44,7 @@ export const PipelineSummary: React.FC<PipelineSummaryProps> = ({ stagesData }) 
             <Building2 className="w-5 h-5 text-green-mid" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-green-dark">No Pipeline Stages Active</h4>
+            <h4 className="text-sm font-bold text-green-dark">No Sponsors Tracked Yet</h4>
             <p className="text-xs text-text-muted mt-1 max-w-md mx-auto">
               As you discover companies and advance them from Qualified to Outreach and Negotiation, stage valuations will calculate here in real time.
             </p>

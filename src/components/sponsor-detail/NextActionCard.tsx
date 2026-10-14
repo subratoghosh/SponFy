@@ -1,12 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Company } from "@/types";
-import { ArrowRight, Calendar, Send, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
 
 export const NextActionCard: React.FC<{ company: Company }> = ({ company }) => {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [generating, setGenerating] = useState(false);
+
   const getNextAction = () => {
     if (company.stage === "Interested" || company.stage === "Negotiation") {
       return {
@@ -14,33 +19,67 @@ export const NextActionCard: React.FC<{ company: Company }> = ({ company }) => {
         reason: "Sponsor confirmed interest in partnership tier. Fast follow-through ensures commitment.",
         href: "/app/replies",
         cta: "Go to Reply Thread",
+        isGenerate: false,
       };
     }
     if (company.stage === "Draft Ready" || company.stage === "Approved") {
       return {
         title: "Review Pitch Draft & Execute Send",
-        reason: "94% quality score draft is ready with verified recipient and zero suppression blocks.",
-        href: "/app/outreach",
+        reason: "Personalized pitch draft is prepared and ready in Outreach Approval Hub.",
+        href: `/app/outreach?companyId=${company.id}`,
         cta: "Review & Send",
+        isGenerate: false,
       };
     }
     if (company.stage === "Contacted") {
       return {
-        title: "Monitor Thread & Prepare Day 4 Follow-up",
-        reason: "Email successfully delivered via Gmail API. Automatic reminder will trigger in 3 days.",
+        title: "Monitor Thread & Prepare Follow-up",
+        reason: "Email successfully delivered via Gmail API. Automatic reminder cadence is active.",
         href: "/app/followups",
         cta: "View Cadence",
+        isGenerate: false,
       };
     }
     return {
       title: "Generate Personalized Outreach Draft",
       reason: "Research and 7-factor fit scoring are complete. Ready for customized pitch generation.",
-      href: `/app/sponsors/${company.id}`,
+      href: `/app/outreach?companyId=${company.id}`,
       cta: "Generate Draft",
+      isGenerate: true,
     };
   };
 
   const action = getNextAction();
+
+  const handleAction = async () => {
+    if (action.isGenerate) {
+      setGenerating(true);
+      try {
+        const res = await fetch("/api/outreach/draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companyId: company.id }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Draft generation failed");
+        }
+        toast("Draft ready! Redirecting to Outreach...", "success");
+        const draftId = data.draft?.id;
+        if (draftId) {
+          router.push(`/app/outreach?draftId=${encodeURIComponent(draftId)}&companyId=${encodeURIComponent(company.id)}`);
+        } else {
+          router.push(`/app/outreach?companyId=${encodeURIComponent(company.id)}`);
+        }
+      } catch (err: any) {
+        toast(err.message || "Failed to generate draft", "error");
+      } finally {
+        setGenerating(false);
+      }
+    } else {
+      router.push(action.href);
+    }
+  };
 
   return (
     <div className="bg-butter-panel rounded-3xl p-5 sm:p-6 border border-butter-gold/60 shadow-md space-y-3">
@@ -63,11 +102,16 @@ export const NextActionCard: React.FC<{ company: Company }> = ({ company }) => {
       </div>
 
       <div className="pt-2 flex justify-end">
-        <Link href={action.href}>
-          <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
-            {action.cta} <ArrowRight className="w-3.5 h-3.5 ml-1" />
-          </Button>
-        </Link>
+        <Button
+          variant="green"
+          size="sm"
+          loading={generating}
+          onClick={handleAction}
+          className="text-xs font-bold shadow-sm"
+        >
+          {generating ? "Generating..." : action.cta}{" "}
+          {!generating && <ArrowRight className="w-3.5 h-3.5 ml-1" />}
+        </Button>
       </div>
     </div>
   );

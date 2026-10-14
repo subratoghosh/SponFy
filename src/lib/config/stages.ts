@@ -23,7 +23,7 @@ export const STAGE_CONFIGS: Record<Stage, StageConfig> = {
   RESEARCHED: {
     key: "RESEARCHED",
     label: "Researched",
-    description: "Deep dossier with verified sources compiled",
+    description: "Verified profile with reliable sources compiled",
     color: { bg: "bg-[#0284C7]/12", text: "text-[#0284C7]", border: "border-[#0284C7]/35" },
     step: 2,
   },

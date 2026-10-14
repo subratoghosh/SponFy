@@ -1,30 +1,37 @@
 import React from "react";
 import { getAnalyticsData } from "@/lib/data/repositories/analytics";
 import { getCampaigns } from "@/lib/data/repositories/campaigns";
+import { getSponsors } from "@/lib/data/repositories/sponsors";
+import { getDrafts } from "@/lib/data/repositories/outreach";
+import { loadFollowups } from "@/lib/outreach/followup-service";
+import { getReplyAnalyses } from "@/lib/data/repositories/replies";
 import { DEMO_ACTIVITIES } from "@/lib/data/seed-data";
 import { CampaignDashboardView } from "@/components/dashboard/CampaignDashboardView";
 import { auth } from "@/lib/auth";
+import { Calendar, Clock, Send, CheckCircle2, MessageSquare, AlertCircle } from "lucide-react";
 
 export default async function OverviewPage() {
   const session = await auth();
   const isDemoUser = session?.user?.email === "demo@sponfy.dev";
 
-  const [rawAnalytics, rawCampaigns] = await Promise.all([
-    getAnalyticsData(),
-    getCampaigns(),
-  ]);
+  const rawCampaigns = await getCampaigns();
 
   // Remove preloaded demo campaign for real users
   const userCampaigns = isDemoUser
     ? rawCampaigns
     : rawCampaigns.filter(
-        (c) => c.name !== "SponFy Hackathon 2026" && c.id !== "camp-demo-1"
+        (c) => c.name !== "SponFy Hackathon 2026" && c.name !== "SponFy Flagship Campaign 2026" && c.id !== "camp-demo-1" && c.id !== "camp-sponfy-2026"
       );
 
   const activeCampaign = userCampaigns[0] || null;
   const campaignName = activeCampaign?.name || "Your Workspace";
 
-  // For real users without campaigns, start completely from zero
+  const rawAnalytics = await getAnalyticsData(
+    activeCampaign?.id,
+    session?.user?.id
+  );
+
+  // For real users, strictly use their real campaign data
   const analytics = isDemoUser
     ? rawAnalytics
     : userCampaigns.length === 0
@@ -52,11 +59,133 @@ export default async function OverviewPage() {
       }
     : rawAnalytics;
 
-  const demoInsights = [
-    "Developer Tools and Cloud companies in your pipeline have an 82% positive reply rate — 2.4x higher than FMCG brands.",
-    "Outreach pitches sent between 10:00 AM and 11:30 AM IST showed a 40% faster reply turnaround from DevRel managers.",
-    "Postman and Razorpay have active negotiations totaling ₹1.6 Lakhs; closing both achieves 52% of your target.",
-  ];
+  // Compute live action queue items across the entire workflow lifecycle
+  const [sponsors, drafts, followups, replies] = await Promise.all([
+    getSponsors(activeCampaign?.id, session?.user?.id),
+    getDrafts(),
+    loadFollowups(),
+    getReplyAnalyses(),
+  ]);
+
+  const computedActions: any[] = [];
+
+  // 1. Follow-ups Due
+  const dueFollowups = followups.filter((f) => f.state === "due" || f.state === "draft_ready");
+  for (const f of dueFollowups.slice(0, 3)) {
+    computedActions.push({
+      id: `act-fu-${f.companyId}`,
+      type: "followup",
+      badge: f.state === "draft_ready" ? "Follow-up Ready" : "Follow-up Due",
+      badgeColor: "bg-sky-100 text-sky-800 border-sky-300",
+      company: f.companyName,
+      text: `Follow-up ${f.nextTouch ? f.nextTouch - 1 : 1} is due (${Math.floor(f.daysSinceLast)}d since last email).`,
+      cta: "Review Follow-up",
+      href: "/app/followups",
+      icon: Clock,
+    });
+  }
+
+  // 2. Drafts awaiting approval
+  const pendingApprovalDrafts = drafts.filter((d) => d.status === "draft");
+  for (const d of pendingApprovalDrafts.slice(0, 3)) {
+    const comp = sponsors.find((s) => s.id === d.companyId);
+    computedActions.push({
+      id: `act-dr-${d.id}`,
+      type: "draft",
+      badge: d.needsAttention ? "Needs Attention" : "Draft Ready",
+      badgeColor: d.needsAttention
+        ? "bg-amber-100 text-amber-800 border-amber-300"
+        : "bg-purple-100 text-purple-800 border-purple-300",
+      company: comp?.name || "Sponsor",
+      text: d.needsAttention
+        ? "Draft has unresolved placeholders. Edit before approving."
+        : `Personalized email pitch ready for review. Quality score: ${d.quality?.overall || 90}%.`,
+      cta: "Review Draft",
+      href: "/app/outreach",
+      icon: Send,
+    });
+  }
+
+  // 3. Approved drafts ready to send
+  const approvedDrafts = drafts.filter((d) => d.status === "approved");
+  for (const d of approvedDrafts.slice(0, 2)) {
+    const comp = sponsors.find((s) => s.id === d.companyId);
+    computedActions.push({
+      id: `act-app-${d.id}`,
+      type: "send",
+      badge: "Ready to Dispatch",
+      badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      company: comp?.name || "Sponsor",
+      text: "Draft approved by organizer. Ready to send via connected Gmail.",
+      cta: "Send via Gmail",
+      href: "/app/outreach",
+      icon: Send,
+    });
+  }
+
+  // 4. Approved sponsors awaiting initial draft
+  const approvedWithoutDrafts = sponsors.filter(
+    (s) => s.sponsorApproved && !drafts.some((d) => d.companyId === s.id)
+  );
+  for (const s of approvedWithoutDrafts.slice(0, 2)) {
+    computedActions.push({
+      id: `act-need-draft-${s.id}`,
+      type: "need_draft",
+      badge: "Awaiting Draft",
+      badgeColor: "bg-amber-100 text-amber-800 border-amber-300",
+      company: s.name,
+      text: `Approved sponsor in pipeline. Fit score: ${s.fitScore}%. Generate personalized pitch.`,
+      cta: "Draft Pitch",
+      href: "/app/outreach",
+      icon: MessageSquare,
+    });
+  }
+
+  // 5. Inbound Replies
+  for (const r of replies.slice(0, 2)) {
+    const comp = sponsors.find((s) => s.id === r.companyId);
+    computedActions.push({
+      id: `act-rep-${r.id}`,
+      type: r.meetingRequested ? "meeting" : "reply",
+      badge: r.meetingRequested ? "Meeting Requested" : `Reply: ${r.intent}`,
+      badgeColor: r.meetingRequested
+        ? "bg-green-100 text-green-800 border-green-300"
+        : "bg-blue-100 text-blue-800 border-blue-300",
+      company: comp?.name || "Sponsor",
+      text: r.summary || `Sponsor responded with ${r.intent} intent. Check the reply thread.`,
+      cta: "View Reply",
+      href: "/app/replies",
+      icon: r.meetingRequested ? Calendar : MessageSquare,
+    });
+  }
+
+  // 6. Prospects at limit (2 follow-ups completed)
+  const completeFollowups = followups.filter((f) => f.state === "complete");
+  for (const f of completeFollowups.slice(0, 2)) {
+    computedActions.push({
+      id: `act-lim-${f.companyId}`,
+      type: "limit",
+      badge: "Touch Limit Reached",
+      badgeColor: "bg-stone-100 text-stone-800 border-stone-300",
+      company: f.companyName,
+      text: `Sent 1 initial + 2 follow-ups with no response. Close prospect or handle manually.`,
+      cta: "Manage Prospect",
+      href: "/app/followups",
+      icon: AlertCircle,
+    });
+  }
+
+  const demoInsights = isDemoUser
+    ? [
+        "Developer Tools and Cloud companies in your pipeline have an 82% positive reply rate — 2.4x higher than FMCG brands.",
+        "Outreach pitches sent between 10:00 AM and 11:30 AM IST showed a 40% faster reply turnaround from DevRel managers.",
+        "Postman and Razorpay have active negotiations totaling ₹1.6 Lakhs; closing both achieves 52% of your target.",
+      ]
+    : [];
+
+  const finalActionQueue = isDemoUser && computedActions.length === 0
+    ? undefined // Falls back to DEFAULT_DEMO_ACTIONS for demo user
+    : computedActions;
 
   return (
     <CampaignDashboardView
@@ -64,7 +193,7 @@ export default async function OverviewPage() {
       campaignName={campaignName}
       activities={isDemoUser ? DEMO_ACTIVITIES : []}
       insights={isDemoUser ? demoInsights : []}
-      actionQueue={isDemoUser && analytics.summary.totalSponsors > 0 ? undefined : []}
+      actionQueue={finalActionQueue}
     />
   );
 }

@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
-  Sparkles,
   Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

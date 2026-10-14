@@ -46,7 +46,7 @@ export function ReplyAnalysisPanel({ analysis, onExecuteRecommendation, onClose 
             <Brain className="w-4 h-4 text-[#0C382E]" />
             <h3 className="font-heading font-bold text-sm">AI Reply Intelligence</h3>
           </div>
-          <p className="text-[11px] text-[#0C382E]/60">Gemini intent & requirement extraction</p>
+          <p className="text-[11px] text-[#0C382E]/60">Automated intent & requirement extraction</p>
         </div>
         {onClose && (
           <button
