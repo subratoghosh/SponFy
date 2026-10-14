@@ -48,7 +48,7 @@ export function CampaignDashboardView({
   const tabs: { id: TabType; label: string; icon: any; count?: number }[] = [
     { id: "all", label: "Overview", icon: LayoutDashboard },
     { id: "queue", label: "Action Queue", icon: CheckSquare, count: actionQueue ? actionQueue.length : 0 },
-    { id: "pipeline", label: "Pipeline & Stages", icon: BarChart3 },
+    { id: "pipeline", label: "Outreach Stages", icon: BarChart3 },
     { id: "insights", label: "Live Intel & Feed", icon: Activity, count: activities ? activities.length : 0 },
   ];
 

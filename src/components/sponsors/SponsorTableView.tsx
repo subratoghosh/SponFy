@@ -22,7 +22,7 @@ export const SponsorTableView: React.FC<SponsorTableViewProps> = ({ sponsors }) 
               <th className="py-3.5 px-4">Industry</th>
               <th className="py-3.5 px-4">Stage</th>
               <th className="py-3.5 px-4 text-center">Fit Score</th>
-              <th className="py-3.5 px-4 text-right">Pipeline Value</th>
+              <th className="py-3.5 px-4 text-right">Target Amount</th>
               <th className="py-3.5 px-4">Verified Contact</th>
               <th className="py-3.5 px-6 text-right">Action</th>
             </tr>

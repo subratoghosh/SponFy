@@ -50,7 +50,7 @@ export const AnalyticsPreview = async () => {
       icon: TrendingUp,
     },
     {
-      label: "Active Pipeline",
+      label: "Target Sponsorship",
       value: formatCurrencyINR(pipelineVal),
       change: `${totalSponsors} Scored Sponsors`,
       icon: BarChart3,

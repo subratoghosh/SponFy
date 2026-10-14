@@ -175,7 +175,7 @@ export const StageCompaniesModal: React.FC<StageCompaniesModalProps> = ({
         </div>
 
         <div className="pt-3 border-t border-green-dark/10 flex justify-between items-center text-xs text-text-muted shrink-0">
-          <span>Total Pipeline Value: {formatCurrencyINR(sponsors.reduce((acc, s) => acc + (s.pipelineValue || 0), 0))}</span>
+          <span>Total Sponsorship Value: {formatCurrencyINR(sponsors.reduce((acc, s) => acc + (s.pipelineValue || 0), 0))}</span>
           <Button variant="outline" size="sm" onClick={onClose} className="text-xs">
             Close
           </Button>

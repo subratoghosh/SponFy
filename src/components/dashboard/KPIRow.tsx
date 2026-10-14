@@ -101,9 +101,9 @@ export const KPIRow: React.FC<KPIRowProps> = ({ summary }) => {
       icon: Calendar,
     },
     {
-      label: "Active Pipeline",
+      label: "Target Sponsorship",
       value: formatCurrencyINR(summary.pipelineAmount),
-      subtext: "Total Value in Funnel",
+      subtext: "Active Outreach Value",
       icon: Scale,
     },
     {
