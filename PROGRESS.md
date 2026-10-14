@@ -154,4 +154,95 @@
     - Generated additive offline migration: `prisma/migrations/20261014_workflow_state_models/migration.sql`.
     - Produced `docs/WORKFLOW_GAP_ANALYSIS.md` and `docs/MANUAL_TEST_PLAN.md`.
 
+---
 
+## [2026-10-15] EMAIL SAFETY, VERIFICATION, ANALYTICS & GUIDED SETUP Complete
+
+### Phase Zero Capability Matrix
+| Capability | Status | Evidence | Required change |
+|---|---|---|---|
+| **Sponsor discovery** | Working | `src/app/api/discover/route.ts` | Grounded search via Tavily/Firecrawl + GenAI structured extraction with 7-day TTL candidates isolation. Preserved intact. |
+| **Relevance filtering** | Working | `src/lib/discovery/relevance.ts` | Implemented 0-cost deterministic filtering + category scoring (`RELEVANT`, `IRRELEVANT`, `UNCERTAIN`) with citations. |
+| **Hunter integration** | Working | `src/lib/integrations/verification/hunter.ts` | Official Hunter v2 Email Verifier integration (`HUNTER_API_KEY`) with normalized internal status mapping. |
+| **ZeroBounce integration** | Working | `src/lib/integrations/verification/zerobounce.ts` | Official ZeroBounce v2 Validate integration (`ZEROBOUNCE_API_KEY`) for selective secondary checks. |
+| **Email eligibility** | Working | `src/app/api/outreach/eligibility/route.ts`, `src/lib/outreach/send-guard.ts` | Pre-send gate categorizing into `Ready to Send`, `Needs Review`, and `Blocked` with reasons and next actions. |
+| **Gmail sending** | Working | `src/lib/integrations/gmail/index.ts` | Preserved Real & Mock Gmail clients, atomic send claim, AES-256-GCM token encryption, and rolling daily limit. |
+| **Bounce and suppression** | Working | `src/lib/integrations/gmail/index.ts`, `src/app/api/replies/sync/route.ts` | Automated Gmail DSN scan (`scanBounces`), hard bounce extraction, automatic suppression, and stage updates to Lost. |
+| **Sender health** | Working | `src/components/dashboard/SenderHealthCard.tsx` | Real-data health monitoring with `HEALTHY`, `WATCH`, and `AT_RISK` states that gate bulk sending. |
+| **Email analytics** | Working | `src/app/api/outreach/track/open/route.ts`, `src/app/api/outreach/track/click/route.ts` | Transparent 1x1 GIF open tracking and secure HTTPS redirect click tracking without exposing secrets or emails. |
+| **Follow-ups** | Working | `src/lib/workflows/outreach-graph.ts` | 2-touch limit and 2-day cadence strictly preserved; halted on reply, opt-out, or confirmed bounce. |
+| **Guided setup** | Working | `src/components/onboarding/GuidedSetupBanner.tsx`, `src/components/settings/SettingsTabs.tsx` | Lightweight contextual banner informing user of next step without intrusive popups. |
+
+### Done:
+1. **Tiered Email Verification**:
+   - `HunterVerifier` (`src/lib/integrations/verification/hunter.ts`) for primary layer.
+   - `ZeroBounceVerifier` (`src/lib/integrations/verification/zerobounce.ts`) for secondary layer (selective on catch-all, unknown, risky).
+   - `TieredVerificationService` (`src/lib/integrations/verification/index.ts`) with multi-level caching to protect credit budgets.
+2. **Relevance Filter**:
+   - `filterCandidateRelevance` (`src/lib/discovery/relevance.ts`) rejects directories, forum domains, and campus clubs before credit consumption.
+3. **Pre-Send Eligibility Gate (`Check Eligibility`)**:
+   - Created `/api/outreach/eligibility` endpoint.
+   - Upgraded `BulkSendModal.tsx` to display interactive 3-category review (`Ready to Send`, `Needs Review`, `Blocked`).
+   - Extended `src/lib/outreach/send-guard.ts` with deliverability and sender health gates.
+4. **Gmail Bounce Detection & Suppression**:
+   - Implemented `scanBounces()` in `RealGmailClient` and `MockGmailClient` to parse DSN messages.
+   - Wired into `/api/replies/sync` to automatically append hard-bounced addresses to suppression and stop follow-ups.
+5. **Sender Health & Analytics**:
+   - Created `SenderHealthCard.tsx` in `src/components/dashboard/` and embedded in overview dashboard.
+   - Created `/api/outreach/track/open` (1x1 transparent GIF) and `/api/outreach/track/click` (secure redirect).
+6. **Guided Setup**:
+   - Created `GuidedSetupBanner.tsx` and integrated at top of `AppLayout.tsx`.
+   - Updated `SettingsTabs.tsx` with Hunter and ZeroBounce configuration status.
+7. **Database Schema & Documentation**:
+   - Added `EmailVerification` and `EmailTrackingEvent` models to `prisma/schema.prisma` and generated Prisma Client.
+   - Generated additive non-destructive migration `prisma/migrations/20261015_email_safety_verification_tracking/migration.sql`.
+   - Created `docs/SETUP_AND_MANUAL_TEST_PLAN.md`.
+8. **Automated Verification**:
+   - Created unit and integration test suite `tests/email-safety-and-verification.test.ts`.
+   - `npm test`: 11 test files, 102/102 tests passing (100% pass rate).
+   - `npm run typecheck` (`tsc --noEmit`): 0 errors.
+   - Zero git commits made (working tree remains clean/uncommitted per user instruction).
+
+---
+
+## [2026-10-15 00:08] WORKFLOW, ROUTING, SPONSOR REMOVAL, SINGLE BADGE & GROK VERIFICATION Complete
+
+### Identified Bugs, Root Causes & Intended Fixes
+1. **"Generate Draft" Navigation Failure**:
+   - *Root Cause*: In `src/components/sponsor-detail/NextActionCard.tsx`, the action for un-drafted companies returned `href: \`/app/sponsors/\${company.id}\``, causing clicks on "Generate Draft" to reload the sponsor detail page.
+   - *Fix*: Replaced static link with an interactive async action calling `POST /api/outreach/draft` with `{ companyId }`, displaying a spinner on the button, and redirecting via `router.push('/app/outreach?draftId=' + draftId + '&companyId=' + companyId)`. Updated `/app/outreach/page.tsx` to read `useSearchParams()` (wrapped in `<Suspense>`) so arriving with `?draftId=...` or `?companyId=...` immediately focuses that company's draft.
+2. **Sponsors Section Missing Removal Option**:
+   - *Root Cause*: No removal action or endpoint existed to remove a sponsor company from the active campaign pipeline.
+   - *Fix*: Implemented `removeSponsor(companyId)` in `src/lib/data/repositories/sponsors.ts` and `deleteDraftsByCompanyId` in `src/lib/data/repositories/outreach.ts`. Created authenticated `DELETE /api/sponsors/[id]` endpoint. Added trash removal icon button in `KanbanBoard.tsx` and `SponsorTableView.tsx` with confirmation modal and safety explanation in `src/app/(app)/app/sponsors/page.tsx`. Automatically cancels pending unsent drafts while strictly preserving sent emails, reply events, and suppression records.
+3. **Unnecessary Per-Company Stage Dropdown**:
+   - *Root Cause*: `KanbanBoard.tsx` rendered an interactive `<select>` dropdown with all pipeline stages on every individual company card, leading to confusing accidental stage skips.
+   - *Fix*: Removed the per-company `<select>` dropdown. Replaced with one clean, non-interactive canonical status badge styled with the stage's brand color, showing true persisted status (`Qualified`, `Approved`, `Contacted`, etc.).
+4. **Grok Independent Relevance Verification Layer**:
+   - *Root Cause*: Tavily discovery returned raw web results without an independent LLM check against the user's specific natural-language prompt criteria.
+   - *Fix*: Created `src/lib/discovery/grok.ts` with `GrokRelevanceVerifier` using official xAI chat completions endpoint (`https://api.x.ai/v1/chat/completions`, model `grok-2-latest`). Added `XAI_API_KEY` to environment schema and factory. Integrated into `src/app/api/discover/route.ts` with zero-cost pre-filtering. Results falling below relevance or marked `UNCERTAIN` are excluded from the primary verified list.
+5. **Duplicate Draft Prevention & In-Place Regeneration**:
+   - *Root Cause*: Calling `/api/outreach/draft` repeatedly for the same company created duplicate drafts in the database.
+   - *Fix*: Updated `POST /api/outreach/draft` to reuse existing draft when `regenerate: true` is not passed, returning `alreadyExisted: true`. When `regenerate: true` is sent, it updates the existing draft in-place without creating duplicates or orphaning past drafts.
+
+### Files Modified & Created
+- `src/components/sponsor-detail/NextActionCard.tsx`: Wired interactive draft generation handler and redirection to `/app/outreach`.
+- `src/app/(app)/app/outreach/page.tsx`: Added `useSearchParams()` support with `<Suspense>` wrapper to auto-select and auto-generate target company drafts.
+- `src/app/api/outreach/draft/route.ts`: Added GET draft by company endpoint and duplicate draft prevention with in-place regeneration.
+- `src/components/sponsor-detail/OutreachTab.tsx`: Updated to use client API fetch and carry `draftId` to Outreach Queue.
+- `src/components/outreach/EmailComposer.tsx`: Added `regenerate: true` flag on regeneration.
+- `src/components/sponsors/KanbanBoard.tsx`: Replaced per-company dropdown with single canonical status badge; added removal button.
+- `src/components/sponsors/SponsorTableView.tsx`: Added sponsor removal button.
+- `src/app/(app)/app/sponsors/page.tsx`: Added confirmation modal and delete handler.
+- `src/lib/data/repositories/sponsors.ts`: Added `removeSponsor(companyId)` with draft cleanup.
+- `src/lib/data/repositories/outreach.ts`: Added `deleteDraftsByCompanyId(companyId)`.
+- `src/app/api/sponsors/[id]/route.ts`: Added `DELETE` route handler with authentication and ownership validation.
+- `src/lib/discovery/grok.ts`: Created Grok xAI relevance verification service.
+- `src/lib/env.ts` & `src/lib/integrations/factory.ts`: Added `XAI_API_KEY`.
+- `src/app/api/discover/route.ts`: Integrated Grok relevance verification into Tavily discovery flow.
+- `tests/workflow-sponsor-management-and-routing.test.ts`: Created new test suite covering Grok parsing, sponsor removal, and draft routing.
+
+### Verification Results
+- **Vitest Unit & Integration Tests**: 13 test files, **109 tests passing (100% pass rate)** (`npm test`).
+- **TypeScript Strict Check**: `tsc --noEmit` passed with **0 errors** (`npm run typecheck`).
+- **Next.js Production Build**: `next build` passed with **0 errors**, all 61 routes compiled and static-generated cleanly.
+- **Git Tree Safety**: 0 commits made (all changes clean and uncommitted in working tree).
