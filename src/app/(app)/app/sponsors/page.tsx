@@ -27,6 +27,8 @@ export default function SponsorsPipelinePage() {
   const [selectedStage, setSelectedStage] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [sponsorToRemove, setSponsorToRemove] = useState<Company | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const loadSponsors = useCallback(() => {
     setLoading(true);
@@ -44,6 +46,28 @@ export default function SponsorsPipelinePage() {
   useEffect(() => {
     loadSponsors();
   }, [loadSponsors]);
+
+  const handleRemoveSponsor = async () => {
+    if (!sponsorToRemove) return;
+    setRemoving(true);
+    try {
+      const res = await fetch(`/api/sponsors/${sponsorToRemove.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSponsors((prev) => prev.filter((s) => s.id !== sponsorToRemove.id));
+        toast(`Removed ${sponsorToRemove.name} from current campaign sponsors`, "success");
+        setSponsorToRemove(null);
+      } else {
+        toast(data.error || "Failed to remove sponsor", "error");
+      }
+    } catch {
+      toast("Error removing sponsor", "error");
+    } finally {
+      setRemoving(false);
+    }
+  };
 
   const handleStageChange = async (sponsorId: string, targetStage: PipelineStage) => {
     try {
@@ -165,9 +189,13 @@ export default function SponsorsPipelinePage() {
         <KanbanBoard
           sponsors={filteredSponsors}
           onStageChange={handleStageChange}
+          onRemoveSponsor={(s) => setSponsorToRemove(s)}
         />
       ) : (
-        <SponsorTableView sponsors={filteredSponsors} />
+        <SponsorTableView
+          sponsors={filteredSponsors}
+          onRemoveSponsor={(s) => setSponsorToRemove(s)}
+        />
       )}
 
       {/* CSV Import Modal */}
@@ -176,6 +204,50 @@ export default function SponsorsPipelinePage() {
         onClose={() => setIsCsvModalOpen(false)}
         onSuccess={loadSponsors}
       />
+
+      {/* Remove Sponsor Confirmation Modal */}
+      {sponsorToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-green-dark/15 shadow-2xl space-y-4">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-700 flex items-center justify-center">
+              <Building2 className="w-5 h-5" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-heading font-black text-lg text-green-dark">
+                Remove {sponsorToRemove.name}?
+              </h3>
+              <p className="text-xs text-text-dim leading-relaxed">
+                This will remove <strong>{sponsorToRemove.name}</strong> from your active campaign sponsor tracker and cancel any pending unsent drafts.
+              </p>
+              <div className="p-3 mt-2 rounded-xl bg-amber-50/70 border border-amber-200 text-[11px] text-amber-900 leading-normal">
+                <strong>Note:</strong> Past sent email history, received replies, and suppression records will remain safely preserved in your workspace.
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSponsorToRemove(null)}
+                disabled={removing}
+                className="text-xs font-semibold"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleRemoveSponsor}
+                loading={removing}
+                className="text-xs font-bold"
+              >
+                Remove from Campaign
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { TodayActionQueue } from "./TodayActionQueue";
 import { PipelineSummary } from "./PipelineSummary";
 import { ActivityFeed } from "./ActivityFeed";
 import { AIInsightCard } from "./AIInsightCard";
+import { SenderHealthCard } from "./SenderHealthCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -173,7 +174,8 @@ export function CampaignDashboardView({
               <PipelineSummary stagesData={analytics.pipelineValueByStage} />
               {!isFocusMode && <ActivityFeed activities={activities} />}
             </div>
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-4 space-y-6">
+              <SenderHealthCard />
               <AIInsightCard insights={insights} />
             </div>
           </div>

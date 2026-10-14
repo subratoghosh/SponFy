@@ -13,17 +13,20 @@ import {
   Tag,
   DollarSign,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface KanbanBoardProps {
   sponsors: Company[];
   onStageChange: (sponsorId: string, targetStage: PipelineStage) => void;
+  onRemoveSponsor?: (sponsor: Company) => void;
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   sponsors,
   onStageChange,
+  onRemoveSponsor,
 }) => {
   // Category dropdown selection: "all" or specific PipelineStage
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
@@ -217,27 +220,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </span>
                   </div>
 
-                  {/* Stage Dropdown Selector for this Company */}
-                  <div className="relative">
-                    <select
-                      value={sponsor.stage}
-                      onChange={(e) =>
-                        onStageChange(sponsor.id, e.target.value as PipelineStage)
-                      }
-                      className="appearance-none pl-3 pr-8 py-2 bg-butter-warm text-green-dark text-xs font-bold rounded-xl border border-green-dark/15 hover:border-green-dark/40 focus:outline-none cursor-pointer"
-                      style={{
-                        borderLeftColor: stageConfig?.color,
-                        borderLeftWidth: "4px",
-                      }}
-                    >
-                      {PIPELINE_STAGES.map((st) => (
-                        <option key={st.id} value={st.id}>
-                          {st.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-green-dark/60 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
+                  {/* Canonical Single Status Badge */}
+                  <span
+                    className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border shrink-0"
+                    style={{
+                      backgroundColor: stageConfig?.bgColor || "rgba(74, 111, 98, 0.12)",
+                      color: stageConfig?.color || "#164E3E",
+                      borderColor: `${stageConfig?.color || "#164E3E"}40`,
+                    }}
+                  >
+                    {sponsor.stage}
+                  </span>
 
                   {/* View Details Button */}
                   <Link href={`/app/sponsors/${sponsor.id}`}>
@@ -250,6 +243,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Button>
                   </Link>
+
+                  {/* Remove Sponsor Action Button */}
+                  {onRemoveSponsor && (
+                    <button
+                      onClick={() => onRemoveSponsor(sponsor)}
+                      className="p-1.5 rounded-xl text-text-dim hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors shrink-0"
+                      title="Remove sponsor from campaign"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );

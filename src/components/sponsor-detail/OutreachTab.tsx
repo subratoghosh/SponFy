@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Company, EmailDraft } from "@/types";
-import { getDraftByCompanyId } from "@/lib/data/repositories/outreach";
 import { Button } from "@/components/ui/button";
 import { Send, CheckCircle2, ShieldCheck, ArrowRight, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
@@ -14,8 +13,16 @@ export const OutreachTab: React.FC<{ company: Company }> = ({ company }) => {
   const [generating, setGenerating] = useState(false);
   const [tone, setTone] = useState<"professional" | "enthusiastic" | "value_first" | "short">("professional");
 
-  const loadDraft = useCallback(() => {
-    getDraftByCompanyId(company.id).then(setDraft);
+  const loadDraft = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/outreach/draft?companyId=${encodeURIComponent(company.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.draft) setDraft(data.draft);
+      }
+    } catch (e) {
+      console.warn("Failed fetching company draft:", e);
+    }
   }, [company.id]);
 
   useEffect(() => {
@@ -28,12 +35,14 @@ export const OutreachTab: React.FC<{ company: Company }> = ({ company }) => {
       const res = await fetch("/api/outreach/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyId: company.id, tone }),
+        body: JSON.stringify({ companyId: company.id, tone, regenerate: !!draft }),
       });
       const data = await res.json();
       if (data.success) {
         setDraft(data.draft);
-        toast("New personalized draft generated!", "success");
+        toast(draft ? "Draft regenerated!" : "New personalized draft generated!", "success");
+      } else {
+        toast(data.error || "Draft generation failed", "error");
       }
     } catch {
       toast("Draft generation failed", "error");
@@ -100,7 +109,7 @@ export const OutreachTab: React.FC<{ company: Company }> = ({ company }) => {
               <span className="text-xs font-semibold text-text-dim">
                 Status: <strong className="text-green-dark uppercase">{draft.status}</strong>
               </span>
-              <Link href="/app/outreach">
+              <Link href={`/app/outreach?draftId=${encodeURIComponent(draft.id)}&companyId=${encodeURIComponent(company.id)}`}>
                 <Button variant="green" size="sm" className="font-bold shadow-md">
                   Open in Outreach Approval Queue <ArrowRight className="w-3.5 h-3.5 ml-1" />
                 </Button>

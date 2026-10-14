@@ -439,3 +439,29 @@ export async function addContact(companyId: string, contact: Omit<Contact, "id" 
   company.contacts.push(newContact);
   return newContact;
 }
+
+export async function removeSponsor(companyId: string): Promise<boolean> {
+  const { deleteDraftsByCompanyId } = await import("./outreach");
+  await deleteDraftsByCompanyId(companyId);
+
+  if (isDatabaseConfigured()) {
+    try {
+      // Delete the company record (contacts, sources, research report cascade deleted)
+      // Historical sent messages and suppression records remain preserved independently
+      await prisma.company.delete({
+        where: { id: companyId },
+      });
+      return true;
+    } catch (err) {
+      console.warn("Prisma removeSponsor failed, falling back to memory store:", err);
+    }
+  }
+
+  const idx = sponsorsStoreRef.value.findIndex((c) => c.id === companyId);
+  if (idx !== -1) {
+    sponsorsStoreRef.value.splice(idx, 1);
+    return true;
+  }
+  return false;
+}
+

@@ -442,6 +442,32 @@ export function SettingsTabs() {
                     </div>
                     <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Web Intelligence Ready</Badge>
                   </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#0C382E]" />
+                      <div>
+                        <span className="text-xs font-bold text-[#0C382E] block">Hunter.io Verification Layer</span>
+                        <span className="text-[11px] text-[#0C382E]/60">Primary email finding & deliverability check</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white border border-[#0C382E]/10 text-[#0C382E]">
+                      HUNTER_API_KEY
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#0C382E]" />
+                      <div>
+                        <span className="text-xs font-bold text-[#0C382E] block">ZeroBounce Secondary Verification</span>
+                        <span className="text-[11px] text-[#0C382E]/60">Selective verification for catch-all & risky mailboxes</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white border border-[#0C382E]/10 text-[#0C382E]">
+                      ZEROBOUNCE_API_KEY
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -10,6 +10,8 @@ import {
   XCircle,
   Clock,
   Loader2,
+  HelpCircle,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -28,11 +30,16 @@ export const BulkSendModal: React.FC<BulkSendModalProps> = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [activeTab, setActiveTab] = useState<"ready" | "needs_review" | "blocked">("ready");
+
   const [data, setData] = useState<{
-    eligibleCount: number;
-    excludedCount: number;
-    eligible: Array<{ draftId: string; companyName: string; toEmail: string; subject: string }>;
-    excluded: Array<{ draftId: string; companyName: string; reason: string }>;
+    readyCount: number;
+    needsReviewCount: number;
+    blockedCount: number;
+    totalCount: number;
+    ready: Array<{ draftId: string; companyName: string; toEmail: string; subject: string; reason: string }>;
+    needsReview: Array<{ draftId: string; companyName: string; toEmail: string; subject: string; reason: string; nextAction: string }>;
+    blocked: Array<{ draftId: string; companyName: string; toEmail: string; reason: string; nextAction: string }>;
     dailyCap: number;
     sentInWindow: number;
     remainingCap: number;
@@ -49,11 +56,18 @@ export const BulkSendModal: React.FC<BulkSendModalProps> = ({
     if (isOpen) {
       setLoading(true);
       setResult(null);
-      fetch("/api/outreach/bulk-send")
+      fetch("/api/outreach/eligibility")
         .then((res) => res.json())
         .then((json) => {
           if (json.success) {
             setData(json);
+            if (json.readyCount > 0) {
+              setActiveTab("ready");
+            } else if (json.needsReviewCount > 0) {
+              setActiveTab("needs_review");
+            } else {
+              setActiveTab("blocked");
+            }
           } else {
             toast(json.error || "Failed to inspect send eligibility", "error");
           }
@@ -66,14 +80,14 @@ export const BulkSendModal: React.FC<BulkSendModalProps> = ({
   if (!isOpen) return null;
 
   const handleExecuteSend = async () => {
-    if (!data || data.eligibleCount === 0) return;
+    if (!data || data.readyCount === 0) return;
     setSending(true);
     try {
       const res = await fetch("/api/outreach/bulk-send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          draftIds: data.eligible.map((e) => e.draftId),
+          draftIds: data.ready.map((e) => e.draftId),
         }),
       });
 
@@ -99,54 +113,53 @@ export const BulkSendModal: React.FC<BulkSendModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in">
       <div className="bg-white rounded-3xl border border-green-dark/15 shadow-2xl p-6 sm:p-8 max-w-2xl w-full space-y-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-green-dark/10 pb-4">
+        <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-butter-warm flex items-center justify-center text-green-dark border border-green-dark/10">
-              <ShieldCheck className="w-6 h-6 text-green-mid" />
+            <div className="w-10 h-10 rounded-2xl bg-green-light flex items-center justify-center text-green-dark shrink-0">
+              <ShieldCheck className="w-5 h-5 text-green-dark" />
             </div>
             <div>
-              <h3 className="font-heading font-black text-xl text-green-dark">
-                Bulk Dispatch Confirmation
+              <h3 className="text-lg font-serif font-bold text-green-dark">
+                Check Eligibility & Review
               </h3>
-              <p className="text-xs text-text-dim">
-                Server-side safety verification and daily send capacity check.
+              <p className="text-xs text-text-dim mt-0.5">
+                Every recipient is verified for deliverability, suppression, and approval safety before dispatch.
               </p>
             </div>
           </div>
           <button
-            type="button"
             onClick={onClose}
-            className="text-text-muted hover:text-green-dark p-1 rounded-lg"
+            disabled={sending}
+            className="text-text-dim hover:text-green-dark transition-colors p-1 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-text-dim flex flex-col items-center justify-center space-y-3">
-            <Loader2 className="w-8 h-8 text-green-dark animate-spin" />
-            <p className="text-xs font-semibold text-green-dark">
-              Verifying recipient contacts, suppression lists, and daily caps...
-            </p>
+          <div className="py-12 flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-green-dark" />
+            <p className="text-xs text-text-dim">Verifying email deliverability and safety gates...</p>
           </div>
         ) : result ? (
           /* Execution Result View */
           <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-butter-panel border border-green-dark/10 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-butter-panel border border-green-dark/15 flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6 text-green-700 shrink-0" />
               <div>
-                <span className="font-heading font-extrabold text-green-dark text-base block">
-                  Bulk Send Complete
-                </span>
-                <span className="text-xs text-text-dim">
-                  {result.sentCount} sent successfully &bull; {result.failedCount} failed
-                </span>
+                <h4 className="font-bold text-sm text-green-900">
+                  Bulk Dispatch Completed
+                </h4>
+                <p className="text-xs text-text-dim mt-0.5">
+                  {result.sentCount} message(s) sent successfully.
+                  {result.failedCount > 0 && ` ${result.failedCount} message(s) encountered errors.`}
+                </p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-green-mid" />
             </div>
 
             {result.sent.length > 0 && (
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-green-dark mb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-green-900 mb-2">
                   Successfully Sent ({result.sent.length}):
                 </h4>
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
@@ -205,88 +218,198 @@ export const BulkSendModal: React.FC<BulkSendModalProps> = ({
               </span>
             </div>
 
-            {/* Eligible List */}
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-green-dark mb-2 flex items-center justify-between">
-                <span>Eligible Approved Emails ({data?.eligibleCount})</span>
-                <span className="text-[11px] font-normal text-text-dim">Ready for dispatch</span>
-              </h4>
+            {/* 3 Categories Navigation Tabs */}
+            <div className="grid grid-cols-3 gap-2 p-1.5 bg-butter-warm rounded-2xl border border-green-dark/10 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setActiveTab("ready")}
+                className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === "ready"
+                    ? "bg-white text-green-900 shadow-xs border border-green-dark/10"
+                    : "text-green-900/70 hover:text-green-900"
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                <span>Ready ({data?.readyCount ?? 0})</span>
+              </button>
 
-              {data && data.eligible.length === 0 ? (
-                <div className="p-6 text-center border border-dashed border-green-dark/20 rounded-2xl text-xs text-text-dim">
-                  No approved drafts currently meet all send criteria. Approve drafts or add verified contacts first.
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-                  {data?.eligible.map((item) => (
-                    <div
-                      key={item.draftId}
-                      className="p-3 rounded-xl border border-green-dark/12 bg-white flex items-center justify-between text-xs hover:border-green-dark/30 transition-colors"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <span className="font-bold text-green-dark block truncate">
-                          {item.companyName}
-                        </span>
-                        <span className="text-[11px] text-text-dim truncate block">
-                          {item.subject}
-                        </span>
-                      </div>
-                      <span className="font-mono text-[11px] text-green-dark/80 shrink-0 bg-butter-warm px-2 py-0.5 rounded-md">
-                        {item.toEmail}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => setActiveTab("needs_review")}
+                className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === "needs_review"
+                    ? "bg-white text-amber-900 shadow-xs border border-amber-300"
+                    : "text-amber-900/70 hover:text-amber-900"
+                }`}
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
+                <span>Needs Review ({data?.needsReviewCount ?? 0})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("blocked")}
+                className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === "blocked"
+                    ? "bg-white text-red-900 shadow-xs border border-red-300"
+                    : "text-red-900/70 hover:text-red-900"
+                }`}
+              >
+                <XCircle className="w-3.5 h-3.5 text-red-600" />
+                <span>Blocked ({data?.blockedCount ?? 0})</span>
+              </button>
             </div>
 
-            {/* Excluded List with Reasons */}
-            {data && data.excluded.length > 0 && (
+            {/* Active Category Display */}
+            {activeTab === "ready" && (
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 mb-2 flex items-center justify-between">
-                  <span>Excluded Drafts ({data.excludedCount})</span>
-                  <span className="text-[11px] font-normal text-amber-800">Will not be sent</span>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-green-dark mb-2 flex items-center justify-between">
+                  <span>Eligible Emails Ready to Send ({data?.readyCount})</span>
+                  <span className="text-[11px] font-normal text-text-dim">Passes all deliverability & safety checks</span>
                 </h4>
-                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                  {data.excluded.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl border border-amber-200 bg-amber-50/60 flex items-start justify-between text-xs gap-3"
-                    >
-                      <div className="min-w-0">
-                        <span className="font-bold text-amber-950 block truncate">
-                          {item.companyName}
-                        </span>
-                        <span className="text-[11px] text-amber-800 block">
-                          {item.reason}
+
+                {data && data.ready.length === 0 ? (
+                  <div className="p-6 text-center border border-dashed border-green-dark/20 rounded-2xl text-xs text-text-dim">
+                    No approved drafts currently meet all send criteria. Approve drafts or add verified corporate contacts first.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {data?.ready.map((item) => (
+                      <div
+                        key={item.draftId}
+                        className="p-3 rounded-xl border border-green-200 bg-white flex items-center justify-between text-xs hover:border-green-dark/30 transition-colors"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <span className="font-bold text-green-dark block truncate">
+                            {item.companyName}
+                          </span>
+                          <span className="text-[11px] text-text-dim truncate block">
+                            {item.subject}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[11px] text-green-900 shrink-0 bg-green-50 border border-green-200 px-2.5 py-0.5 rounded-md">
+                          {item.toEmail}
                         </span>
                       </div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-200/60 text-amber-900 shrink-0">
-                        Excluded
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Confirmation Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-green-dark/10">
-              <Button variant="outline" size="sm" onClick={onClose} className="text-xs font-bold">
-                Cancel
-              </Button>
+            {activeTab === "needs_review" && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 mb-2 flex items-center justify-between">
+                  <span>Needs Human Review ({data?.needsReviewCount})</span>
+                  <span className="text-[11px] font-normal text-amber-800">Uncertain mailbox or catch-all domain</span>
+                </h4>
 
-              <Button
-                variant="green"
-                size="sm"
-                disabled={sending || !data || data.eligibleCount === 0}
-                loading={sending}
-                onClick={handleExecuteSend}
-                className="text-xs font-bold shadow-xs gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5" />
-                Confirm & Send ({data?.eligibleCount ?? 0}) Emails
-              </Button>
+                {data && data.needsReview.length === 0 ? (
+                  <div className="p-6 text-center border border-dashed border-amber-200 rounded-2xl text-xs text-text-dim">
+                    No drafts currently require manual review.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {data?.needsReview.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl border border-amber-200 bg-amber-50/60 text-xs space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-amber-950 truncate">
+                            {item.companyName}
+                          </span>
+                          <span className="font-mono text-[11px] text-amber-900 bg-amber-100/70 px-2 py-0.5 rounded">
+                            {item.toEmail}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-900">{item.reason}</p>
+                        <p className="text-[10px] text-amber-700 font-semibold">Action: {item.nextAction}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "blocked" && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-red-900 mb-2 flex items-center justify-between">
+                  <span>Blocked Drafts ({data?.blockedCount})</span>
+                  <span className="text-[11px] font-normal text-red-800">Cannot be sent</span>
+                </h4>
+
+                {data && data.blocked.length === 0 ? (
+                  <div className="p-6 text-center border border-dashed border-red-200 rounded-2xl text-xs text-text-dim">
+                    Zero drafts blocked.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {data?.blocked.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl border border-red-200 bg-red-50/60 text-xs space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-red-950 truncate">
+                            {item.companyName}
+                          </span>
+                          {item.toEmail && (
+                            <span className="font-mono text-[11px] text-red-900 bg-red-100 px-2 py-0.5 rounded">
+                              {item.toEmail}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-red-800">{item.reason}</p>
+                        <p className="text-[10px] text-red-700 font-semibold">Next step: {item.nextAction}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bottom Actions */}
+            <div className="pt-2 border-t border-green-dark/10 flex items-center justify-between">
+              <div className="text-xs text-text-dim">
+                {data?.readyCount ? (
+                  <span className="text-green-800 font-semibold">
+                    {data.readyCount} email(s) ready to send
+                  </span>
+                ) : (
+                  <span>No emails ready to send</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onClose}
+                  disabled={sending}
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="green"
+                  size="sm"
+                  onClick={handleExecuteSend}
+                  disabled={sending || !data || data.readyCount === 0}
+                  className="text-xs font-bold flex items-center gap-1.5"
+                >
+                  {sending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Sending via Gmail...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      Send {data?.readyCount || 0} Eligible Emails
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         )}

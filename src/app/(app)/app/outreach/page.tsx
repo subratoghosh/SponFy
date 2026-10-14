@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { EmailDraft, Company } from "@/types";
 import { DraftQueueList } from "@/components/outreach/DraftQueueList";
 import { EmailComposer } from "@/components/outreach/EmailComposer";
@@ -14,8 +15,12 @@ import { Send, SendHorizontal, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OutreachSkeleton } from "@/components/skeletons/OutreachSkeleton";
 
-export default function OutreachPage() {
+function OutreachContent() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const urlDraftId = searchParams.get("draftId");
+  const urlCompanyId = searchParams.get("companyId");
+
   const [drafts, setDrafts] = useState<EmailDraft[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,16 +38,51 @@ export default function OutreachPage() {
       const res = await fetch("/api/outreach/state", { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load outreach data");
-      const allDrafts: EmailDraft[] = data.drafts;
+      let allDrafts: EmailDraft[] = data.drafts || [];
+      const allCompanies: Company[] = data.companies || [];
       setDrafts(allDrafts);
-      setCompanies(data.companies);
-      setSelectedDraftId((prev) => prev || (allDrafts.length > 0 ? allDrafts[0].id : null));
+      setCompanies(allCompanies);
+
+      // Resolve selected draft from URL params or default
+      if (urlDraftId && allDrafts.some((d) => d.id === urlDraftId)) {
+        setSelectedDraftId(urlDraftId);
+      } else if (urlCompanyId) {
+        const existingDraft = allDrafts.find((d) => d.companyId === urlCompanyId);
+        if (existingDraft) {
+          setSelectedDraftId(existingDraft.id);
+        } else {
+          // If no draft exists for this company, check if the company is in allCompanies (approved sponsor)
+          const targetCompany = allCompanies.find((c) => c.id === urlCompanyId);
+          if (targetCompany) {
+            try {
+              const draftRes = await fetch("/api/outreach/draft", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ companyId: urlCompanyId }),
+              });
+              const draftData = await draftRes.json();
+              if (draftData.success && draftData.draft) {
+                allDrafts = [draftData.draft, ...allDrafts];
+                setDrafts(allDrafts);
+                setSelectedDraftId(draftData.draft.id);
+              }
+            } catch (e) {
+              console.warn("Failed auto-generating draft for company:", e);
+              if (allDrafts.length > 0) setSelectedDraftId(allDrafts[0].id);
+            }
+          } else if (allDrafts.length > 0) {
+            setSelectedDraftId(allDrafts[0].id);
+          }
+        }
+      } else {
+        setSelectedDraftId((prev) => prev || (allDrafts.length > 0 ? allDrafts[0].id : null));
+      }
     } catch (err: any) {
       toast(err.message || "Failed to load outreach data", "error");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, urlDraftId, urlCompanyId]);
 
   useEffect(() => {
     loadData();
@@ -288,3 +328,12 @@ export default function OutreachPage() {
     </div>
   );
 }
+
+export default function OutreachPage() {
+  return (
+    <Suspense fallback={<OutreachSkeleton />}>
+      <OutreachContent />
+    </Suspense>
+  );
+}
+

@@ -4,14 +4,18 @@ import React from "react";
 import Link from "next/link";
 import { Company } from "@/types";
 import { formatCurrencyINR, formatDate } from "@/lib/utils";
-import { Building2, TrendingUp, ExternalLink, ArrowRight, UserCheck } from "lucide-react";
+import { Building2, TrendingUp, ExternalLink, ArrowRight, UserCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SponsorTableViewProps {
   sponsors: Company[];
+  onRemoveSponsor?: (sponsor: Company) => void;
 }
 
-export const SponsorTableView: React.FC<SponsorTableViewProps> = ({ sponsors }) => {
+export const SponsorTableView: React.FC<SponsorTableViewProps> = ({
+  sponsors,
+  onRemoveSponsor,
+}) => {
   return (
     <div className="bg-white rounded-3xl border border-green-dark/12 shadow-sm overflow-hidden animate-fade-in">
       <div className="overflow-x-auto">
@@ -97,11 +101,22 @@ export const SponsorTableView: React.FC<SponsorTableViewProps> = ({ sponsors }) 
 
                 {/* Actions */}
                 <td className="py-4 px-6 text-right">
-                  <Link href={`/app/sponsors/${spon.id}`}>
-                    <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
-                      View Details <ArrowRight className="w-3 h-3 ml-1" />
-                    </Button>
-                  </Link>
+                  <div className="flex items-center justify-end gap-2">
+                    <Link href={`/app/sponsors/${spon.id}`}>
+                      <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
+                        View Details <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </Link>
+                    {onRemoveSponsor && (
+                      <button
+                        onClick={() => onRemoveSponsor(spon)}
+                        className="p-1.5 rounded-xl text-text-dim hover:text-red-700 hover:bg-red-50 transition-colors"
+                        title="Remove sponsor"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

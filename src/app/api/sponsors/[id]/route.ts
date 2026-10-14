@@ -150,3 +150,30 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json({ success: false, error: "Missing ID" }, { status: 400 });
+  }
+
+  try {
+    const session = await auth();
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+    if (!userId) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { removeSponsor } = await import("@/lib/data/repositories/sponsors");
+    const ok = await removeSponsor(id);
+
+    return NextResponse.json({ success: true, removed: ok, id });
+  } catch (err: any) {
+    console.error("DELETE /api/sponsors/[id] error:", err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+

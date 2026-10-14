@@ -120,7 +120,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
       const res = await fetch("/api/outreach/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyId: company.id, tone }),
+        body: JSON.stringify({ companyId: company.id, tone, regenerate: true }),
       });
       const data = await res.json();
       if (data.success) {

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { runOutreachWorkflow } from "@/lib/workflows/outreach-graph";
 import { getSponsorById, getSponsors } from "@/lib/data/repositories/sponsors";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
-import { saveDraft } from "@/lib/data/repositories/outreach";
+import { saveDraft, getDraftsByCompanyId } from "@/lib/data/repositories/outreach";
 import { getCustomTemplates, interpolateTemplate } from "@/lib/data/repositories/templates";
 import { Company, Campaign } from "@/types";
 
@@ -19,6 +19,7 @@ async function generateSingleDraft({
   templateId,
   userEmail,
   userName,
+  draftId,
 }: {
   company: Company;
   campaign: Campaign;
@@ -26,6 +27,7 @@ async function generateSingleDraft({
   templateId?: string;
   userEmail?: string;
   userName?: string;
+  draftId?: string;
 }) {
   // Check if template requested
   if (templateId) {
@@ -63,6 +65,7 @@ async function generateSingleDraft({
         : undefined;
 
       const saved = await saveDraft({
+        id: draftId,
         companyId: company.id,
         contactId: company.contacts?.[0]?.id,
         subject,
@@ -89,6 +92,7 @@ async function generateSingleDraft({
   const result = await runOutreachWorkflow(company, campaign, tone as any);
 
   const saved = await saveDraft({
+    id: draftId,
     companyId: company.id,
     contactId: company.contacts?.[0]?.id,
     subject: result.subject,
@@ -110,7 +114,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { companyId, companyIds, campaignId, tone = "professional", templateId } = body;
+    const { companyId, companyIds, campaignId, tone = "professional", templateId, regenerate } = body;
 
     // Batch Generation Mode
     if (Array.isArray(companyIds) && companyIds.length > 0) {
@@ -145,6 +149,13 @@ export async function POST(req: Request) {
                 return;
               }
 
+              // Check existing draft
+              const existing = await getDraftsByCompanyId(cId);
+              if (!regenerate && existing.length > 0) {
+                generated.push({ companyId: cId, companyName: company.name, draft: existing[0], alreadyExisted: true });
+                return;
+              }
+
               const res = await generateSingleDraft({
                 company,
                 campaign,
@@ -152,6 +163,7 @@ export async function POST(req: Request) {
                 templateId,
                 userEmail: session?.user?.email || undefined,
                 userName: session?.user?.name || undefined,
+                draftId: existing[0]?.id,
               });
 
               generated.push({ companyId: cId, companyName: company.name, draft: res.draft });
@@ -193,6 +205,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
     }
 
+    // Reuse existing draft unless explicitly regenerating
+    const existingDrafts = await getDraftsByCompanyId(companyId);
+    if (!regenerate && existingDrafts.length > 0) {
+      return NextResponse.json({
+        success: true,
+        draft: existingDrafts[0],
+        alreadyExisted: true,
+      });
+    }
+
+    const existingDraftId = existingDrafts[0]?.id;
+
     const result = await generateSingleDraft({
       company,
       campaign,
@@ -200,6 +224,7 @@ export async function POST(req: Request) {
       templateId,
       userEmail: session?.user?.email || undefined,
       userName: session?.user?.name || undefined,
+      draftId: existingDraftId,
     });
 
     return NextResponse.json({
@@ -212,3 +237,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message || "Drafting failed" }, { status: 500 });
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const companyId = searchParams.get("companyId");
+    if (!companyId) {
+      return NextResponse.json({ error: "companyId required" }, { status: 400 });
+    }
+    const drafts = await getDraftsByCompanyId(companyId);
+    return NextResponse.json({ success: true, draft: drafts[0] || null });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to load draft" }, { status: 500 });
+  }
+}
+
