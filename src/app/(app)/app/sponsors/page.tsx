@@ -17,11 +17,12 @@ import { useSession } from "next-auth/react";
 import { SponsorsKanbanSkeleton } from "@/components/skeletons/SponsorsKanbanSkeleton";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useSponsorsData } from "@/lib/hooks/useSponsorsData";
+
 export default function SponsorsPipelinePage() {
   const { data: session } = useSession();
   const { toast } = useToast();
-  const [sponsors, setSponsors] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("all");
   const [selectedStage, setSelectedStage] = useState("all");
@@ -30,57 +31,39 @@ export default function SponsorsPipelinePage() {
   const [sponsorToRemove, setSponsorToRemove] = useState<Company | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  const loadSponsors = useCallback(() => {
-    setLoading(true);
-    getSponsors()
-      .then((data) => {
-        const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
-        const cleanData = isDemo
-          ? data
-          : data.filter((s) => s.campaignId !== "camp-demo-1");
-        setSponsors(cleanData);
-      })
-      .finally(() => setLoading(false));
-  }, [session]);
+  // Debounce search query by 300ms
+  const debouncedSearch = useDebounce(search, 300);
 
-  useEffect(() => {
-    loadSponsors();
-  }, [loadSponsors]);
+  const {
+    sponsors: rawSponsors,
+    loading,
+    refetch,
+    updateStage,
+    removeSponsor,
+  } = useSponsorsData({
+    search: debouncedSearch,
+    industry: selectedIndustry,
+    stage: selectedStage,
+  });
+
+  const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
+  const sponsors = isDemo
+    ? rawSponsors
+    : rawSponsors.filter((s) => s.campaignId !== "camp-demo-1");
 
   const handleRemoveSponsor = async () => {
     if (!sponsorToRemove) return;
     setRemoving(true);
     try {
-      const res = await fetch(`/api/sponsors/${sponsorToRemove.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setSponsors((prev) => prev.filter((s) => s.id !== sponsorToRemove.id));
-        toast(`Removed ${sponsorToRemove.name} from current campaign sponsors`, "success");
-        setSponsorToRemove(null);
-      } else {
-        toast(data.error || "Failed to remove sponsor", "error");
-      }
-    } catch {
-      toast("Error removing sponsor", "error");
+      await removeSponsor(sponsorToRemove.id, sponsorToRemove.name);
+      setSponsorToRemove(null);
     } finally {
       setRemoving(false);
     }
   };
 
   const handleStageChange = async (sponsorId: string, targetStage: PipelineStage) => {
-    try {
-      const updated = await updateSponsorStage(sponsorId, targetStage);
-      if (updated) {
-        setSponsors((prev) =>
-          prev.map((s) => (s.id === sponsorId ? { ...s, stage: targetStage } : s))
-        );
-        toast(`Moved ${updated.name} to ${targetStage}`, "success");
-      }
-    } catch {
-      toast("Failed to move sponsor stage", "error");
-    }
+    await updateStage(sponsorId, targetStage);
   };
 
   // Filter logic
@@ -202,7 +185,7 @@ export default function SponsorsPipelinePage() {
       <CSVImportModal
         isOpen={isCsvModalOpen}
         onClose={() => setIsCsvModalOpen(false)}
-        onSuccess={loadSponsors}
+        onSuccess={refetch}
       />
 
       {/* Remove Sponsor Confirmation Modal */}

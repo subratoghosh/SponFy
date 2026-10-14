@@ -2,9 +2,14 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { CampaignCard } from "@/components/campaigns/CampaignCard";
-import { CreateCampaignModal } from "@/components/campaigns/CreateCampaignModal";
 import { getCampaigns, deleteCampaign } from "@/lib/data/repositories/campaigns";
+
+const CreateCampaignModal = dynamic(
+  () => import("@/components/campaigns/CreateCampaignModal").then((m) => m.CreateCampaignModal),
+  { ssr: false }
+);
 import { Campaign } from "@/types";
 import {
   Plus,

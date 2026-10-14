@@ -34,13 +34,43 @@ export async function GET(request: NextRequest) {
     }
 
     const [companies, drafts, messages, campaigns] = await Promise.all([
-      prisma.company.findMany({ where: companyWhere }),
-      prisma.emailDraft.findMany({ where: userId && !isDemo ? { userId } : {} }),
+      prisma.company.findMany({
+        where: companyWhere,
+        select: {
+          id: true,
+          stage: true,
+          fitScore: true,
+          pipelineValue: true,
+          industry: true,
+        },
+      }),
+      prisma.emailDraft.findMany({
+        where: userId && !isDemo ? { userId } : {},
+        select: {
+          id: true,
+          status: true,
+        },
+      }),
       prisma.message.findMany({
         where: messageWhere,
-        include: { analysis: true },
+        select: {
+          id: true,
+          direction: true,
+          analysis: {
+            select: {
+              intent: true,
+              meetingRequested: true,
+            },
+          },
+        },
       }),
-      prisma.campaign.findMany({ where: campaignWhere }),
+      prisma.campaign.findMany({
+        where: campaignWhere,
+        select: {
+          id: true,
+          targetAmount: true,
+        },
+      }),
     ]);
 
     const activeCampaign = campaigns[0] || null;

@@ -252,6 +252,7 @@ model Company {
   @@unique([campaignId, domain])
   @@index([userId, campaignId])
   @@index([userId, stage])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("companies")
 }
 
@@ -330,6 +331,7 @@ model EmailDraft {
 
   @@index([userId, status])
   @@index([companyId])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("email_drafts")
 }
 
@@ -355,6 +357,7 @@ model Message {
 
   @@index([userId, gmailThreadId])
   @@index([companyId])
+  @@index([userId, sentAt(sort: Desc)])
   @@map("messages")
 }
 

@@ -1,18 +1,52 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 import { getDrafts } from "@/lib/data/repositories/outreach";
 import { getSponsors } from "@/lib/data/repositories/sponsors";
+import { requireAuth } from "@/lib/security/auth-guard";
+import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limit";
 
-// The Outreach page reads drafts through the server so that approve / send / save
-// (which all run on the server) and what the page shows always agree. Without a database
-// the browser and the server each keep their OWN in-memory copy, so reading client-side
-// made approvals invisible.
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request): Promise<NextResponse>;
+export async function GET(): Promise<NextResponse>;
+export async function GET(request?: Request): Promise<NextResponse> {
   try {
-    const [drafts, companies] = await Promise.all([getDrafts(), getSponsors()]);
-    return NextResponse.json({ drafts, companies });
+    const authRes = await requireAuth();
+    if (!authRes.success) {
+      return authRes.response;
+    }
+    const userId = authRes.context.userId;
+
+    const rateLimit = await checkRateLimit("read", userId);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit);
+    }
+
+    let campaignId: string | undefined = undefined;
+    if (request?.url) {
+      try {
+        const { searchParams } = new URL(request.url);
+        campaignId = searchParams.get("campaignId") || undefined;
+      } catch {
+        // invalid URL or test environment
+      }
+    }
+
+    // Concurrently fetch drafts and companies scoped strictly to authenticated user
+    const [drafts, companies] = await Promise.all([
+      getDrafts(undefined, userId),
+      getSponsors(campaignId, userId),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      drafts,
+      companies,
+      totalDrafts: drafts.length,
+      totalCompanies: companies.length,
+    });
   } catch (err: any) {
+    console.error("[API outreach/state error]:", err);
     return NextResponse.json({ error: err.message || "Failed to load outreach data" }, { status: 500 });
   }
 }

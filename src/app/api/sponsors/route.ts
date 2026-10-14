@@ -21,9 +21,21 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const campaignId = searchParams.get("campaignId") || undefined;
+  const search = searchParams.get("search")?.trim() || "";
+  const stage = searchParams.get("stage")?.trim() || "";
+  const industry = searchParams.get("industry")?.trim() || "";
+  
+  // Pagination parameters
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
+  const skip = (page - 1) * limit;
 
   if (!isDatabaseConfigured()) {
-    return NextResponse.json({ success: true, data: [] });
+    return NextResponse.json({
+      success: true,
+      data: [],
+      pagination: { total: 0, page: 1, limit, totalPages: 0, hasMore: false },
+    });
   }
 
   try {
@@ -32,15 +44,71 @@ export async function GET(request: NextRequest) {
       where.campaignId = campaignId;
     }
 
-    const companies = await prisma.company.findMany({
-      where,
-      include: {
-        contacts: true,
-        report: true,
-        sources: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { industry: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (industry && industry !== "all") {
+      where.industry = industry;
+    }
+
+    if (stage && stage !== "all") {
+      where.stage = stage.toUpperCase().replace(/\s+/g, "_");
+    }
+
+    // Run count and paged query in parallel with Prisma field projection
+    const [total, companies] = await Promise.all([
+      prisma.company.count({ where }),
+      prisma.company.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          website: true,
+          industry: true,
+          description: true,
+          campaignId: true,
+          stage: true,
+          fitScore: true,
+          scoreBreakdown: true,
+          pipelineValue: true,
+          signals: true,
+          confidence: true,
+          researchStatus: true,
+          createdAt: true,
+          updatedAt: true,
+          contacts: {
+            select: {
+              id: true,
+              companyId: true,
+              name: true,
+              role: true,
+              email: true,
+              status: true,
+              sourceUrl: true,
+              createdAt: true,
+            },
+          },
+          sources: {
+            select: {
+              url: true,
+              title: true,
+              snippet: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+    const hasMore = page < totalPages;
 
     const data = companies.map((c) => ({
       id: c.id,
@@ -71,19 +139,27 @@ export async function GET(request: NextRequest) {
         title: s.title || "",
         snippet: s.snippet || "",
       })),
-      researchReport: c.report
-        ? {
-            sections: (c.report.sections as any) || {},
-            recommendedAngle: c.report.recommendedAngle || "",
-          }
-        : undefined,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasMore,
+      },
+    });
   } catch (err: any) {
     console.error("GET /api/sponsors error:", err);
-    return NextResponse.json({ success: true, data: [] });
+    return NextResponse.json({
+      success: true,
+      data: [],
+      pagination: { total: 0, page: 1, limit, totalPages: 0, hasMore: false },
+    });
   }
 }
