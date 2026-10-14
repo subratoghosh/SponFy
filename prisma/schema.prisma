@@ -586,3 +586,37 @@ model DiscoveryResult {
   @@map("discovery_results")
 }
 
+model EmailVerification {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  provider     String   // hunter | zerobounce | tiered
+  status       String   // VALID | INVALID | DISPOSABLE | ACCEPT_ALL | RISKY | UNKNOWN
+  subStatus    String?
+  score        Int?
+  isDeliverable Boolean  @default(false)
+  isDisposable Boolean  @default(false)
+  isAcceptAll  Boolean  @default(false)
+  rawResponse  Json?    @default("{}")
+  checkedAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([email])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("email_verifications")
+}
+
+model EmailTrackingEvent {
+  id        String   @id @default(cuid())
+  messageId String
+  type      String   // send_attempted | accepted | delivered | opened | clicked | bounced | replied
+  metadata  Json?    @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("email_tracking_events")
+}
+
+
