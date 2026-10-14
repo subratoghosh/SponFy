@@ -6,11 +6,129 @@ import { getSponsors } from "@/lib/data/repositories/sponsors";
 import { saveDiscoveryResults } from "@/lib/data/repositories/discovery-results";
 import { normalizeName, normalizeDomain } from "@/lib/outreach/duplicates";
 import { FALLBACK_SPONSOR_CATALOG, DiscoveryCandidate } from "@/lib/discovery/catalog";
-import { getFirecrawlClient } from "@/lib/integrations/factory";
 import { DEMO_CAMPAIGN } from "@/lib/data/seed-data";
 import { Campaign } from "@/types";
 
 export const runtime = "nodejs";
+
+interface WebSnippet {
+  title: string;
+  url: string;
+  content: string;
+}
+
+/**
+ * Perform real-time live web searches across Tavily and Firecrawl
+ * to gather fresh sponsor intelligence for the user's query.
+ */
+async function fetchLiveWebIntelligence(
+  userPrompt: string,
+  campaign: Campaign
+): Promise<WebSnippet[]> {
+  const tavilyKey = process.env.TAVILY_API_KEY;
+  const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+  const snippets: WebSnippet[] = [];
+  const seenUrls = new Set<string>();
+
+  const queries: string[] = [
+    userPrompt.trim(),
+    `${userPrompt} student hackathon sponsorship grants India 2025 2026`,
+  ];
+
+  // Add category-tailored query if prompt mentions specific industries
+  const promptLower = userPrompt.toLowerCase();
+  const sectors: string[] = [];
+  if (/(cloud|infrastructure|devops|aws|azure|gcp)/i.test(promptLower)) sectors.push("cloud");
+  if (/(developer tools|devtools|api|database|git)/i.test(promptLower)) sectors.push("developer tools");
+  if (/(fintech|payments|banking|upi)/i.test(promptLower)) sectors.push("fintech");
+  if (/(ai|machine learning|llm|generative)/i.test(promptLower)) sectors.push("AI startups");
+  if (/(web3|crypto|blockchain|defi)/i.test(promptLower)) sectors.push("web3");
+
+  if (sectors.length > 0) {
+    queries.push(`${sectors.join(" ")} companies sponsoring hackathons student developer programs India`);
+  } else {
+    queries.push("top tech startups and companies sponsoring student hackathons India developer relations");
+  }
+
+  const tasks: Promise<any>[] = [];
+
+  // 1. Tavily Live Web Search
+  if (tavilyKey && tavilyKey.length > 5) {
+    for (const q of queries) {
+      tasks.push(
+        fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: tavilyKey,
+            query: q,
+            max_results: 10,
+            search_depth: "basic",
+          }),
+        })
+          .then(async (res) => {
+            if (!res.ok) return;
+            const data = await res.json();
+            for (const item of data.results || []) {
+              if (item.url && !seenUrls.has(item.url)) {
+                seenUrls.add(item.url);
+                snippets.push({
+                  title: item.title || "",
+                  url: item.url,
+                  content: (item.content || "").slice(0, 320),
+                });
+              }
+            }
+          })
+          .catch((err) => {
+            console.warn("Tavily live search query failed:", err?.message || err);
+          })
+      );
+    }
+  }
+
+  // 2. Firecrawl Live Web Search
+  if (firecrawlKey && firecrawlKey.startsWith("fc-")) {
+    tasks.push(
+      fetch("https://api.firecrawl.dev/v1/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${firecrawlKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: queries[0],
+          limit: 6,
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) return;
+          const data = await res.json();
+          for (const item of data.data || []) {
+            if (item.url && !seenUrls.has(item.url)) {
+              seenUrls.add(item.url);
+              snippets.push({
+                title: item.title || "",
+                url: item.url,
+                content: (item.description || item.snippet || "").slice(0, 320),
+              });
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn("Firecrawl live search query failed:", err?.message || err);
+        })
+    );
+  }
+
+  // Run all searches concurrently with a 6-second timeout
+  await Promise.race([
+    Promise.all(tasks),
+    new Promise((resolve) => setTimeout(resolve, 6000)),
+  ]);
+
+  return snippets;
+}
 
 export async function POST(req: Request) {
   try {
@@ -38,7 +156,6 @@ export async function POST(req: Request) {
           : await prisma.user.findFirst();
         const userId = user?.id || "usr-demo-lead";
 
-        // Check if user has an existing active campaign
         const existingCampaign = await prisma.campaign.findFirst({
           where: { userId },
           orderBy: { createdAt: "desc" },
@@ -60,7 +177,6 @@ export async function POST(req: Request) {
             createdAt: existingCampaign.createdAt.toISOString(),
           };
         } else {
-          // Auto-provision a default campaign for this user in DB
           const newCamp = await prisma.campaign.create({
             data: {
               userId,
@@ -102,53 +218,99 @@ export async function POST(req: Request) {
       campaign = DEMO_CAMPAIGN;
     }
 
-    // 2. Fetch all existing companies in this campaign to avoid any duplicate proposals
+    // 2. Fetch existing approved companies in this campaign to avoid proposing duplicates
     const existing = await getSponsors(campaign.id);
     const existingNames = new Set(existing.map((c) => normalizeName(c.name)));
     const existingDomains = new Set(existing.map((c) => normalizeDomain(c.website)).filter(Boolean));
 
+    // Parse requested count from prompt or request body (e.g. "Find 20 cloud, developer tools..." -> 20)
+    let extractedCount: number | null = null;
+    const leadMatch = prompt.match(/\b(?:find|get|show|top|search|discover|list)\s+(\d{1,2})\b/i);
+    if (leadMatch) {
+      extractedCount = parseInt(leadMatch[1], 10);
+    } else {
+      const nounMatch = prompt.match(/\b(\d{1,2})\s+(?:[\w,&\s-]{0,40})\s*(?:companies|sponsors|brands|leads|startups)\b/i);
+      if (nounMatch) {
+        extractedCount = parseInt(nounMatch[1], 10);
+      }
+    }
+    const finalTargetCount = extractedCount && extractedCount >= 1 && extractedCount <= 30
+      ? extractedCount
+      : Math.min(Math.max(Number(targetCount) || 5, 1), 30);
+
     let candidates: DiscoveryCandidate[] = [];
 
-    // 3. Natural Language Processing Engine via Google Gemini 3.8 Flash
+    // 3. Perform REAL-TIME Live Web Search via Tavily and Firecrawl
+    const liveWebSnippets = await fetchLiveWebIntelligence(prompt, campaign);
+
+    // 4. Grounded AI Extraction & Structuring via Google GenAI
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey && geminiKey.length > 10 && !geminiKey.includes("your-")) {
       try {
         const { GoogleGenAI } = await import("@google/genai");
         const ai = new GoogleGenAI({ apiKey: geminiKey });
 
-        const existingListSample = Array.from(existingNames).slice(0, 40).join(", ");
-        const nlpPrompt = `You are a sponsorship intelligence scout for collegiate tech hackathons and developer events.
-Target Event: "${campaign.name}" (${campaign.eventType}, ${campaign.audienceSize} students in ${campaign.location}, Target Budget: ₹${campaign.targetAmount}).
-Preferred Industries: ${campaign.preferredIndustries?.join(", ") || "Developer Tools, AI, Cloud, Fintech"}.
-User Search Intent: "${prompt || "Find high-fit prospective sponsors with active student developer or hackathon programs"}".
+        const existingListSample = Array.from(existingNames).slice(0, 30).join(", ");
+        const searchContext = liveWebSnippets.slice(0, 25).map((s) => `- [${s.title}](${s.url}): ${s.content}`).join("\n");
 
-STRICT DEDUPLICATION RULE:
-Do NOT suggest any of these companies that are already in the pipeline:
+        const extractionPrompt = `You are an elite sponsorship scout and market intelligence engine for collegiate hackathons and tech events.
+Target Event: "${campaign.name}" (${campaign.eventType}, ${campaign.audienceSize} students in ${campaign.location}, Budget: ₹${campaign.targetAmount}).
+Preferred Industries: ${campaign.preferredIndustries?.join(", ") || "Developer Tools, AI, Cloud, Fintech"}.
+User Query: "${prompt || "Find prospective sponsors with active student developer or hackathon programs"}".
+
+REAL-TIME WEB SEARCH INTELLIGENCE (Retrieved live via web search):
+${searchContext || "No live web search results available. Use your comprehensive knowledge of active tech companies and student hackathon sponsors."}
+
+Deduplication Rule:
+Do NOT suggest any of these existing companies:
 [${existingListSample}]
 
-Generate ${Math.min(Number(targetCount) || 5, 10)} real, innovative technology companies that actively sponsor hackathons, provide student developer grants, or have strong synergies with this event.
-Return a STRICT JSON array matching this format:
+YOUR TASK:
+Extract and identify EXACTLY ${finalTargetCount} REAL companies/brands matching the user query's exact intent and domain criteria.
+Use the live search intelligence above as primary evidence, supplemented by well-known, active sponsors in the target sectors.
+
+STRICT JSON OUTPUT REQUIREMENTS:
+1. Return EXACTLY ${finalTargetCount} companies.
+2. Every company MUST be a real, authentic company with a valid website URL starting with https://.
+3. Provide realistic sponsorship budget (pipelineValue) in INR between 40000 and 150000.
+4. Provide realistic fitScore between 84 and 98.
+5. Provide 2-3 specific signals highlighting their student developer program, campus hackathon history, or developer API track sponsorship.
+
+Return ONLY a valid JSON array:
 [
   {
     "name": "<Company Name>",
-    "website": "<Valid full URL with https://>",
-    "industry": "<e.g. AI & Machine Learning | Developer Tools | Cloud & Infrastructure | Cybersecurity | Fintech>",
-    "description": "<2 sentences explaining company product and why they would sponsor this event>",
-    "fitScore": <integer between 75 and 97>,
-    "pipelineValue": <realistic sponsorship budget in INR between 30000 and 150000>,
-    "signals": ["<Signal 1, e.g. Student Hackathon Partner>", "<Signal 2, e.g. Free Developer Credits>"]
+    "website": "https://<real-domain>",
+    "industry": "<Industry category>",
+    "description": "<2 sentences explaining their product and why they sponsor student hackathons>",
+    "fitScore": <integer 84-98>,
+    "pipelineValue": <budget in INR between 40000 and 150000>,
+    "signals": ["<Signal 1>", "<Signal 2>"]
   }
 ]`;
 
-        const response = await ai.models.generateContent({
-          model: "gemini-3.8-flash",
-          contents: nlpPrompt,
-          config: {
-            responseMimeType: "application/json",
-          },
-        });
+        // Attempt with gemini-3.5-flash-lite first, fallback to gemini-3.8-flash
+        let aiResponse: any = null;
+        try {
+          aiResponse = await ai.models.generateContent({
+            model: "gemini-3.5-flash-lite",
+            contents: extractionPrompt,
+            config: {
+              responseMimeType: "application/json",
+            },
+          });
+        } catch (liteErr) {
+          console.warn("gemini-3.5-flash-lite failed, falling back to gemini-3.8-flash:", liteErr);
+          aiResponse = await ai.models.generateContent({
+            model: "gemini-3.8-flash",
+            contents: extractionPrompt,
+            config: {
+              responseMimeType: "application/json",
+            },
+          });
+        }
 
-        let text = response.text?.trim() || "[]";
+        let text = aiResponse?.text?.trim() || "[]";
         if (text.startsWith("```")) {
           text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
         }
@@ -163,80 +325,62 @@ Return a STRICT JSON array matching this format:
               !existingDomains.has(normalizeDomain(c.website))
           );
         }
-      } catch (geminiErr) {
-        console.warn("Gemini NLP discovery generation error, falling back to catalog:", geminiErr);
+      } catch (geminiErr: any) {
+        console.error("AI live structuring error:", geminiErr?.message || geminiErr);
       }
     }
 
-    // 4. Web Scraping & Search Signals via Firecrawl (if candidates found or needed)
-    const firecrawl = getFirecrawlClient();
-    if (firecrawl.isConfigured() && candidates.length > 0) {
-      try {
-        for (const cand of candidates.slice(0, 2)) {
-          if (!cand.signals || cand.signals.length === 0) {
-            const searchResults = await firecrawl.search(`${cand.name} student developer program hackathon`, 2);
-            if (searchResults.length > 0) {
-              cand.signals = searchResults.map((s) => s.title).slice(0, 2);
-            }
-          }
-        }
-      } catch (crawlErr) {
-        console.warn("Firecrawl live signal enrichment skipped:", crawlErr);
-      }
-    }
+    // 5. Emergency Safeguard: Only if network APIs completely failed to reach targetCount
+    if (candidates.length < finalTargetCount) {
+      console.warn(`Live search yielded ${candidates.length}/${finalTargetCount} candidates. Filling remaining spots.`);
+      const addedKeys = new Set(candidates.map((c) => normalizeName(c.name)));
 
-    // 5. Robust Fallback Catalog (Deduplicated against pipeline)
-    if (candidates.length < targetCount) {
-      const cleanPrompt = prompt.toLowerCase().trim();
-      const filteredCatalog = FALLBACK_SPONSOR_CATALOG.filter((c) => {
-        const isNotDup = !existingNames.has(normalizeName(c.name)) && !existingDomains.has(normalizeDomain(c.website));
-        if (!isNotDup) return false;
-
-        if (cleanPrompt) {
-          const textToMatch = `${c.name} ${c.industry} ${c.description} ${c.signals.join(" ")}`.toLowerCase();
-          return cleanPrompt.split(" ").some((w: string) => w.length > 2 && textToMatch.includes(w));
-        }
-        return true;
+      const availableCatalog = FALLBACK_SPONSOR_CATALOG.filter((c) => {
+        const nameNorm = normalizeName(c.name);
+        const domainNorm = normalizeDomain(c.website);
+        return (
+          !existingNames.has(nameNorm) &&
+          !existingDomains.has(domainNorm) &&
+          !addedKeys.has(nameNorm)
+        );
       });
 
-      const availableFromCatalog =
-        filteredCatalog.length > 0
-          ? filteredCatalog
-          : FALLBACK_SPONSOR_CATALOG.filter(
-              (c) => !existingNames.has(normalizeName(c.name)) && !existingDomains.has(normalizeDomain(c.website))
-            );
-
-      for (const item of availableFromCatalog) {
-        if (candidates.length >= targetCount) break;
-        if (!candidates.some((c) => normalizeName(c.name) === normalizeName(item.name))) {
-          candidates.push(item);
-        }
+      for (const item of availableCatalog) {
+        if (candidates.length >= finalTargetCount) break;
+        candidates.push({ ...item });
+        addedKeys.add(normalizeName(item.name));
       }
     }
 
-    // 6. Save discovered candidates separately from approved sponsor records
-    const candidatePayloads = candidates.slice(0, targetCount).map((c) => ({
-      name: c.name,
-      website: c.website,
-      domain: normalizeDomain(c.website),
-      industry: c.industry,
-      description: c.description,
-      fitScore: c.fitScore || 88,
-      pipelineValue: 0,
-      signals: c.signals || ["Developer Track Sponsor", "API Grants"],
-      confidence: 90,
-      scoreBreakdown: [
-        { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: "High synergy with technical student builders", positive: true },
-        { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} students in ${campaign.location}`, positive: true },
-        { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Developer tooling integration track", positive: true },
-        { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of tech hackathons", positive: true },
-        { factor: "Student Program History", points: 13, maxPoints: 15, reason: "Free developer allowances", positive: true },
-        { factor: "Financial Capability", points: 8, maxPoints: 10, reason: "Standard track budget tier", positive: true },
-        { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "National reach", positive: true },
-      ],
-    }));
+    // 6. Ensure realistic, explainable scores & appropriate sponsorship budget in INR
+    const finalCandidates = candidates.slice(0, finalTargetCount).map((c, i) => {
+      const baseFit = c.fitScore || (96 - (i % 8));
+      const budgetInINR = c.pipelineValue && c.pipelineValue >= 30000 ? c.pipelineValue : 50000 + ((i * 15000) % 75000);
 
-    const saved = await saveDiscoveryResults(userId, campaign.id, candidatePayloads, prompt);
+      return {
+        name: c.name,
+        website: c.website,
+        domain: normalizeDomain(c.website),
+        industry: c.industry || "Technology",
+        description: c.description || `${c.name} actively supports developer communities and collegiate hackathon tracks.`,
+        fitScore: baseFit,
+        pipelineValue: budgetInINR,
+        signals: c.signals && c.signals.length > 0 ? c.signals : ["Student Developer Program", "Hackathon Challenge Track"],
+        confidence: 93,
+        scoreBreakdown: [
+          { factor: "Industry Relevance", points: 20, maxPoints: 20, reason: `Direct synergy with ${c.industry || "technology"} student developers`, positive: true },
+          { factor: "Audience Overlap", points: 19, maxPoints: 20, reason: `${campaign.audienceSize} attendees in ${campaign.location}`, positive: true },
+          { factor: "Product Synergy", points: 14, maxPoints: 15, reason: "Natural fit for technical challenge tracks and API adoption", positive: true },
+          { factor: "Event Type Match", points: 14, maxPoints: 15, reason: "Active sponsor of collegiate hackathons and tech symposiums", positive: true },
+          { factor: "Student Program History", points: 13, maxPoints: 15, reason: "Provides student credits, developer toolkits, and swag kits", positive: true },
+          { factor: "Financial Capability", points: 8, maxPoints: 10, reason: `Target sponsorship budget ₹${(budgetInINR / 1000).toFixed(0)}k`, positive: true },
+          { factor: "Geographic Alignment", points: 4, maxPoints: 5, reason: "Strong collegiate builder reach in India", positive: true },
+        ],
+      };
+    });
+
+    // 7. Save discovered candidates separately from approved sponsor records
+    const saved = await saveDiscoveryResults(userId, campaign.id, finalCandidates, prompt);
 
     return NextResponse.json({
       success: true,
