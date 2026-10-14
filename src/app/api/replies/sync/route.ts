@@ -75,11 +75,36 @@ export async function POST(req: Request) {
       }
     }
 
+    // 2. Scan and process bounces
+    const bounces = await gmail.scanBounces();
+    const bounceRecords = [];
+    for (const b of bounces) {
+      if (b.isHardBounce) {
+        await addSuppression(b.recipientEmail, "bounced");
+        // Mark matching sponsor as Lost
+        const matchingSponsor = sponsors.find((s) =>
+          s.contacts?.some(
+            (c) => c.email && c.email.toLowerCase() === b.recipientEmail.toLowerCase()
+          )
+        );
+        if (matchingSponsor) {
+          await updateSponsorStage(matchingSponsor.id, "Lost");
+        }
+        bounceRecords.push({
+          email: b.recipientEmail,
+          suppressed: true,
+          reason: b.bounceReason,
+        });
+      }
+    }
+
     const allThreads = await getInboundThreads();
 
     return NextResponse.json({
       success: true,
       syncedCount: processed.length,
+      bouncesDetected: bounceRecords.length,
+      bounces: bounceRecords,
       threads: allThreads,
     });
   } catch (err: any) {

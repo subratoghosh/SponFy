@@ -1,5 +1,13 @@
 import { Message } from "@/types";
 
+export interface BounceEvent {
+  recipientEmail: string;
+  isHardBounce: boolean;
+  bounceReason: string;
+  gmailMessageId: string;
+  bouncedAt: string;
+}
+
 export interface IGmailClient {
   isConfigured(): boolean;
   sendEmail(
@@ -13,6 +21,7 @@ export interface IGmailClient {
     sentAt: string;
   }>;
   pollReplies(lastSyncedAt?: string): Promise<Message[]>;
+  scanBounces(): Promise<BounceEvent[]>;
   getAuthUrl(state?: string, redirectUriOverride?: string): string;
 }
 
@@ -171,6 +180,58 @@ export class RealGmailClient implements IGmailClient {
       throw new Error(`Gmail reply sync failed: ${err?.message || err}`);
     }
   }
+
+  async scanBounces(): Promise<BounceEvent[]> {
+    try {
+      const { google } = await import("googleapis");
+      const oauth2Client = new google.auth.OAuth2(this.clientId, this.clientSecret, this.redirectUri);
+      oauth2Client.setCredentials(this.tokens);
+
+      const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+      // Query for Mail Delivery Subsystem / DSN messages
+      const listRes = await gmail.users.messages.list({
+        userId: "me",
+        q: 'from:(mailer-daemon OR "Mail Delivery Subsystem" OR postmaster) "Delivery Status Notification"',
+        maxResults: 15,
+      });
+
+      const bounces: BounceEvent[] = [];
+      const msgList = listRes.data.messages || [];
+
+      for (const item of msgList) {
+        if (!item.id) continue;
+        const msgDetail = await gmail.users.messages.get({
+          userId: "me",
+          id: item.id,
+        });
+
+        const snippet = msgDetail.data.snippet || "";
+        const emailMatch = snippet.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        const bouncedRecipient = emailMatch ? emailMatch[0].toLowerCase() : "";
+
+        if (bouncedRecipient) {
+          // Discriminate between hard bounce (550 / User not found) vs soft temporary failure
+          const isHard =
+            /550|5\.1\.1|user not found|does not exist|mailbox unavailable|address rejected|recipient address rejected/i.test(
+              snippet
+            );
+
+          bounces.push({
+            recipientEmail: bouncedRecipient,
+            isHardBounce: isHard,
+            bounceReason: snippet.slice(0, 160),
+            gmailMessageId: item.id,
+            bouncedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      return bounces;
+    } catch (err) {
+      console.warn("Gmail bounce inspection failed:", err);
+      return [];
+    }
+  }
 }
 
 export class MockGmailClient implements IGmailClient {
@@ -191,6 +252,10 @@ export class MockGmailClient implements IGmailClient {
   }
 
   async pollReplies(lastSyncedAt?: string): Promise<Message[]> {
+    return [];
+  }
+
+  async scanBounces(): Promise<BounceEvent[]> {
     return [];
   }
 }

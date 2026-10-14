@@ -29,7 +29,10 @@ export type GuardFailure = {
     | "daily_cap_reached"
     | "needs_attention"
     | "reply_received"
-    | "stage_halted";
+    | "stage_halted"
+    | "verification_invalid"
+    | "verification_disposable"
+    | "verification_risky";
   error: string;
 };
 
@@ -92,6 +95,8 @@ export interface SendGuardInput {
   needsAttention?: boolean;
   hasReply?: boolean;
   companyStage?: string;
+  verificationStatus?: string;
+  senderHealthAtRisk?: boolean;
   /** Outbound messages already sent to this company (any email in its history). */
   priorOutbound: { sentAt: string }[];
   /** Outbound messages sent by the whole workspace inside the cap window. */
@@ -112,6 +117,17 @@ export function evaluateSend(input: SendGuardInput): GuardResult {
   }
   if (input.needsAttention) {
     return fail(422, "needs_attention", "Blocked: this draft contains unresolved placeholders or requires attention before sending.");
+  }
+
+  // 1b. Email verification gate
+  if (input.verificationStatus === "INVALID") {
+    return fail(422, "verification_invalid", `Blocked: ${input.recipient} is confirmed invalid and undeliverable.`);
+  }
+  if (input.verificationStatus === "DISPOSABLE") {
+    return fail(422, "verification_disposable", `Blocked: ${input.recipient} is a temporary/disposable address.`);
+  }
+  if (input.verificationStatus === "RISKY" && input.senderHealthAtRisk) {
+    return fail(422, "verification_risky", `Blocked: ${input.recipient} has high spam risk and sender health is currently AT_RISK.`);
   }
 
   // 2. Reply received / stage halted guard for follow-ups
