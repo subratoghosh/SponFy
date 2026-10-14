@@ -255,7 +255,7 @@ export function SettingsTabs() {
                       Custom Email Pitch Templates
                     </CardTitle>
                     <p className="text-xs text-[#0C382E]/60">
-                      Save, upload, and reuse multiple email pitch formats. You can choose between Gemini AI or any of these templates during outreach.
+                      Save, upload, and reuse multiple email pitch formats. You can choose between AI-generated drafts or any of these templates during outreach.
                     </p>
                   </div>
                   <Button
@@ -430,17 +430,17 @@ export function SettingsTabs() {
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
                     <div className="flex items-center gap-2">
                       <Cpu className="w-4 h-4 text-[#0C382E]" />
-                      <span className="text-xs font-bold text-[#0C382E]">Google Gemini 2.5 Flash</span>
+                      <span className="text-xs font-bold text-[#0C382E]">AI Core Intelligence Engine</span>
                     </div>
-                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Fallback Mock Ready</Badge>
+                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Automated Ready</Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF4E6]/50 border border-[#0C382E]/10">
                     <div className="flex items-center gap-2">
                       <ExternalLink className="w-4 h-4 text-[#0C382E]" />
-                      <span className="text-xs font-bold text-[#0C382E]">Tavily Live Web Search</span>
+                      <span className="text-xs font-bold text-[#0C382E]">Live Web Search & Intelligence</span>
                     </div>
-                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Cited Extractor Ready</Badge>
+                    <Badge variant="outline" className="text-xs bg-[#E8F5E9] text-[#2E7D32] border-[#2E7D32]/20">Active / Web Intelligence Ready</Badge>
                   </div>
                 </div>
               </CardContent>
