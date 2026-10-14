@@ -22,7 +22,7 @@ export interface AIWorkProgressProps {
 const DEFAULT_TIPS = [
   "Tip: Higher fit score companies reply up to 2.4x more often.",
   "Tip: Personalizing the challenge track to developer platforms doubles response rates.",
-  "Tip: SponFy verifies cited evidence with Tavily to prevent hallucinated claims.",
+  "Tip: SponFy cross-verifies live company signals to ensure authentic sponsorship fit.",
   "Tip: Human review ensures your outreach matches your team's authentic tone.",
   "Tip: Targeting verified campus relations leads yields faster turnaround times.",
 ];
