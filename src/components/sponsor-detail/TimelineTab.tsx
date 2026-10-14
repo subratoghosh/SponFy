@@ -9,7 +9,7 @@ export const TimelineTab: React.FC<{ company: Company }> = ({ company }) => {
   const events = [
     {
       title: `Moved to "${company.stage}" stage`,
-      desc: `Pipeline status updated to ${company.stage}`,
+      desc: `Outreach status updated to ${company.stage}`,
       time: company.updatedAt,
       icon: TrendingUp,
     },
@@ -21,7 +21,7 @@ export const TimelineTab: React.FC<{ company: Company }> = ({ company }) => {
     },
     {
       title: "Company Discovered & Profile Sourced",
-      desc: "Initial company research scraped and indexed via Tavily",
+      desc: "Initial company profile and sponsorship research gathered",
       time: company.createdAt,
       icon: CheckCircle2,
     },
