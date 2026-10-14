@@ -39,6 +39,8 @@ interface CandidateListProps {
   hasSearched?: boolean;
   onApproveSelected: (ids: string[]) => Promise<void>;
   onApproveAll: () => Promise<void>;
+  onRejectCandidate: (id: string, name: string) => Promise<void>;
+  onRejectSelected?: (ids: string[]) => Promise<void>;
   onClearResults: () => Promise<void>;
   approving?: boolean;
 }
@@ -48,6 +50,8 @@ export const CandidateList: React.FC<CandidateListProps> = ({
   hasSearched = false,
   onApproveSelected,
   onApproveAll,
+  onRejectCandidate,
+  onRejectSelected,
   onClearResults,
   approving = false,
 }) => {
@@ -107,7 +111,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
               Discovered Sponsor Candidates ({candidates.length})
             </h3>
             <span className="text-[11px] font-bold bg-amber-50 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-200">
-              Awaiting Approval &bull; Not in Pipeline
+              Awaiting Approval &bull; Not Added Yet
             </span>
           </div>
           <p className="text-xs text-text-dim mt-0.5">
@@ -159,22 +163,38 @@ export const CandidateList: React.FC<CandidateListProps> = ({
             </span>
           </span>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSelectedIds(new Set())}
-              className="text-xs font-bold border-green-dark/20 text-green-dark"
+              className="text-xs font-bold border-green-dark/20 text-green-dark cursor-pointer"
             >
               Cancel Selection
             </Button>
+
+            {onRejectSelected && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  const ids = Array.from(selectedIds);
+                  setSelectedIds(new Set());
+                  await onRejectSelected(ids);
+                }}
+                className="text-xs font-bold border-red-300 text-red-700 hover:bg-red-50 gap-1 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+                Reject Selected ({selectedIds.size})
+              </Button>
+            )}
 
             <Button
               variant="green"
               size="sm"
               loading={approving}
               onClick={() => onApproveSelected(Array.from(selectedIds))}
-              className="text-xs font-bold shadow-xs gap-1.5"
+              className="text-xs font-bold shadow-xs gap-1.5 cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4" />
               Approve Selected ({selectedIds.size})
@@ -274,10 +294,21 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setReviewCandidate(company)}
-                  className="text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel gap-1"
+                  className="text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel gap-1 cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5" />
                   Review
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onRejectCandidate(company.id, company.name)}
+                  className="text-xs font-bold border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 gap-1 cursor-pointer transition-colors"
+                  title={`Reject ${company.name}`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Reject
                 </Button>
 
                 <Button
@@ -370,29 +401,46 @@ export const CandidateList: React.FC<CandidateListProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-green-dark/10">
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-green-dark/10 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setReviewCandidate(null)}
-                className="text-xs font-bold"
-              >
-                Close Preview
-              </Button>
-              <Button
-                variant="green"
-                size="sm"
-                disabled={approving}
                 onClick={async () => {
                   const id = reviewCandidate.id;
+                  const name = reviewCandidate.name;
                   setReviewCandidate(null);
-                  await onApproveSelected([id]);
+                  await onRejectCandidate(id, name);
                 }}
-                className="text-xs font-bold shadow-xs gap-1"
+                className="text-xs font-bold border-red-200 text-red-700 hover:bg-red-50 gap-1 cursor-pointer"
               >
-                <Check className="w-3.5 h-3.5" />
-                Approve & Add to Pipeline
+                <X className="w-3.5 h-3.5" />
+                Reject Candidate
               </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setReviewCandidate(null)}
+                  className="text-xs font-bold cursor-pointer"
+                >
+                  Close Preview
+                </Button>
+                <Button
+                  variant="green"
+                  size="sm"
+                  disabled={approving}
+                  onClick={async () => {
+                    const id = reviewCandidate.id;
+                    setReviewCandidate(null);
+                    await onApproveSelected([id]);
+                  }}
+                  className="text-xs font-bold shadow-xs gap-1 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Approve & Add to Outreach Tracker
+                </Button>
+              </div>
             </div>
           </div>
         </div>
