@@ -54,10 +54,22 @@ export async function saveDiscoveryResults(
 ): Promise<DiscoveryResultRecord[]> {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7-day expiry
 
+  // Clear previous transient discovery results for this campaign so new searches replace results cleanly
+  await clearDiscoveryResults(userId, campaignId);
+
+  // Deduplicate incoming candidates by normalized domain/name
+  const seenCandidates = new Set<string>();
+  const uniqueCandidates = candidates.filter((c) => {
+    const key = (c.domain || c.website || c.name || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
+    if (seenCandidates.has(key)) return false;
+    seenCandidates.add(key);
+    return true;
+  });
+
   if (isDatabaseConfigured()) {
     try {
       const created = await Promise.all(
-        candidates.map((c) =>
+        uniqueCandidates.map((c) =>
           db.discoveryResult.create({
             data: {
               userId,
@@ -109,7 +121,7 @@ export async function saveDiscoveryResults(
   }
 
   // Memory store fallback
-  const records: DiscoveryResultRecord[] = candidates.map((c, i) => ({
+  const records: DiscoveryResultRecord[] = uniqueCandidates.map((c, i) => ({
     id: `disc-${Date.now()}-${i}`,
     userId,
     campaignId,
@@ -141,6 +153,7 @@ export async function getDiscoveryResults(
   campaignId?: string
 ): Promise<DiscoveryResultRecord[]> {
   const now = new Date();
+  let rawRecords: DiscoveryResultRecord[] = [];
 
   if (isDatabaseConfigured()) {
     try {
@@ -153,7 +166,7 @@ export async function getDiscoveryResults(
         orderBy: { createdAt: "desc" },
       });
 
-      return records.map((r: any) => ({
+      rawRecords = records.map((r: any) => ({
         id: r.id,
         userId: r.userId,
         campaignId: r.campaignId,
@@ -180,13 +193,27 @@ export async function getDiscoveryResults(
     }
   }
 
-  // Memory store fallback
-  return discoveryResultsStoreRef.value.filter(
-    (r) =>
-      r.userId === userId &&
-      (!campaignId || r.campaignId === campaignId) &&
-      new Date(r.expiresAt).getTime() > now.getTime()
-  );
+  if (rawRecords.length === 0) {
+    rawRecords = discoveryResultsStoreRef.value.filter(
+      (r) =>
+        r.userId === userId &&
+        (!campaignId || r.campaignId === campaignId) &&
+        new Date(r.expiresAt).getTime() > now.getTime()
+    );
+  }
+
+  // Deduplicate results so repeated patterns (e.g. ABCDEABCDEABCDE) never appear on refresh
+  const seen = new Set<string>();
+  const deduplicated: DiscoveryResultRecord[] = [];
+  for (const r of rawRecords) {
+    const key = (r.domain || r.website || r.name).toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduplicated.push(r);
+    }
+  }
+
+  return deduplicated;
 }
 
 export async function clearDiscoveryResults(
@@ -218,13 +245,16 @@ export async function clearDiscoveryResults(
 
 export async function deleteDiscoveryResult(
   id: string,
-  userId: string
+  userId?: string
 ): Promise<boolean> {
   let dbSuccess = false;
   if (isDatabaseConfigured()) {
     try {
       const res = await db.discoveryResult.deleteMany({
-        where: { id, userId },
+        where: {
+          id,
+          ...(userId ? { userId } : {}),
+        },
       });
       dbSuccess = res.count > 0;
     } catch (err) {
@@ -233,11 +263,40 @@ export async function deleteDiscoveryResult(
   }
 
   const idx = discoveryResultsStoreRef.value.findIndex(
-    (r) => r.id === id && r.userId === userId
+    (r) => r.id === id && (!userId || r.userId === userId)
   );
   if (idx !== -1) {
     discoveryResultsStoreRef.value.splice(idx, 1);
     return true;
   }
   return dbSuccess;
+}
+
+export async function deleteDiscoveryResults(
+  ids: string[],
+  userId?: string
+): Promise<number> {
+  if (!ids || ids.length === 0) return 0;
+  let dbCount = 0;
+  if (isDatabaseConfigured()) {
+    try {
+      const res = await db.discoveryResult.deleteMany({
+        where: {
+          id: { in: ids },
+          ...(userId ? { userId } : {}),
+        },
+      });
+      dbCount = res.count;
+    } catch (err) {
+      console.warn("Prisma deleteDiscoveryResults failed, falling back to memory store:", err);
+    }
+  }
+
+  const before = discoveryResultsStoreRef.value.length;
+  const idSet = new Set(ids);
+  discoveryResultsStoreRef.value = discoveryResultsStoreRef.value.filter(
+    (r) => !(idSet.has(r.id) && (!userId || r.userId === userId))
+  );
+  const memCount = before - discoveryResultsStoreRef.value.length;
+  return dbCount || memCount;
 }
