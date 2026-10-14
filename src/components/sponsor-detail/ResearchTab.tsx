@@ -44,7 +44,7 @@ export const ResearchTab: React.FC<{ company: Company; onRefresh: () => void }> 
             Company Research & Web Citations
           </h3>
           <p className="text-xs text-text-dim">
-            Multi-source intelligence gathered via Tavily & classified by Gemini
+            Multi-source intelligence verified and analyzed for sponsorship outreach
           </p>
         </div>
         <Button
