@@ -29,12 +29,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit: verify policy (20 requests/minute/user)
+    const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+    const rateLimit = await checkRateLimit("verify", userId);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit);
+    }
+
     const { searchParams } = new URL(req.url);
     const draftIdParam = searchParams.get("draftId");
 
     const [allDrafts, allSponsors, profile] = await Promise.all([
-      getDrafts(),
-      getSponsors(),
+      getDrafts(undefined, userId),
+      getSponsors(undefined, userId),
       getUserProfile(),
     ]);
 
