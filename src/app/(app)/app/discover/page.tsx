@@ -63,9 +63,9 @@ export default function DiscoverPage() {
 
     try {
       // Step simulation for live progress feel
-      setTimeout(() => setCurrentStep(1), 600);
-      setTimeout(() => setCurrentStep(2), 1200);
-      setTimeout(() => setCurrentStep(3), 1800);
+      setTimeout(() => setCurrentStep(1), 300);
+      setTimeout(() => setCurrentStep(2), 600);
+      setTimeout(() => setCurrentStep(3), 900);
 
       const res = await fetch("/api/discover", {
         method: "POST",
@@ -83,26 +83,53 @@ export default function DiscoverPage() {
       }
 
       const data = await res.json();
-      setTimeout(() => {
-        setCurrentStep(4);
-        const candidates = data.candidates || [];
-        setResults(candidates);
-        setJobActive(false);
-        setLoading(false);
+      setCurrentStep(4);
+      const candidates = data.candidates || [];
+      setResults(candidates);
+      setJobActive(false);
+      setLoading(false);
 
-        if (candidates.length > 0) {
-          toast(
-            `Discovered ${candidates.length} prospective sponsor(s)! Review and select companies to approve for outreach.`,
-            "success"
-          );
-        } else {
-          toast("No new companies found for this query. Try a broader search term.", "info");
-        }
-      }, 2200);
+      if (candidates.length > 0) {
+        toast(
+          `Discovered ${candidates.length} prospective sponsor(s)! Review and select companies to approve for outreach.`,
+          "success"
+        );
+      } else {
+        toast("No new companies found for this query. Try a broader search term.", "info");
+      }
     } catch (err: any) {
       toast(err?.message || "Discovery search failed", "error");
       setLoading(false);
       setJobActive(false);
+    }
+  };
+
+  const handleRejectCandidate = async (candidateId: string, companyName: string) => {
+    // Optimistic removal from current view
+    setResults((prev) => prev.filter((c) => c.id !== candidateId));
+    toast(`Rejected "${companyName}" from discovery list.`, "info");
+    try {
+      await fetch(`/api/discover/results?id=${encodeURIComponent(candidateId)}`, {
+        method: "DELETE",
+      });
+    } catch {
+      // already removed optimistically
+    }
+  };
+
+  const handleRejectSelected = async (candidateIds: string[]) => {
+    if (candidateIds.length === 0) return;
+    const idSet = new Set(candidateIds);
+    setResults((prev) => prev.filter((c) => !idSet.has(c.id)));
+    toast(`Rejected ${candidateIds.length} candidate(s).`, "info");
+    try {
+      await fetch("/api/discover/results", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: candidateIds }),
+      });
+    } catch {
+      // already removed optimistically
     }
   };
 
@@ -128,7 +155,7 @@ export default function DiscoverPage() {
       }
 
       toast(
-        `Approved ${data.approvedCount} sponsor(s) into your pipeline!` +
+        `Approved ${data.approvedCount} sponsor(s) into your outreach tracker!` +
           (data.alreadyApprovedCount ? ` (${data.alreadyApprovedCount} already tracked)` : ""),
         "success"
       );
@@ -164,7 +191,7 @@ export default function DiscoverPage() {
       }
 
       toast(
-        `Approved all ${data.approvedCount} sponsor(s) into your pipeline!` +
+        `Approved all ${data.approvedCount} sponsor(s) into your outreach tracker!` +
           (data.alreadyApprovedCount ? ` (${data.alreadyApprovedCount} already tracked)` : ""),
         "success"
       );
@@ -186,7 +213,7 @@ export default function DiscoverPage() {
       });
       if (res.ok) {
         setResults([]);
-        toast("Cleared discovery candidate list. Saved pipeline sponsors remain untouched.", "info");
+        toast("Cleared discovery candidate list. Saved outreach sponsors remain untouched.", "info");
       }
     } catch {
       toast("Failed to clear results", "error");
@@ -251,6 +278,8 @@ export default function DiscoverPage() {
           hasSearched={hasSearched}
           onApproveSelected={handleApproveSelected}
           onApproveAll={handleApproveAll}
+          onRejectCandidate={handleRejectCandidate}
+          onRejectSelected={handleRejectSelected}
           onClearResults={handleClearResults}
           approving={approving}
         />
