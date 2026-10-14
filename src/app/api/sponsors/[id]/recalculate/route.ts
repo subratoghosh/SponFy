@@ -1,19 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
 import { getSponsorById, updateSponsor } from "@/lib/data/repositories/sponsors";
 import { computeFitScore, CompanyFeatures } from "@/lib/services/scoring";
+import { requireAuth, verifyCompanyOwnership } from "@/lib/security/auth-guard";
+import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limit";
+
+export const runtime = "nodejs";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  const userId = session?.user?.id;
-  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !userId;
+  // 1. Server-side authentication
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
 
-  if (!userId && !isDemo) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // 2. Rate limiting
+  const rateLimit = await checkRateLimit("relevance", userId);
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
   }
 
   const { id } = await params;
@@ -24,6 +32,15 @@ export async function POST(
   const sponsor = await getSponsorById(id);
   if (!sponsor) {
     return NextResponse.json({ error: "Sponsor not found" }, { status: 404 });
+  }
+
+  // 3. IDOR Resource Ownership Check
+  const owned = await verifyCompanyOwnership(sponsor.id, userId);
+  if (!owned) {
+    return NextResponse.json(
+      { error: "Forbidden. You do not own this sponsor.", code: "FORBIDDEN" },
+      { status: 403 }
+    );
   }
 
   const campaign = await getCampaignById(sponsor.campaignId);

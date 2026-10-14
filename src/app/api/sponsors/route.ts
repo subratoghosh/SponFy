@@ -6,22 +6,30 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
+  const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+
+  if (!userId) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limiting: 60 reads/minute/user
+  const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+  const rateLimit = await checkRateLimit("read", userId);
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
   const { searchParams } = new URL(request.url);
   const campaignId = searchParams.get("campaignId") || undefined;
-
-  const isDemo = session?.user?.email === "demo@sponfy.dev";
 
   if (!isDatabaseConfigured()) {
     return NextResponse.json({ success: true, data: [] });
   }
 
   try {
-    const userId = session?.user?.id;
-    const where: any = {};
+    const where: any = { userId };
     if (campaignId) {
       where.campaignId = campaignId;
-    } else if (userId && !isDemo) {
-      where.userId = userId;
     }
 
     const companies = await prisma.company.findMany({
