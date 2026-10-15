@@ -202,7 +202,7 @@ function OutreachContent() {
         )}
       </div>
 
-      {loading ? (
+      {loading && drafts.length === 0 ? (
         <OutreachSkeleton />
       ) : drafts.length === 0 ? (
         <EmptyState

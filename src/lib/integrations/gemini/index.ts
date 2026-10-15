@@ -60,6 +60,63 @@ export class RealGeminiClient implements IGeminiClient {
     return !!this.apiKey && this.apiKey.length > 5;
   }
 
+  private async generateWithFallback(
+    prompt: string,
+    responseMimeType: string = "application/json"
+  ) {
+    const { GoogleGenAI } = await import("@google/genai");
+    const ai = new GoogleGenAI({ apiKey: this.apiKey });
+
+    const candidateModels = [
+      "gemini-3.5-flash",
+      "gemini-flash-latest",
+      "gemini-3.5-flash-lite",
+      "gemini-3.7-flash",
+      "gemini-3.8-flash",
+    ];
+
+    let lastError: any = null;
+
+    for (const model of candidateModels) {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              responseMimeType,
+            },
+          });
+          const text = response.text || "{}";
+          return JSON.parse(text);
+        } catch (err: any) {
+          lastError = err;
+          const msg = err?.message || String(err);
+          // If model doesn't exist, don't retry it
+          if (msg.includes("404") || msg.includes("NOT_FOUND")) {
+            break;
+          }
+          // If transient overload or 503, brief backoff
+          if (attempt < 2 && (msg.includes("503") || msg.includes("429") || msg.includes("UNAVAILABLE") || msg.includes("demand"))) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+          }
+        }
+      }
+    }
+
+    const isHighDemand =
+      lastError?.message?.includes("503") ||
+      lastError?.message?.includes("high demand") ||
+      lastError?.message?.includes("UNAVAILABLE");
+
+    if (isHighDemand) {
+      throw new Error(
+        "Gemini AI is currently experiencing high demand. Please try again shortly or generate using an existing saved template."
+      );
+    }
+    throw new Error(`Gemini request failed: ${lastError?.message || "Unknown error"}`);
+  }
+
   async scoreCompanyFit(
     companyName: string,
     industry: string,
@@ -67,8 +124,6 @@ export class RealGeminiClient implements IGeminiClient {
     campaign: Campaign
   ) {
     try {
-      const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: this.apiKey });
       const prompt = `You are a sponsorship analytics expert. Evaluate the sponsorship fit between company "${companyName}" (${industry}: ${description}) and event "${campaign.name}" (Type: ${campaign.eventType}, Audience: ${campaign.audienceSize} students in ${campaign.location}, Target: ₹${campaign.targetAmount}).
 Return strict JSON with:
 {
@@ -86,18 +141,8 @@ Return strict JSON with:
   "summaryReason": "<one sentence overview>"
 }`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        },
-      });
-
-      const text = response.text || "{}";
-      return JSON.parse(text);
+      return await this.generateWithFallback(prompt);
     } catch (err: any) {
-      // Do not substitute canned scores for a real company: report the failure instead.
       console.error("Real Gemini fit scoring failed:", err);
       throw new Error(`Gemini fit scoring failed: ${err?.message || err}`);
     }
@@ -109,8 +154,6 @@ Return strict JSON with:
     tone: "professional" | "enthusiastic" | "value_first" | "short" = "professional"
   ) {
     try {
-      const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: this.apiKey });
       const prompt = `Draft a personalized sponsorship pitch email for company "${company.name}" regarding our event "${campaign.name}" (${campaign.audienceSize} students in ${campaign.location}).
 Tone: ${tone}.
 Return strict JSON:
@@ -128,16 +171,7 @@ Return strict JSON:
   }
 }`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        },
-      });
-
-      const text = response.text || "{}";
-      return JSON.parse(text);
+      return await this.generateWithFallback(prompt);
     } catch (err: any) {
       console.error("Real Gemini drafting failed:", err);
       throw new Error(`Gemini drafting failed: ${err?.message || err}`);
@@ -150,8 +184,6 @@ Return strict JSON:
     companyName: string
   ): Promise<ReplyAnalysis> {
     try {
-      const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: this.apiKey });
       const prompt = `Classify this inbound email reply from "${companyName}".
 Subject: ${emailSubject}
 Body: ${emailBody}
@@ -168,16 +200,7 @@ Return strict JSON matching:
   "meetingRequested": <boolean>
 }`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        },
-      });
-
-      const text = response.text || "{}";
-      const parsed = JSON.parse(text);
+      const parsed = await this.generateWithFallback(prompt);
       return {
         id: `rep-${Date.now()}`,
         messageId: `msg-${Date.now()}`,
@@ -186,7 +209,6 @@ Return strict JSON matching:
         createdAt: new Date().toISOString(),
       };
     } catch (err: any) {
-      // A real sponsor reply must never get a made-up intent label.
       console.error("Real Gemini reply classification failed:", err);
       throw new Error(`Gemini reply classification failed: ${err?.message || err}`);
     }

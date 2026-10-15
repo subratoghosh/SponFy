@@ -4,24 +4,45 @@ import React from "react";
 import Link from "next/link";
 import { Company } from "@/types";
 import { formatCurrencyINR, formatDate } from "@/lib/utils";
-import { Building2, TrendingUp, ExternalLink, ArrowRight, UserCheck, Trash2 } from "lucide-react";
+import { Building2, TrendingUp, ExternalLink, ArrowRight, UserCheck, Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SponsorTableViewProps {
   sponsors: Company[];
   onRemoveSponsor?: (sponsor: Company) => void;
+  selectedSponsorIds?: string[];
+  onToggleSelectSponsor?: (id: string) => void;
+  onSelectAll?: () => void;
+  onDraftEmail?: (sponsor: Company) => void;
 }
 
 export const SponsorTableView: React.FC<SponsorTableViewProps> = ({
   sponsors,
   onRemoveSponsor,
+  selectedSponsorIds,
+  onToggleSelectSponsor,
+  onSelectAll,
+  onDraftEmail,
 }) => {
+  const allSelected = sponsors.length > 0 && sponsors.every((s) => selectedSponsorIds?.includes(s.id));
+
   return (
     <div className="bg-white rounded-3xl border border-green-dark/12 shadow-sm overflow-hidden animate-fade-in">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="bg-butter-panel border-b border-green-dark/10 text-[11px] font-bold uppercase tracking-wider text-text-muted">
+              {onToggleSelectSponsor && (
+                <th className="py-3.5 px-4 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all sponsors"
+                    checked={allSelected}
+                    onChange={() => onSelectAll?.()}
+                    className="w-4 h-4 rounded border-green-dark/30 text-green-dark focus:ring-green-dark/20 cursor-pointer accent-green-dark"
+                  />
+                </th>
+              )}
               <th className="py-3.5 px-6">Company</th>
               <th className="py-3.5 px-4">Industry</th>
               <th className="py-3.5 px-4">Stage</th>
@@ -35,8 +56,21 @@ export const SponsorTableView: React.FC<SponsorTableViewProps> = ({
             {sponsors.map((spon) => (
               <tr
                 key={spon.id}
-                className="hover:bg-butter-panel/60 transition-colors group"
+                className={`hover:bg-butter-panel/60 transition-colors group ${
+                  selectedSponsorIds?.includes(spon.id) ? "bg-butter-panel/40" : ""
+                }`}
               >
+                {onToggleSelectSponsor && (
+                  <td className="py-4 px-4 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${spon.name}`}
+                      checked={selectedSponsorIds?.includes(spon.id) || false}
+                      onChange={() => onToggleSelectSponsor(spon.id)}
+                      className="w-4 h-4 rounded border-green-dark/30 text-green-dark focus:ring-green-dark/20 cursor-pointer accent-green-dark"
+                    />
+                  </td>
+                )}
                 {/* Company Name & Link */}
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
@@ -102,8 +136,21 @@ export const SponsorTableView: React.FC<SponsorTableViewProps> = ({
                 {/* Actions */}
                 <td className="py-4 px-6 text-right">
                   <div className="flex items-center justify-end gap-2">
+                    {onDraftEmail && (
+                      <Button
+                        type="button"
+                        variant="butter"
+                        size="sm"
+                        onClick={() => onDraftEmail(spon)}
+                        className="text-xs font-bold shadow-xs gap-1.5"
+                        title={`Draft email to ${spon.name}`}
+                      >
+                        <Mail className="w-3.5 h-3.5 text-green-dark" />
+                        <span>Draft</span>
+                      </Button>
+                    )}
                     <Link href={`/app/sponsors/${spon.id}`}>
-                      <Button variant="green" size="sm" className="text-xs font-bold shadow-sm">
+                      <Button variant="outline" size="sm" className="text-xs font-bold border-green-dark/20 text-green-dark shadow-xs">
                         View Details <ArrowRight className="w-3 h-3 ml-1" />
                       </Button>
                     </Link>

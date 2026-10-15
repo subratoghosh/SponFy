@@ -14,6 +14,7 @@ import {
   DollarSign,
   ChevronDown,
   Trash2,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,12 +22,18 @@ interface KanbanBoardProps {
   sponsors: Company[];
   onStageChange: (sponsorId: string, targetStage: PipelineStage) => void;
   onRemoveSponsor?: (sponsor: Company) => void;
+  selectedSponsorIds?: string[];
+  onToggleSelectSponsor?: (id: string) => void;
+  onDraftEmail?: (sponsor: Company) => void;
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   sponsors,
   onStageChange,
   onRemoveSponsor,
+  selectedSponsorIds,
+  onToggleSelectSponsor,
+  onDraftEmail,
 }) => {
   // Category dropdown selection: "all" or specific PipelineStage
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
@@ -147,8 +154,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 key={sponsor.id}
                 className="bg-white rounded-2xl p-4 sm:p-5 border border-green-dark/12 shadow-xs hover:shadow-card-hover hover:border-green-dark/30 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4"
               >
-                {/* Left Section: Info & Identification */}
+                  {/* Left Section: Info & Identification */}
                 <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                  {onToggleSelectSponsor && (
+                    <div className="flex items-center pt-3 shrink-0">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${sponsor.name}`}
+                        checked={selectedSponsorIds?.includes(sponsor.id) || false}
+                        onChange={() => onToggleSelectSponsor(sponsor.id)}
+                        className="w-4 h-4 rounded border-green-dark/30 text-green-dark focus:ring-green-dark/20 cursor-pointer accent-green-dark"
+                      />
+                    </div>
+                  )}
                   <div className="w-11 h-11 rounded-xl bg-butter-panel text-green-dark font-extrabold text-sm flex items-center justify-center shrink-0 border border-green-dark/10 shadow-xs">
                     {sponsor.name.charAt(0).toUpperCase()}
                   </div>
@@ -231,6 +249,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   >
                     {sponsor.stage}
                   </span>
+
+                  {/* Direct Draft Email Action Button */}
+                  {onDraftEmail && (
+                    <Button
+                      type="button"
+                      variant="butter"
+                      size="sm"
+                      onClick={() => onDraftEmail(sponsor)}
+                      className="text-xs font-bold gap-1.5 shadow-xs cursor-pointer whitespace-nowrap"
+                      title={`Draft email to ${sponsor.name}`}
+                    >
+                      <Mail className="w-3.5 h-3.5 text-green-dark" />
+                      <span>Draft Email</span>
+                    </Button>
+                  )}
 
                   {/* View Details Button */}
                   <Link href={`/app/sponsors/${sponsor.id}`}>

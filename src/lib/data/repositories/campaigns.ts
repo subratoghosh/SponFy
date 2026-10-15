@@ -6,7 +6,7 @@ import { memoryStore } from "@/lib/data/memory-store";
 // In-memory store for empty states / fallback
 const campaignsStoreRef = memoryStore<Campaign[]>("campaigns", () => process.env.NODE_ENV === "test" ? [DEMO_CAMPAIGN] : []);
 
-export async function getCampaigns(): Promise<Campaign[]> {
+export async function getCampaigns(userId?: string): Promise<Campaign[]> {
   if (typeof window !== "undefined") {
     try {
       const res = await fetch("/api/campaigns");
@@ -24,7 +24,12 @@ export async function getCampaigns(): Promise<Campaign[]> {
 
   if (isDatabaseConfigured()) {
     try {
+      const where: any = {};
+      if (userId) {
+        where.userId = userId;
+      }
       const records = await prisma.campaign.findMany({
+        where: Object.keys(where).length > 0 ? where : undefined,
         orderBy: { createdAt: "desc" },
       });
       return records.map((r) => ({

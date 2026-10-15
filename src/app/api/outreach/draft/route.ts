@@ -20,6 +20,7 @@ async function generateSingleDraft({
   userEmail,
   userName,
   draftId,
+  userId,
 }: {
   company: Company;
   campaign: Campaign;
@@ -28,6 +29,7 @@ async function generateSingleDraft({
   userEmail?: string;
   userName?: string;
   draftId?: string;
+  userId?: string;
 }) {
   // Check if template requested
   if (templateId) {
@@ -66,6 +68,7 @@ async function generateSingleDraft({
 
       const saved = await saveDraft({
         id: draftId,
+        userId,
         companyId: company.id,
         contactId: company.contacts?.[0]?.id,
         subject,
@@ -93,6 +96,7 @@ async function generateSingleDraft({
 
   const saved = await saveDraft({
     id: draftId,
+    userId,
     companyId: company.id,
     contactId: company.contacts?.[0]?.id,
     subject: result.subject,
@@ -173,6 +177,7 @@ export async function POST(req: Request) {
                 userEmail: session?.user?.email || undefined,
                 userName: session?.user?.name || undefined,
                 draftId: existing[0]?.id,
+                userId,
               });
 
               generated.push({ companyId: cId, companyName: company.name, draft: res.draft });
@@ -243,6 +248,7 @@ export async function POST(req: Request) {
       userEmail: session?.user?.email || undefined,
       userName: session?.user?.name || undefined,
       draftId: existingDraftId,
+      userId,
     });
 
     return NextResponse.json({
@@ -252,7 +258,21 @@ export async function POST(req: Request) {
       needsAttention: (result as any).needsAttention,
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Drafting failed" }, { status: 500 });
+    const isAiError =
+      err?.message?.includes("Gemini") ||
+      err?.message?.includes("demand") ||
+      err?.message?.includes("quota") ||
+      err?.message?.includes("UNAVAILABLE");
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: err.message || "Drafting failed",
+        isAiError,
+        canUseTemplate: true,
+      },
+      { status: 500 }
+    );
   }
 }
 

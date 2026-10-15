@@ -12,9 +12,15 @@ import { Calendar, Clock, Send, CheckCircle2, MessageSquare, AlertCircle } from 
 
 export default async function OverviewPage() {
   const session = await auth();
+  const userId = session?.user?.id;
   const isDemoUser = session?.user?.email === "demo@sponfy.dev";
 
-  const rawCampaigns = await getCampaigns();
+  let rawCampaigns: any[] = [];
+  try {
+    rawCampaigns = await getCampaigns(userId);
+  } catch (err) {
+    console.warn("Failed to load campaigns in OverviewPage:", err);
+  }
 
   // Remove preloaded demo campaign for real users
   const userCampaigns = isDemoUser
@@ -26,46 +32,57 @@ export default async function OverviewPage() {
   const activeCampaign = userCampaigns[0] || null;
   const campaignName = activeCampaign?.name || "Your Workspace";
 
-  const rawAnalytics = await getAnalyticsData(
-    activeCampaign?.id,
-    session?.user?.id
-  );
+  const emptySummary = {
+    totalSponsors: 0,
+    qualifiedCount: 0,
+    sentEmails: 0,
+    repliesCount: 0,
+    overallReplyRate: 0,
+    positiveReplyRate: 0,
+    meetingCount: 0,
+    negotiationsCount: 0,
+    committedCount: 0,
+    committedAmount: 0,
+    pipelineAmount: 0,
+    targetAmount: activeCampaign?.targetAmount || 0,
+  };
 
-  // For real users, strictly use their real campaign data
-  const analytics = isDemoUser
-    ? rawAnalytics
-    : userCampaigns.length === 0
-    ? {
-        funnel: [],
-        outreachTrends: [],
-        pipelineValueByStage: [],
-        industryStats: [],
-        followupLift: [],
-        intentDistribution: [],
-        summary: {
-          totalSponsors: 0,
-          qualifiedCount: 0,
-          sentEmails: 0,
-          repliesCount: 0,
-          overallReplyRate: 0,
-          positiveReplyRate: 0,
-          meetingCount: 0,
-          negotiationsCount: 0,
-          committedCount: 0,
-          committedAmount: 0,
-          pipelineAmount: 0,
-          targetAmount: activeCampaign?.targetAmount || 0,
-        },
-      }
-    : rawAnalytics;
+  let analytics = {
+    funnel: [],
+    outreachTrends: [],
+    pipelineValueByStage: [],
+    industryStats: [],
+    followupLift: [],
+    intentDistribution: [],
+    summary: emptySummary,
+  };
 
-  // Compute live action queue items across the entire workflow lifecycle
-  const [sponsors, drafts, followups, replies] = await Promise.all([
-    getSponsors(activeCampaign?.id, session?.user?.id),
-    getDrafts(),
-    loadFollowups(),
+  try {
+    const rawAnalytics = await getAnalyticsData(
+      activeCampaign?.id,
+      userId
+    );
+    if (isDemoUser) {
+      analytics = rawAnalytics;
+    } else if (userCampaigns.length > 0 && rawAnalytics) {
+      analytics = rawAnalytics;
+    }
+  } catch (err) {
+    console.warn("Failed to load analytics in OverviewPage:", err);
+  }
+
+  // Compute live action queue items across the entire workflow lifecycle with fault isolation
+  const [sponsorsRes, draftsRes, followupsRes, repliesRes] = await Promise.allSettled([
+    getSponsors(activeCampaign?.id, userId),
+    getDrafts(undefined, userId),
+    loadFollowups(undefined, userId, activeCampaign?.id),
     getReplyAnalyses(),
   ]);
+
+  const sponsors = sponsorsRes.status === "fulfilled" ? sponsorsRes.value : [];
+  const drafts = draftsRes.status === "fulfilled" ? draftsRes.value : [];
+  const followups = followupsRes.status === "fulfilled" ? followupsRes.value : [];
+  const replies = repliesRes.status === "fulfilled" ? repliesRes.value : [];
 
   const computedActions: any[] = [];
 

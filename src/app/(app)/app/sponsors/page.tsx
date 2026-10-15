@@ -8,14 +8,17 @@ import { SponsorTableView } from "@/components/sponsors/SponsorTableView";
 import { SponsorFilters } from "@/components/sponsors/SponsorFilters";
 import { CSVImportModal } from "@/components/sponsors/CSVImportModal";
 import { useToast } from "@/components/ui/toast";
-import { Building2, Compass, FileSpreadsheet, Plus } from "lucide-react";
+import { Building2, Compass, FileSpreadsheet, Plus, Mail, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
+import useSWR from "swr";
 
 import { useSession } from "next-auth/react";
 import { SponsorsKanbanSkeleton } from "@/components/skeletons/SponsorsKanbanSkeleton";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import { GenerateDraftModal } from "@/components/sponsors/GenerateDraftModal";
+import { BulkDraftModal } from "@/components/sponsors/BulkDraftModal";
 
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useSponsorsData } from "@/lib/hooks/useSponsorsData";
@@ -30,6 +33,22 @@ export default function SponsorsPipelinePage() {
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [sponsorToRemove, setSponsorToRemove] = useState<Company | null>(null);
   const [removing, setRemoving] = useState(false);
+
+  // Bulk Selection and Direct Draft State
+  const [selectedSponsorIds, setSelectedSponsorIds] = useState<string[]>([]);
+  const [draftModalSponsor, setDraftModalSponsor] = useState<Company | null>(null);
+  const [isBulkDraftModalOpen, setIsBulkDraftModalOpen] = useState(false);
+
+  // Load user active campaign for draft context
+  const { data: campaignsData } = useSWR(
+    session?.user ? ["/api/campaigns", session.user.id] : null,
+    async ([url]) => {
+      const res = await fetch(url);
+      const json = await res.json();
+      return json.data || [];
+    }
+  );
+  const activeCampaign = campaignsData?.[0] || null;
 
   // Debounce search query by 300ms
   const debouncedSearch = useDebounce(search, 300);
@@ -50,6 +69,28 @@ export default function SponsorsPipelinePage() {
   const sponsors = isDemo
     ? rawSponsors
     : rawSponsors.filter((s) => s.campaignId !== "camp-demo-1");
+
+  const handleToggleSelectSponsor = (id: string) => {
+    setSelectedSponsorIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const allFilteredIds = filteredSponsors.map((s) => s.id);
+    const areAllSelected = allFilteredIds.length > 0 && allFilteredIds.every((id) => selectedSponsorIds.includes(id));
+    if (areAllSelected) {
+      setSelectedSponsorIds([]);
+    } else {
+      setSelectedSponsorIds(allFilteredIds);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedSponsorIds([]);
+  };
+
+  const selectedSponsorsList = sponsors.filter((s) => selectedSponsorIds.includes(s.id));
 
   const handleRemoveSponsor = async () => {
     if (!sponsorToRemove) return;
@@ -126,8 +167,60 @@ export default function SponsorsPipelinePage() {
         onViewModeChange={setViewMode}
       />
 
+      {/* Multi-Select Quick Action Bar */}
+      {filteredSponsors.length > 0 && (
+        <div className="flex items-center justify-between text-xs font-semibold px-2 py-1 text-text-dim">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              className="inline-flex items-center gap-1.5 hover:text-green-dark transition-colors cursor-pointer text-xs"
+            >
+              {filteredSponsors.length > 0 &&
+              filteredSponsors.every((s) => selectedSponsorIds.includes(s.id)) ? (
+                <>
+                  <CheckSquare className="w-4 h-4 text-green-dark" />
+                  <span>Deselect All ({filteredSponsors.length})</span>
+                </>
+              ) : (
+                <>
+                  <Square className="w-4 h-4 text-text-muted" />
+                  <span>Select All ({filteredSponsors.length})</span>
+                </>
+              )}
+            </button>
+            {selectedSponsorIds.length > 0 && (
+              <span className="text-green-dark font-bold bg-butter-cream px-2.5 py-0.5 rounded-full border border-green-dark/15 shadow-2xs">
+                {selectedSponsorIds.length} sponsor{selectedSponsorIds.length > 1 ? "s" : ""} selected
+              </span>
+            )}
+          </div>
+
+          {selectedSponsorIds.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleClearSelection}
+                className="text-xs text-text-dim hover:text-green-dark underline font-medium cursor-pointer"
+              >
+                Clear
+              </button>
+              <Button
+                variant="butter"
+                size="sm"
+                onClick={() => setIsBulkDraftModalOpen(true)}
+                className="text-xs font-black gap-1.5 shadow-xs"
+              >
+                <Mail className="w-3.5 h-3.5 text-green-dark" />
+                <span>Bulk Draft Outreach ({selectedSponsorIds.length})</span>
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Main Content Area: Skeletons, Empty State, or Data */}
-      {loading ? (
+      {loading && sponsors.length === 0 ? (
         viewMode === "kanban" ? (
           <SponsorsKanbanSkeleton />
         ) : (
@@ -173,13 +266,71 @@ export default function SponsorsPipelinePage() {
           sponsors={filteredSponsors}
           onStageChange={handleStageChange}
           onRemoveSponsor={(s) => setSponsorToRemove(s)}
+          selectedSponsorIds={selectedSponsorIds}
+          onToggleSelectSponsor={handleToggleSelectSponsor}
+          onDraftEmail={(s) => setDraftModalSponsor(s)}
         />
       ) : (
         <SponsorTableView
           sponsors={filteredSponsors}
           onRemoveSponsor={(s) => setSponsorToRemove(s)}
+          selectedSponsorIds={selectedSponsorIds}
+          onToggleSelectSponsor={handleToggleSelectSponsor}
+          onSelectAll={handleSelectAll}
+          onDraftEmail={(s) => setDraftModalSponsor(s)}
         />
       )}
+
+      {/* Floating Bottom Sticky Bar when sponsors are selected */}
+      {selectedSponsorIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-green-dark text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-4 animate-fade-in">
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <span className="w-6 h-6 rounded-full bg-butter-gold text-green-dark flex items-center justify-center font-black text-xs">
+              {selectedSponsorIds.length}
+            </span>
+            <span>Sponsor{selectedSponsorIds.length > 1 ? "s" : ""} Selected</span>
+          </div>
+          <div className="h-4 w-px bg-white/20" />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="butter"
+              size="sm"
+              onClick={() => setIsBulkDraftModalOpen(true)}
+              className="text-xs font-black gap-1.5 shadow-sm text-green-dark"
+            >
+              <Mail className="w-3.5 h-3.5 text-green-dark" />
+              <span>Draft Outreach ({selectedSponsorIds.length})</span>
+            </Button>
+            <button
+              onClick={handleClearSelection}
+              className="text-xs text-white/70 hover:text-white underline font-semibold cursor-pointer ml-1"
+            >
+              Deselect All
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Direct Individual Draft Generation Modal */}
+      {draftModalSponsor && (
+        <GenerateDraftModal
+          isOpen={!!draftModalSponsor}
+          onClose={() => setDraftModalSponsor(null)}
+          sponsor={draftModalSponsor}
+          campaign={activeCampaign}
+        />
+      )}
+
+      {/* Bulk Draft Outreach Modal */}
+      <BulkDraftModal
+        isOpen={isBulkDraftModalOpen}
+        onClose={() => setIsBulkDraftModalOpen(false)}
+        selectedSponsors={selectedSponsorsList}
+        campaign={activeCampaign}
+        onSuccess={() => {
+          setSelectedSponsorIds([]);
+        }}
+      />
 
       {/* CSV Import Modal */}
       <CSVImportModal

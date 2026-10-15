@@ -78,8 +78,8 @@ export function computeFollowups(input: ComputeInput): FollowupItem[] {
     const last = outbound[outbound.length - 1];
     const touchesSent = outbound.length;
     const daysSinceLast = (now.getTime() - new Date(last.sentAt).getTime()) / DAY_MS;
-    const recipientEmail = last.toEmail;
-    const contact = company.contacts?.find((c) => c.email.toLowerCase() === recipientEmail.toLowerCase());
+    const recipientEmail = last.toEmail || "";
+    const contact = company.contacts?.find((c) => c?.email && recipientEmail && c.email.toLowerCase() === recipientEmail.toLowerCase());
     const hasReply = msgs.some((m) => m.direction === "inbound");
     const delayDays = delayForNextTouch(touchesSent);
     const nextTouch = touchesSent < MAX_TOUCHES ? touchesSent + 1 : null;
