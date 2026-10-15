@@ -4,6 +4,9 @@ export const APP_NAME = "SponFy";
 export const APP_TAGLINE = "AI Sponsorship Operating System for Campaigns & Events";
 export const DEFAULT_DAILY_SEND_CAP = 30;
 
+// Marketing Site Contact & Social Links
+export const SITE_CONTACT = { email: "", instagram: "", linkedin: "", youtube: "" };
+
 // Central Nav Configuration
 export const NAV_ITEMS = [
   { label: "Overview", href: "/app", icon: "LayoutDashboard" },

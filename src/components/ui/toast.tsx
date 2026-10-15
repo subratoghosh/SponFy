@@ -13,16 +13,16 @@ interface ToastItem {
 }
 
 interface ToastContextType {
-  toast: (message: string, type?: ToastType) => void;
+  toast: (message: string, type?: ToastType, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-let globalToastHandler: ((message: string, type?: ToastType) => void) | null = null;
+let globalToastHandler: ((message: string, type?: ToastType, duration?: number) => void) | null = null;
 
-export const toast = (message: string, type: ToastType = "success") => {
+export const toast = (message: string, type: ToastType = "success", duration: number = 4000) => {
   if (globalToastHandler) {
-    globalToastHandler(message, type);
+    globalToastHandler(message, type, duration);
   } else {
     console.log(`[Toast ${type}]: ${message}`);
   }
@@ -31,13 +31,13 @@ export const toast = (message: string, type: ToastType = "success") => {
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType = "success") => {
+  const showToast = useCallback((message: string, type: ToastType = "success", duration: number = 4000) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts((prev) => [...prev, { id, type, message }]);
 
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    }, duration);
   }, []);
 
   useEffect(() => {

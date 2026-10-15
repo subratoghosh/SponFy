@@ -5,25 +5,34 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import {
   FolderKanban,
-  Mail,
   CheckCircle2,
   ChevronDown,
-  User,
   Plus,
   LogOut,
   Settings,
   ShieldCheck,
-  Database,
   Compass,
   Clock,
   BarChart3,
-  Home,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { getCampaigns } from "@/lib/data/repositories/campaigns";
 import { Campaign } from "@/types";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 import { cn } from "@/lib/utils";
+import { MAIN_NAV_ITEMS } from "@/lib/config/nav";
+
+const MOBILE_DROPDOWN_LABELS = ["Discover", "Follow-ups", "Analytics", "Settings"] as const;
+
+const NAV_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Compass,
+  Clock,
+  BarChart3,
+  Settings,
+};
+
+const mobileNavItems = MOBILE_DROPDOWN_LABELS.map(
+  (label) => MAIN_NAV_ITEMS.find((item) => item.label === label)!
+).filter(Boolean);
 
 export const TopBar: React.FC = () => {
   const { data: session } = useSession();
@@ -50,7 +59,7 @@ export const TopBar: React.FC = () => {
     });
   }, [session]);
 
-  // Close dropdowns on outside click
+  // Close dropdowns on outside click or Escape key
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (campaignRef.current && !campaignRef.current.contains(e.target as Node)) {
@@ -60,8 +69,18 @@ export const TopBar: React.FC = () => {
         setProfileDropdownOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCampaignDropdownOpen(false);
+        setProfileDropdownOpen(false);
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const user = session?.user;
@@ -194,6 +213,8 @@ export const TopBar: React.FC = () => {
             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
             className="flex items-center gap-1 sm:gap-2 p-0.5 sm:px-2 sm:py-1 rounded-full sm:rounded-2xl hover:bg-white/80 border border-transparent hover:border-green-dark/10 transition-all cursor-pointer"
             aria-label="User profile and account settings"
+            aria-expanded={profileDropdownOpen}
+            aria-haspopup="true"
           >
             <div className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full bg-green-dark text-butter-cream flex items-center justify-center font-black text-xs shadow-sm hover:ring-2 hover:ring-butter-cream transition-all shrink-0">
               {initials}
@@ -211,7 +232,11 @@ export const TopBar: React.FC = () => {
 
           {/* User Profile Dropdown Menu */}
           {profileDropdownOpen && (
-            <div className="absolute top-12 right-0 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-dropdown border border-green-dark/15 p-3 z-50 animate-fade-in space-y-3">
+            <div
+              role="menu"
+              aria-label="User profile and account settings"
+              className="absolute top-12 right-0 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-dropdown border border-green-dark/15 p-3 z-50 animate-fade-in space-y-2"
+            >
               {/* Profile Card Header */}
               <div className="p-3 rounded-xl bg-butter-bg/60 border border-green-dark/10 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-green-dark text-butter-cream flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
@@ -244,9 +269,27 @@ export const TopBar: React.FC = () => {
                 </div>
               </div>
 
-              {/* Navigation Links (including all items previously under More) */}
-              <div className="space-y-1 pt-1 text-xs font-bold text-green-dark max-h-[55vh] overflow-y-auto">
-                {isAdmin && (
+              {/* Mobile-only Navigation Links (missing from bottom tab bar) */}
+              <div className="md:hidden border-t border-green-dark/10 pt-1.5 space-y-1 text-xs font-bold text-green-dark">
+                {mobileNavItems.map((item) => {
+                  const Icon = NAV_ICON_MAP[item.icon] || Compass;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
+                    >
+                      <Icon className="w-4 h-4 text-green-mid shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Admin Console Link (Visible for Administrators on Mobile only) */}
+              {isAdmin && (
+                <div className="md:hidden border-t border-green-dark/10 pt-1.5 text-xs font-bold">
                   <Link
                     href="/admin"
                     onClick={() => setProfileDropdownOpen(false)}
@@ -260,78 +303,21 @@ export const TopBar: React.FC = () => {
                       Admin
                     </span>
                   </Link>
-                )}
-                <Link
-                  href="/app/campaigns"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
-                >
-                  <FolderKanban className="w-4 h-4 text-green-mid shrink-0" />
-                  <span>Campaign Initiatives</span>
-                </Link>
-                <Link
-                  href="/app/discover"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
-                >
-                  <Compass className="w-4 h-4 text-green-mid shrink-0" />
-                  <span>Discover Sponsors</span>
-                </Link>
-                <Link
-                  href="/app/followups"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
-                >
-                  <Clock className="w-4 h-4 text-green-mid shrink-0" />
-                  <span>Follow-up Sequences</span>
-                </Link>
-                <Link
-                  href="/app/analytics"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
-                >
-                  <BarChart3 className="w-4 h-4 text-green-mid shrink-0" />
-                  <span>Analytics & KPIs</span>
-                </Link>
-                <Link
-                  href="/app/settings"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
-                >
-                  <Settings className="w-4 h-4 text-green-mid shrink-0" />
-                  <span>Settings & Preferences</span>
-                </Link>
-                <Link
-                  href="/"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-butter-warm/60 transition-colors"
-                >
-                  <Home className="w-4 h-4 text-green-mid shrink-0" />
-                  <span>Landing Overview</span>
-                </Link>
-                {!isDemo && (
-                  <div className="px-3 py-1.5 flex items-center gap-2 text-[11px] text-emerald-800 font-medium">
-                    <Database className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Your data is stored securely</span>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Divider & Sign Out */}
-              <div className="border-t border-green-dark/10 pt-2">
+              <div className="border-t border-green-dark/10 pt-1.5">
                 <button
                   type="button"
                   onClick={async () => {
                     setProfileDropdownOpen(false);
                     await signOut({ callbackUrl: "/login" });
                   }}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
                 >
-                  <span className="flex items-center gap-2">
-                    <LogOut className="w-4 h-4" />
-                    <span>Log Out</span>
-                  </span>
-                  <span className="text-[10px] text-red-400 font-normal">Sign out</span>
+                  <LogOut className="w-4 h-4 shrink-0" />
+                  <span>Log Out</span>
                 </button>
               </div>
             </div>

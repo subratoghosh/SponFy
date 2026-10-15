@@ -134,22 +134,6 @@ export const Sidebar: React.FC = () => {
 
       {/* Bottom User Profile & Sign Out Bar */}
       <div className="p-4 border-t border-green-mid/40 space-y-3 shrink-0 bg-green-dark">
-        {/* Safety Gate Indicator */}
-        <div className="p-3 bg-green-deep/80 rounded-xl border border-green-mid/50 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-butter-cream flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
-              Safety Gate
-            </span>
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-butter-cream text-green-dark">
-              {isDemo ? "Demo" : "Live DB"}
-            </span>
-          </div>
-          <p className="text-[10px] text-text-onDarkSub/80 leading-snug">
-            All AI pitches require manual organizer approval.
-          </p>
-        </div>
-
         {/* User Profile Card with Sign Out Button */}
         <div className="flex items-center justify-between p-2 rounded-xl bg-green-deep/50 border border-green-mid/30">
           <div className="flex items-center gap-2.5 min-w-0 pr-1">
