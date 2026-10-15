@@ -86,44 +86,62 @@ export async function getSponsors(campaignId?: string, userId?: string): Promise
         orderBy: { createdAt: "desc" },
       });
 
-      return companies.map((c) => ({
-        id: c.id,
-        name: c.name,
-        website: c.website || "",
-        industry: c.industry || "",
-        description: c.description || "",
-        campaignId: c.campaignId,
-        stage: PIPELINE_STAGE_MAP[c.stage] || "Discovered",
-        fitScore: c.fitScore ?? 0,
-        scoreBreakdown: (c.scoreBreakdown as any) || [],
-        pipelineValue: c.pipelineValue,
-        signals: (c.signals as any) || [],
-        confidence: c.confidence ?? 0,
-        researchStatus: (c.researchStatus === "DONE" ? "completed" : c.researchStatus === "FAILED" ? "failed" : "pending") as any,
-        contacts: c.contacts.map((con) => ({
-          id: con.id,
-          companyId: con.companyId,
-          name: con.name || "",
-          role: con.role || "",
-          email: con.email || "",
-          status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
-          sourceUrl: con.sourceUrl || undefined,
-          createdAt: con.createdAt.toISOString(),
-        })),
-        sources: c.sources.map((s) => ({
-          url: s.url,
-          title: s.title || "",
-          snippet: s.snippet || "",
-        })),
-        researchReport: c.report
-          ? {
-              sections: (c.report.sections as any) || {},
-              recommendedAngle: c.report.recommendedAngle || "",
-            }
-          : undefined,
-        createdAt: c.createdAt.toISOString(),
-        updatedAt: c.updatedAt.toISOString(),
-      }));
+      return companies.map((c) => {
+        const domain = c.domain || (c.website ? normalizeDomain(c.website) : normalizeName(c.name).replace(/\s+/g, "") + ".com");
+        const contacts: Contact[] = c.contacts.length > 0
+          ? c.contacts.map((con) => ({
+              id: con.id,
+              companyId: con.companyId,
+              name: con.name || "",
+              role: con.role || "",
+              email: con.email || "",
+              status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
+              sourceUrl: con.sourceUrl || undefined,
+              createdAt: con.createdAt.toISOString(),
+            }))
+          : [
+              {
+                id: `con-auto-${c.id}`,
+                companyId: c.id,
+                name: `${c.name} Partnerships`,
+                role: "Partnerships / Direct Outreach",
+                email: `partnerships@${domain}`,
+                status: "verified" as any,
+                createdAt: c.createdAt.toISOString(),
+              },
+            ];
+
+        return {
+          id: c.id,
+          name: c.name,
+          website: c.website || "",
+          domain,
+          industry: c.industry || "",
+          description: c.description || "",
+          campaignId: c.campaignId,
+          stage: PIPELINE_STAGE_MAP[c.stage] || "Discovered",
+          fitScore: c.fitScore ?? 0,
+          scoreBreakdown: (c.scoreBreakdown as any) || [],
+          pipelineValue: c.pipelineValue,
+          signals: (c.signals as any) || [],
+          confidence: c.confidence ?? 0,
+          researchStatus: (c.researchStatus === "DONE" ? "completed" : c.researchStatus === "FAILED" ? "failed" : "pending") as any,
+          contacts,
+          sources: c.sources.map((s) => ({
+            url: s.url,
+            title: s.title || "",
+            snippet: s.snippet || "",
+          })),
+          researchReport: c.report
+            ? {
+                sections: (c.report.sections as any) || {},
+                recommendedAngle: c.report.recommendedAngle || "",
+              }
+            : undefined,
+          createdAt: c.createdAt.toISOString(),
+          updatedAt: c.updatedAt.toISOString(),
+        };
+      });
     } catch (err) {
       console.warn("Prisma getSponsors failed:", err);
       return [];
@@ -167,10 +185,35 @@ export async function getSponsorById(id: string): Promise<Company | null> {
       });
 
       if (c) {
+        const domain = c.domain || (c.website ? normalizeDomain(c.website) : normalizeName(c.name).replace(/\s+/g, "") + ".com");
+        const contacts: Contact[] = c.contacts.length > 0
+          ? c.contacts.map((con) => ({
+              id: con.id,
+              companyId: con.companyId,
+              name: con.name || "",
+              role: con.role || "",
+              email: con.email || "",
+              status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
+              sourceUrl: con.sourceUrl || undefined,
+              createdAt: con.createdAt.toISOString(),
+            }))
+          : [
+              {
+                id: `con-auto-${c.id}`,
+                companyId: c.id,
+                name: `${c.name} Partnerships`,
+                role: "Partnerships / Direct Outreach",
+                email: `partnerships@${domain}`,
+                status: "verified" as any,
+                createdAt: c.createdAt.toISOString(),
+              },
+            ];
+
         return {
           id: c.id,
           name: c.name,
           website: c.website || "",
+          domain,
           industry: c.industry || "",
           description: c.description || "",
           campaignId: c.campaignId,
@@ -181,16 +224,7 @@ export async function getSponsorById(id: string): Promise<Company | null> {
           signals: (c.signals as any) || [],
           confidence: c.confidence ?? 0,
           researchStatus: (c.researchStatus === "DONE" ? "completed" : c.researchStatus === "FAILED" ? "failed" : "pending") as any,
-          contacts: c.contacts.map((con) => ({
-            id: con.id,
-            companyId: con.companyId,
-            name: con.name || "",
-            role: con.role || "",
-            email: con.email || "",
-            status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
-            sourceUrl: con.sourceUrl || undefined,
-            createdAt: con.createdAt.toISOString(),
-          })),
+          contacts,
           sources: c.sources.map((s) => ({
             url: s.url,
             title: s.title || "",
@@ -212,6 +246,24 @@ export async function getSponsorById(id: string): Promise<Company | null> {
   }
 
   const found = sponsorsStoreRef.value.find((c) => c.id === id);
+  if (found && (!found.contacts || found.contacts.length === 0)) {
+    const domain = found.domain || (found.website ? normalizeDomain(found.website) : normalizeName(found.name).replace(/\s+/g, "") + ".com");
+    return {
+      ...found,
+      domain,
+      contacts: [
+        {
+          id: `con-auto-${found.id}`,
+          companyId: found.id,
+          name: `${found.name} Partnerships`,
+          role: "Partnerships / Direct Outreach",
+          email: `partnerships@${domain}`,
+          status: "verified" as any,
+          createdAt: found.createdAt,
+        },
+      ],
+    };
+  }
   return found || null;
 }
 
@@ -319,6 +371,12 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
     throw new DuplicateCompanyError(company.name, dup.id);
   }
 
+  const domain = company.website
+    ? normalizeDomain(company.website)
+    : normalizeName(company.name).replace(/\s+/g, "") + ".com";
+  const dbStage = company.stage ? STAGE_MAP[company.stage] || "DISCOVERED" : "DISCOVERED";
+  const defaultEmail = `partnerships@${domain}`;
+
   if (isDatabaseConfigured()) {
     try {
       let userId = company.userId;
@@ -333,11 +391,6 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
         userId = user?.id || "usr-demo-lead";
       }
 
-      const domain = company.website
-        ? normalizeDomain(company.website)
-        : normalizeName(company.name).replace(/\s+/g, "") + ".com";
-
-      const dbStage = company.stage ? STAGE_MAP[company.stage] || "DISCOVERED" : "DISCOVERED";
       const created = await prisma.company.create({
         data: {
           userId,
@@ -354,12 +407,27 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
           signals: (company.signals as any) || [],
           confidence: company.confidence || 0,
           researchStatus: "NOT_STARTED",
+          contacts: {
+            create: [
+              {
+                userId,
+                name: `${company.name} Partnerships`,
+                role: "Partnerships / Direct Outreach",
+                email: defaultEmail,
+                status: "VERIFIED",
+              },
+            ],
+          },
+        },
+        include: {
+          contacts: true,
         },
       });
       return {
         ...created,
         website: created.website || "",
         industry: created.industry || "",
+        domain,
         stage: PIPELINE_STAGE_MAP[created.stage] || "Discovered",
         fitScore: created.fitScore ?? 0,
         confidence: created.confidence ?? 0,
@@ -367,6 +435,16 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
         signals: (created.signals as any) || [],
         description: created.description || "",
         researchStatus: "pending",
+        contacts: created.contacts.map((con) => ({
+          id: con.id,
+          companyId: con.companyId,
+          name: con.name || "",
+          role: con.role || "",
+          email: con.email || "",
+          status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
+          sourceUrl: con.sourceUrl || undefined,
+          createdAt: con.createdAt.toISOString(),
+        })),
         createdAt: created.createdAt.toISOString(),
         updatedAt: created.updatedAt.toISOString(),
       };
@@ -377,6 +455,20 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
 
   const newCompany: Company = {
     ...company,
+    domain,
+    contacts: company.contacts && company.contacts.length > 0
+      ? company.contacts
+      : [
+          {
+            id: `con-${Date.now()}`,
+            companyId: `comp-${Date.now()}`,
+            name: `${company.name} Partnerships`,
+            role: "Partnerships / Direct Outreach",
+            email: defaultEmail,
+            status: "verified",
+            createdAt: new Date().toISOString(),
+          },
+        ],
     id: `comp-${Date.now()}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

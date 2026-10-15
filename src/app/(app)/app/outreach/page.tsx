@@ -190,9 +190,17 @@ function OutreachContent() {
     }
   };
 
+  const getRecipientEmail = (comp?: Company) => {
+    if (!comp) return "";
+    const primaryContact = comp.contacts?.find((c) => c.email && c.email.trim() !== "") || comp.contacts?.[0];
+    if (primaryContact?.email) return primaryContact.email;
+    const domain = comp.domain || (comp.website ? comp.website.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
+    return domain ? `partnerships@${domain}` : "partnerships@sponsor.com";
+  };
+
   const handleConfirmSend = async () => {
     if (!activeDraft || !activeCompany) return;
-    const recipientEmail = activeCompany.contacts?.[0]?.email;
+    const recipientEmail = getRecipientEmail(activeCompany);
     if (!recipientEmail) {
       toast("Add a verified contact for this company before sending.", "error");
       return;
@@ -364,7 +372,7 @@ function OutreachContent() {
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
           draft={activeDraft}
-          toEmail={activeCompany.contacts?.[0]?.email || "partner@company.com"}
+          toEmail={getRecipientEmail(activeCompany)}
           companyName={activeCompany.name}
           onConfirmSend={handleConfirmSend}
           loading={sending}

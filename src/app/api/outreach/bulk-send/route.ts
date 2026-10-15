@@ -62,6 +62,8 @@ export async function GET(req: Request) {
       const recipient = resolveRecipient({
         contactId: draft.contactId,
         contacts: company.contacts ?? [],
+        companyDomain: company.domain,
+        companyWebsite: company.website,
       });
 
       if (!recipient.ok) {
@@ -194,6 +196,8 @@ export async function POST(req: Request) {
       const recipient = resolveRecipient({
         contactId: draft.contactId,
         contacts: company.contacts ?? [],
+        companyDomain: company.domain,
+        companyWebsite: company.website,
       });
       if (!recipient.ok) {
         failed.push({ draftId: draft.id, companyName: company.name, reason: recipient.error });

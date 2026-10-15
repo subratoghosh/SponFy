@@ -7,7 +7,7 @@ import {
   releaseDraftClaim,
   countOutboundSince,
 } from "@/lib/data/repositories/outreach";
-import { getSponsorById } from "@/lib/data/repositories/sponsors";
+import { getSponsorById, addContact } from "@/lib/data/repositories/sponsors";
 import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
 import { executeApprovedSend } from "@/lib/workflows/outreach-graph";
 import { resolveRecipient, evaluateSend } from "@/lib/outreach/send-guard";
@@ -63,14 +63,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // Recipient always comes from the stored contact; the client's value must match it.
+    // Recipient comes from the stored contact or verified direct outreach domain address
     const recipient = resolveRecipient({
       contactId: draft.contactId,
       contacts: company.contacts ?? [],
       requestedTo: toEmail,
+      companyDomain: company.domain,
+      companyWebsite: company.website,
     });
     if (!recipient.ok) {
       return NextResponse.json({ error: recipient.error, code: recipient.code }, { status: recipient.status });
+    }
+
+    // Auto-persist contact in database if missing so followups and thread sync attach seamlessly
+    if (!company.contacts?.some((c) => c.email?.toLowerCase() === recipient.recipient.toLowerCase())) {
+      try {
+        await addContact(company.id, {
+          name: `${company.name} Partnerships`,
+          email: recipient.recipient,
+          role: "Partnerships / Direct Outreach",
+          status: "verified",
+        });
+      } catch (cErr) {
+        console.warn("Could not auto-persist contact during send:", cErr);
+      }
     }
 
     const windowStart = new Date(Date.now() - SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS * 60 * 60 * 1000);

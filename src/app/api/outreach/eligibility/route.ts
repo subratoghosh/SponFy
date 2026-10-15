@@ -95,6 +95,8 @@ export async function GET(req: Request) {
       const recipientResult = resolveRecipient({
         contactId: draft.contactId,
         contacts: company.contacts ?? [],
+        companyDomain: company.domain,
+        companyWebsite: company.website,
       });
 
       if (!recipientResult.ok) {
