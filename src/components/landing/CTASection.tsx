@@ -51,15 +51,6 @@ export const CTASection: React.FC = () => {
               <ArrowRight className="w-5 h-5 ml-1 transition-transform duration-200 group-hover:translate-x-1" />
             </Button>
           </Link>
-          <Link href="/login">
-            <Button
-              variant="hero-ghost"
-              size="lg"
-              className="text-base font-semibold hover:scale-105 hover:bg-butter-cream/20 hover:border-butter-cream transition-all duration-300"
-            >
-              Explore Demo Mode
-            </Button>
-          </Link>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-text-onDarkSub font-medium">

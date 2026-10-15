@@ -41,9 +41,11 @@ const config: Config = {
         },
       },
       fontFamily: {
+        sans: ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        heading: ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        slab: ["var(--font-roboto-slab)", "Roboto Slab", "serif"],
         serif: ["var(--font-fraunces)", "Georgia", "serif"],
-        heading: ["var(--font-outfit)", "sans-serif"],
-        sans: ["var(--font-jakarta)", "-apple-system", "sans-serif"],
+        jakarta: ["var(--font-jakarta)", "-apple-system", "sans-serif"],
         mono: ["var(--font-space)", "monospace"],
       },
       borderRadius: {

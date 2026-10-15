@@ -38,7 +38,7 @@ const faqs: FAQItem[] = [
   {
     question: "Can I test SponFy without configuring any API keys?",
     answer:
-      "Absolutely. SponFy is built with a zero-configuration Demo Mode. When launched without API keys, it uses a pre-seeded sample campaign across all 12 pipeline stages, allowing you to experience the complete workflow immediately.",
+      "Yes. SponFy comes with built-in sandbox mock connectors and sample campaigns across all pipeline stages, allowing you to experience the complete workflow immediately.",
   },
 ];
 

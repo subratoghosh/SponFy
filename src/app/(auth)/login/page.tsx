@@ -288,18 +288,6 @@ function LoginForm() {
             </Button>
           </form>
 
-          {/* 1-Click Fast Instant Demo Mode */}
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={handleDemoBypass}
-              className="w-full py-2.5 px-4 rounded-xl bg-butter-panel border border-butter-gold/80 hover:bg-butter-warm/80 text-green-dark text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-2xs group cursor-pointer"
-            >
-              <Building2 className="w-3.5 h-3.5 text-green-mid" />
-              <span>Instant Demo Mode (Preloaded 24 Sponsors)</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-            </button>
-          </div>
 
           {/* Switch to Signup */}
           <div className="pt-3 border-t border-green-dark/10 flex flex-col sm:flex-row items-center justify-between text-xs text-text-muted gap-2">

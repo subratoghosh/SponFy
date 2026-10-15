@@ -125,7 +125,13 @@ export const Footer: React.FC = () => {
                 )}
               </div>
             )}
-            <InstallAppButton />
+            <div className="pt-2">
+              <InstallAppButton
+                label="Download Android App"
+                icon="android"
+                variant="android"
+              />
+            </div>
           </div>
 
           {/* Product Links */}

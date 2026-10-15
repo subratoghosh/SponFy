@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Outfit, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import { Fraunces, Outfit, Plus_Jakarta_Sans, Space_Grotesk, Roboto_Slab, Inter } from "next/font/google";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -7,11 +7,26 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const robotoSlab = Roboto_Slab({
+  subsets: ["latin"],
+  variable: "--font-roboto-slab",
+  display: "swap",
+  weight: ["300", "400", "500", "600"],
+});
+
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
   display: "swap",
-  weight: ["800"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
 });
 
 const outfit = Outfit({
@@ -80,7 +95,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${outfit.variable} ${jakarta.variable} ${space.variable}`}
+      className={`${inter.variable} ${robotoSlab.variable} ${fraunces.variable} ${outfit.variable} ${jakarta.variable} ${space.variable}`}
     >
       <body className="min-h-screen bg-butter-bg text-text-main selection:bg-butter-cream selection:text-green-dark">
         <AuthProvider>

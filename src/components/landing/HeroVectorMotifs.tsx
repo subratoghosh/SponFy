@@ -17,7 +17,7 @@ const VectorMotifItem: React.FC<MotifProps> = ({
   return (
     <div
       className={cn(
-        "absolute z-10 select-none vector-motif-interactive transition-all duration-300",
+        "absolute z-0 select-none vector-motif-interactive transition-all duration-300",
         floatClass,
         className
       )}
@@ -38,9 +38,9 @@ const VectorMotifItem: React.FC<MotifProps> = ({
 export const HeroVectorMotifs: React.FC = () => {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-      {/* 1. TOP-LEFT: Ascending Hackathon Rocket */}
+      {/* 1. TOP-LEFT: Ascending Hackathon Rocket - tucked safely in top-left corner */}
       <VectorMotifItem
-        className="top-[10%] left-[2%] lg:left-[5%] hidden md:block opacity-40 hover:opacity-100"
+        className="top-[3%] left-[1%] lg:left-[2%] hidden md:block opacity-35 hover:opacity-90 scale-85"
         floatClass="float-motif-1"
       >
         <svg
@@ -116,7 +116,7 @@ export const HeroVectorMotifs: React.FC = () => {
 
       {/* 2. TOP-RIGHT: Precision AI Fit Target & Crosshairs */}
       <VectorMotifItem
-        className="top-[9%] right-[2%] lg:right-[6%] hidden md:block opacity-40 hover:opacity-100"
+        className="top-[3%] right-[1%] lg:right-[3%] hidden md:block opacity-35 hover:opacity-90 scale-85"
         floatClass="float-motif-2"
       >
         <svg
@@ -174,9 +174,9 @@ export const HeroVectorMotifs: React.FC = () => {
         </svg>
       </VectorMotifItem>
 
-      {/* 3. MID-LEFT: Multi-Source AI Citation Constellation */}
+      {/* 3. TOP-CENTER GAP: Multi-Source AI Citation Constellation (cleared away from left-aligned headline) */}
       <VectorMotifItem
-        className="top-[42%] left-[1%] lg:left-[4%] hidden lg:block opacity-40 hover:opacity-100"
+        className="top-[2%] left-[32%] lg:left-[38%] hidden xl:block opacity-25 hover:opacity-85 scale-85"
         floatClass="float-motif-3"
       >
         <svg
@@ -230,7 +230,7 @@ export const HeroVectorMotifs: React.FC = () => {
 
       {/* 4. MID-RIGHT: Partnership Handshake Crest */}
       <VectorMotifItem
-        className="top-[38%] right-[1%] lg:right-[4%] hidden lg:block opacity-40 hover:opacity-100"
+        className="top-[34%] right-[0.5%] lg:right-[1.5%] hidden lg:block opacity-35 hover:opacity-90 scale-85"
         floatClass="float-motif-4"
       >
         <svg
@@ -293,9 +293,9 @@ export const HeroVectorMotifs: React.FC = () => {
         </svg>
       </VectorMotifItem>
 
-      {/* 5. LOWER-LEFT: Megaphone Outreach Broadcast */}
+      {/* 5. BOTTOM-LEFT: Megaphone Outreach Broadcast (pushed safely to bottom corner) */}
       <VectorMotifItem
-        className="bottom-[20%] left-[2%] lg:left-[4%] hidden sm:block opacity-40 hover:opacity-100"
+        className="bottom-[2%] left-[0.5%] lg:left-[1.5%] hidden sm:block opacity-35 hover:opacity-90 scale-80"
         floatClass="float-motif-2"
       >
         <svg
@@ -360,7 +360,7 @@ export const HeroVectorMotifs: React.FC = () => {
 
       {/* 6. LOWER-RIGHT: Trophy Cup */}
       <VectorMotifItem
-        className="bottom-[18%] right-[2%] lg:right-[5%] hidden sm:block opacity-40 hover:opacity-100"
+        className="bottom-[14%] right-[1%] lg:right-[2%] hidden sm:block opacity-35 hover:opacity-90 scale-85"
         floatClass="float-motif-1"
       >
         <svg
@@ -421,9 +421,9 @@ export const HeroVectorMotifs: React.FC = () => {
         </svg>
       </VectorMotifItem>
 
-      {/* 7. BOTTOM-LEFT: Coin Stack */}
+      {/* 7. BOTTOM-LEFT GUTTER: Coin Stack */}
       <VectorMotifItem
-        className="bottom-[3%] left-[10%] lg:left-[16%] hidden xl:block opacity-35 hover:opacity-100"
+        className="bottom-[2%] left-[18%] lg:left-[22%] hidden xl:block opacity-25 hover:opacity-80 scale-80"
         floatClass="float-motif-3"
       >
         <svg
@@ -450,9 +450,9 @@ export const HeroVectorMotifs: React.FC = () => {
         </svg>
       </VectorMotifItem>
 
-      {/* 8. BOTTOM-RIGHT: Growth Chart */}
+      {/* 8. BOTTOM-RIGHT GUTTER: Growth Chart */}
       <VectorMotifItem
-        className="bottom-[3%] right-[10%] lg:right-[16%] hidden xl:block opacity-35 hover:opacity-100"
+        className="bottom-[2%] right-[8%] lg:right-[12%] hidden xl:block opacity-25 hover:opacity-80 scale-80"
         floatClass="float-motif-4"
       >
         <svg
