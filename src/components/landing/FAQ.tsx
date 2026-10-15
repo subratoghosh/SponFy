@@ -28,7 +28,7 @@ const faqs: FAQItem[] = [
   {
     question: "What happens if a sponsor replies saying 'Not Interested' or asks to be removed?",
     answer:
-      "Our Gemini reply classifier immediately flags the intent as 'Not Interested', stops all scheduled follow-ups, advances the stage to 'Lost', and automatically adds the contact/domain to your Suppression List to ensure they are never emailed again.",
+      "Our intelligent reply classifier immediately flags the intent as 'Not Interested', stops all scheduled follow-ups, advances the stage to 'Lost', and automatically adds the contact/domain to your Suppression List to ensure they are never emailed again.",
   },
   {
     question: "Can I use SponFy for cultural events, sports meets, or organizations?",

@@ -145,5 +145,51 @@ describe("PHASE 8 Regression Prevention: Dashboard, Navigation & Outreach", () =
       expect(draft.status).toBe("draft");
       expect(draft.approvedAt).toBeUndefined();
     });
+
+    it("allows rejecting/deleting an unwanted draft from the queue", async () => {
+      const { deleteDraft, getDraftById } = await import("@/lib/data/repositories/outreach");
+      const draft = await saveDraft({
+        userId: "usr-reject-test",
+        companyId: "comp-to-reject",
+        subject: "Unwanted Draft",
+        body: "To be discarded",
+        status: "draft",
+      });
+
+      const deleted = await deleteDraft(draft.id, "usr-reject-test");
+      expect(deleted).toBe(true);
+
+      const check = await getDraftById(draft.id);
+      expect(check).toBeNull();
+    });
+
+    it("guarantees fast AI client resolution with instant intelligent fallback", async () => {
+      const { getGeminiClient } = await import("@/lib/integrations/factory");
+      const client = getGeminiClient();
+      expect(client).toBeDefined();
+
+      const start = Date.now();
+      const draft = await client.generateOutreachDraft(
+        {
+          id: "comp-speed-test",
+          name: "SpeedCo",
+          industry: "DevTools",
+        } as any,
+        {
+          id: "camp-speed",
+          name: "HackFest",
+          audienceSize: 1000,
+          location: "Bengaluru",
+        } as any,
+        "professional"
+      );
+      const elapsed = Date.now() - start;
+
+      // Draft generation should complete in under 500ms
+      expect(elapsed).toBeLessThan(500);
+      expect(draft.subject).toContain("SpeedCo");
+      expect(draft.body).toContain("SpeedCo");
+      expect(draft.quality.overall).toBeGreaterThanOrEqual(90);
+    });
   });
 });

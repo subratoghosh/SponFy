@@ -98,7 +98,7 @@ export const ApprovalPreview: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-heading font-bold text-base text-green-dark group-hover/reply:text-green-mid transition-colors">
-                      Gemini Reply Intelligence
+                      Real-Time Reply Intelligence
                     </h3>
                     <p className="text-xs text-text-dim">Thread: Orbit Payments Track Sponsorship Counter-Offer</p>
                   </div>

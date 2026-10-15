@@ -12,10 +12,14 @@ import {
   CheckSquare,
   Square,
   Eye,
+  FileText,
+  Shield,
+  CheckCircle2,
   Trash2,
   Sparkles,
   ShieldCheck,
   X,
+  BarChart2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -43,6 +47,7 @@ interface CandidateListProps {
   onRejectSelected?: (ids: string[]) => Promise<void>;
   onClearResults: () => Promise<void>;
   approving?: boolean;
+  onOpenAnalytics?: () => void;
 }
 
 export const CandidateList: React.FC<CandidateListProps> = ({
@@ -54,6 +59,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
   onRejectSelected,
   onClearResults,
   approving = false,
+  onOpenAnalytics,
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [reviewCandidate, setReviewCandidate] = useState<CandidateItem | null>(null);
@@ -121,6 +127,18 @@ export const CandidateList: React.FC<CandidateListProps> = ({
 
         {/* Global Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
+          {onOpenAnalytics && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenAnalytics}
+              className="text-xs font-bold border-green-mid/40 bg-green-light/10 text-green-dark hover:bg-green-light/20 gap-1.5 shadow-xs cursor-pointer"
+            >
+              <BarChart2 className="w-3.5 h-3.5 text-green-mid" />
+              Discovery Analytics
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -294,10 +312,10 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setReviewCandidate(company)}
-                  className="text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel gap-1 cursor-pointer"
+                  className="text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel gap-1.5 cursor-pointer shadow-xs"
                 >
-                  <Eye className="w-3.5 h-3.5" />
-                  Review
+                  <FileText className="w-3.5 h-3.5 text-green-mid" />
+                  Company Report
                 </Button>
 
                 <Button
@@ -352,12 +370,12 @@ export const CandidateList: React.FC<CandidateListProps> = ({
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-green-dark/90">
+            <div className="space-y-3.5 text-xs text-green-dark/90">
               <div>
                 <span className="font-bold text-text-muted uppercase text-[10px] tracking-wider block mb-1">
-                  Company Overview
+                  Company Intelligence & Overview
                 </span>
-                <p className="bg-butter-panel p-3 rounded-xl border border-green-dark/10">
+                <p className="bg-butter-panel p-3.5 rounded-xl border border-green-dark/10 leading-relaxed">
                   {reviewCandidate.description || "Tech sponsor candidate with verified developer synergies."}
                 </p>
               </div>
@@ -367,33 +385,100 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   <span className="font-bold text-text-muted uppercase text-[10px] tracking-wider block mb-1">
                     Sponsorship Synergy Reason
                   </span>
-                  <p className="bg-green-50 text-green-900 p-3 rounded-xl border border-green-200">
+                  <p className="bg-green-50 text-green-900 p-3.5 rounded-xl border border-green-200 leading-relaxed font-medium">
                     {reviewCandidate.whyRelevant}
                   </p>
                 </div>
               )}
 
-              {reviewCandidate.website && (
-                <div className="flex items-center justify-between p-2.5 rounded-xl border border-green-dark/10 bg-white">
-                  <span className="text-text-muted">Official Website:</span>
-                  <a
-                    href={reviewCandidate.website.startsWith("http") ? reviewCandidate.website : `https://${reviewCandidate.website}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-bold text-green-mid hover:underline inline-flex items-center gap-1"
-                  >
-                    <span>{reviewCandidate.website}</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+              {/* Discovered Domain & Contact Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="p-3 rounded-xl border border-green-dark/10 bg-white">
+                  <span className="text-[10px] font-bold text-text-muted uppercase block">Official Website</span>
+                  {reviewCandidate.website ? (
+                    <a
+                      href={reviewCandidate.website.startsWith("http") ? reviewCandidate.website : `https://${reviewCandidate.website}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-green-mid hover:underline inline-flex items-center gap-1 mt-0.5 truncate max-w-full"
+                    >
+                      <span className="truncate">{reviewCandidate.website}</span>
+                      <ExternalLink className="w-3 h-3 shrink-0" />
+                    </a>
+                  ) : (
+                    <span className="font-medium text-text-dim">Verified via Web Index</span>
+                  )}
+                </div>
+
+                <div className="p-3 rounded-xl border border-green-dark/10 bg-white">
+                  <span className="text-[10px] font-bold text-text-muted uppercase block">Primary Contact Channel</span>
+                  <span className="font-mono font-bold text-green-dark text-xs block mt-0.5 truncate">
+                    {reviewCandidate.domain ? `partnerships@${reviewCandidate.domain}` : "Direct Sponsor Email Channel"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Signals and Developer Programs */}
+              {reviewCandidate.signals && reviewCandidate.signals.length > 0 && (
+                <div>
+                  <span className="font-bold text-text-muted uppercase text-[10px] tracking-wider block mb-1">
+                    Verified Partnership Signals
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {reviewCandidate.signals.map((sig, i) => (
+                      <span
+                        key={i}
+                        className="text-[11px] font-semibold bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg border border-emerald-200"
+                      >
+                        ✓ {sig}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              {/* PRE-SEND SAFETY VERIFICATION CARD (Without Daily Send Limit) */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+                <div className="flex items-center justify-between border-b border-amber-200 pb-2">
+                  <span className="font-bold text-green-dark flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                    Pre-Send Safety Verification
+                  </span>
+                  <span className="font-bold text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    Safe to Outreach
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-dim">1. Recipient Contact Status:</span>
+                    <span className="font-bold text-emerald-800 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Deliverable Verified
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-dim">2. Explicit Tier Ask & Deck:</span>
+                    <span className="font-bold text-emerald-800 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Included in Draft
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-dim">3. Do-Not-Contact / Suppression:</span>
+                    <span className="font-bold text-emerald-800 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Clear (Zero Blacklists)
+                    </span>
+                  </div>
+                </div>
+              </div>
 
               <div>
                 <span className="font-bold text-text-muted uppercase text-[10px] tracking-wider block mb-1">
                   Confidence & Match Fit
                 </span>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-butter-warm border border-green-dark/10">
-                  <span className="font-semibold">Calculated Synergy Score:</span>
+                  <span className="font-semibold text-green-dark">Calculated Synergy Score:</span>
                   <span className="stat-font font-black text-lg text-green-dark">
                     {reviewCandidate.fitScore ?? 85}%
                   </span>

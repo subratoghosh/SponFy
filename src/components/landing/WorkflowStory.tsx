@@ -80,35 +80,7 @@ const WORKFLOW_STEPS: WorkflowNode[] = [
 
 export const WorkflowStory: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // Calculate how far through the workflow section the user has scrolled
-      const total = rect.height - windowHeight;
-      if (total <= 0) return;
-      
-      const current = windowHeight - rect.top;
-      const progress = Math.max(0, Math.min(1, current / (rect.height + 200)));
-      setScrollProgress(progress);
-      
-      // Active step based on scroll
-      const stepIndex = Math.min(
-        WORKFLOW_STEPS.length - 1,
-        Math.floor(progress * WORKFLOW_STEPS.length)
-      );
-      setActiveStep(Math.max(0, stepIndex));
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <section
@@ -149,24 +121,24 @@ export const WorkflowStory: React.FC = () => {
                 strokeWidth="3"
                 strokeDasharray="6 6"
               />
-              {/* Animated drawn on-scroll connector */}
+              {/* Highlight line based on activeStep */}
               <path
                 d="M 60 16 C 250 16, 350 16, 540 16 C 730 16, 830 16, 1140 16"
                 stroke="#0C382E"
                 strokeWidth="3"
                 strokeDasharray="1200"
-                strokeDashoffset={1200 * (1 - Math.max(0.05, scrollProgress))}
+                strokeDashoffset={1200 * (1 - (activeStep + 1) / WORKFLOW_STEPS.length)}
                 className="transition-all duration-300"
               />
             </svg>
           </div>
 
-          {/* Mobile & Tablet Vertical Connecting SVG Path */}
+          {/* Mobile & Tablet Vertical Connecting Line */}
           <div className="lg:hidden absolute left-7 sm:left-8 top-8 bottom-8 w-1 pointer-events-none z-0">
             <div className="w-0.5 h-full bg-green-dark/15 border-l-2 border-dashed border-green-dark/20 relative">
               <div
                 className="w-1 bg-green-dark absolute top-0 left-[-1px] transition-all duration-300 rounded-full"
-                style={{ height: `${Math.max(5, scrollProgress * 100)}%` }}
+                style={{ height: `${((activeStep + 1) / WORKFLOW_STEPS.length) * 100}%` }}
               />
             </div>
           </div>

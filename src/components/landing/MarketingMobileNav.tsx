@@ -9,6 +9,7 @@ import {
   Layers,
   Activity,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -26,9 +27,9 @@ import {
 
 const PRIMARY_TABS = [
   { label: "Home", href: "/", icon: Home },
+  { label: "Why Us", href: "/why-us", icon: ShieldCheck },
   { label: "Workflow", href: "/workflow", icon: GitBranch },
   { label: "Showcase", href: "/showcase", icon: Layers },
-  { label: "Intelligence", href: "/intelligence", icon: Activity },
   { label: "App", href: "/app", icon: ArrowRight },
 ];
 

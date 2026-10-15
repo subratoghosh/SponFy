@@ -203,7 +203,7 @@ export function BulkDraftModal({
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5 text-butter-gold" />
-                  <span>Individual Gemini AI</span>
+                  <span>Individual Personalized AI</span>
                 </button>
                 <button
                   type="button"

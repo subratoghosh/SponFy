@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 import { SITE_CONTACT } from "@/lib/config/constants";
@@ -8,7 +8,7 @@ import { SITE_CONTACT } from "@/lib/config/constants";
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
   const hasSocials = Boolean(
-    SITE_CONTACT.instagram || SITE_CONTACT.linkedin || SITE_CONTACT.youtube
+    SITE_CONTACT.instagram || SITE_CONTACT.linkedin || SITE_CONTACT.youtube || SITE_CONTACT.facebook
   );
 
   return (
@@ -100,6 +100,28 @@ export const Footer: React.FC = () => {
                     </svg>
                   </a>
                 )}
+                {SITE_CONTACT.facebook && (
+                  <a
+                    href={SITE_CONTACT.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook"
+                    className="footer-social-btn group"
+                  >
+                    <svg
+                      className="w-5 h-5 transition-transform duration-200 group-hover:scale-105"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect width="24" height="24" rx="5.5" fill="#1877F2" />
+                      <path
+                        d="M14 13.5H16.5L17 10.5H14V9C14 8.2 14.3 7.5 15.5 7.5H17V5.1C16.3 5 15.3 4.9 14.3 4.9C11.8 4.9 10 6.4 10 9.3V10.5H7.5V13.5H10V21H14V13.5Z"
+                        fill="white"
+                      />
+                    </svg>
+                  </a>
+                )}
               </div>
             )}
           </div>
@@ -113,6 +135,11 @@ export const Footer: React.FC = () => {
               <li>
                 <Link href="/workflow" className="footer-link">
                   Workflow Engine
+                </Link>
+              </li>
+              <li>
+                <Link href="/why-us" className="footer-link">
+                  Why SponFy
                 </Link>
               </li>
               <li>
@@ -157,22 +184,38 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contact & Social Links */}
-          <div className="space-y-3">
+          {/* Contact Us & Location */}
+          <div className="space-y-4">
             <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
               Contact
             </h4>
-            {SITE_CONTACT.email && (
-              <div>
-                <a
-                  href={`mailto:${SITE_CONTACT.email}`}
-                  className="footer-link inline-flex items-center gap-2 text-xs sm:text-sm break-all"
-                >
-                  <Mail className="w-4 h-4 shrink-0 text-butter-cream" aria-hidden="true" />
-                  {SITE_CONTACT.email}
-                </a>
-              </div>
-            )}
+
+            <div className="space-y-3 text-xs sm:text-sm">
+              {SITE_CONTACT.email && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-green-mid/30 border border-green-mid/40 flex items-center justify-center shrink-0">
+                    <Mail className="w-3.5 h-3.5 text-butter-cream" aria-hidden="true" />
+                  </div>
+                  <a
+                    href={`mailto:${SITE_CONTACT.email}`}
+                    className="footer-link hover:text-butter-cream transition-colors break-all leading-snug font-medium"
+                  >
+                    {SITE_CONTACT.email}
+                  </a>
+                </div>
+              )}
+
+              {SITE_CONTACT.location && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-green-mid/30 border border-green-mid/40 flex items-center justify-center shrink-0">
+                    <MapPin className="w-3.5 h-3.5 text-butter-cream" aria-hidden="true" />
+                  </div>
+                  <span className="text-text-onDarkSub/90 font-medium leading-snug">
+                    {SITE_CONTACT.location}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

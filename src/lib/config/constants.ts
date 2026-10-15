@@ -5,7 +5,14 @@ export const APP_TAGLINE = "AI Sponsorship Operating System for Campaigns & Even
 export const DEFAULT_DAILY_SEND_CAP = 30;
 
 // Marketing Site Contact & Social Links
-export const SITE_CONTACT = { email: "sponfy.team26@gmail.com", instagram: "https://www.instagram.com/sponfy_team/", linkedin: "", youtube: "" };
+export const SITE_CONTACT = {
+  email: "sponfy.team26@gmail.com",
+  location: "Surat, Gujarat, India",
+  instagram: "https://www.instagram.com/sponfy_team/",
+  youtube: "https://www.youtube.com/@sponfy",
+  facebook: "https://www.facebook.com/sponfy",
+  linkedin: "",
+};
 
 // Central Nav Configuration
 export const NAV_ITEMS = [

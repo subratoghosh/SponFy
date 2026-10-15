@@ -37,7 +37,7 @@ export const SenderHealthCard: React.FC = () => {
         if (bounceRate >= 5) {
           status = "AT_RISK";
           reason = `High bounce rate detected (${bounceRate.toFixed(1)}%). Bulk sending paused.`;
-          recommendedAction = "Verify prospective emails with Hunter/ZeroBounce before dispatch.";
+          recommendedAction = "Verify prospective emails with automated deliverability verification before dispatch.";
         } else if (bounceRate >= 2) {
           status = "WATCH";
           reason = `Moderate bounce rate (${bounceRate.toFixed(1)}%). Elevated scrutiny recommended.`;

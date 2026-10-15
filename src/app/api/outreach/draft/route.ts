@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { runOutreachWorkflow } from "@/lib/workflows/outreach-graph";
 import { getSponsorById, getSponsors } from "@/lib/data/repositories/sponsors";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
-import { saveDraft, getDraftsByCompanyId } from "@/lib/data/repositories/outreach";
+import { saveDraft, getDraftsByCompanyId, deleteDraft, getDraftById } from "@/lib/data/repositories/outreach";
 import { getCustomTemplates, interpolateTemplate } from "@/lib/data/repositories/templates";
 import { Company, Campaign } from "@/types";
 
@@ -300,6 +300,36 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: true, draft: drafts[0] || null });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Failed to load draft" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await auth();
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const draftId = searchParams.get("id");
+    if (!draftId) {
+      return NextResponse.json({ error: "draftId (id) is required" }, { status: 400 });
+    }
+
+    const draft = await getDraftById(draftId);
+    if (!draft) {
+      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    }
+
+    if (draft.status === "sent" || draft.status === "sending") {
+      return NextResponse.json({ error: "Cannot reject a draft that has already been dispatched" }, { status: 400 });
+    }
+
+    await deleteDraft(draftId, userId);
+    return NextResponse.json({ success: true, message: "Draft rejected and deleted successfully" });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to delete draft" }, { status: 500 });
   }
 }
 

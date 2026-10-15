@@ -166,7 +166,7 @@ export function GenerateDraftModal({
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-butter-gold" />
-              <span>Gemini AI Generator</span>
+              <span>AI Pitch Generator</span>
             </button>
             <button
               type="button"
@@ -221,7 +221,7 @@ export function GenerateDraftModal({
                   Hyper-Personalized Generation
                 </span>
                 <p className="text-[11px] text-green-800/80 leading-relaxed">
-                  Gemini analyzes {sponsor.name}&apos;s verified developer programs, tech stack, and audience alignment to craft a high-converting sponsorship pitch.
+                  Our proprietary AI intelligence analyzes {sponsor.name}&apos;s verified developer programs, tech stack, and audience alignment to craft a high-converting sponsorship pitch.
                 </p>
               </div>
             </div>

@@ -184,7 +184,7 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
               <CardTitle className="text-sm font-heading font-bold text-[#0C382E]">
                 AI Reply Intent Mix
               </CardTitle>
-              <p className="text-xs text-[#0C382E]/60">Categorized by Gemini AI</p>
+              <p className="text-xs text-[#0C382E]/60">Categorized by Natural Language AI</p>
             </div>
             <PieIcon className="w-4 h-4 text-[#0C382E]" />
           </CardHeader>

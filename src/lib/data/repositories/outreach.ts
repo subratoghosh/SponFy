@@ -273,6 +273,29 @@ export async function updateDraft(
   return draftsStoreRef.value[idx];
 }
 
+export async function deleteDraft(id: string, userId?: string): Promise<boolean> {
+  if (isDatabaseConfigured()) {
+    try {
+      await prisma.emailDraft.deleteMany({
+        where: {
+          id,
+          ...(userId ? { userId } : {}),
+        },
+      });
+      return true;
+    } catch (err) {
+      console.warn("Prisma deleteDraft failed, falling back to memory store:", err);
+    }
+  }
+
+  const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
+  if (idx !== -1) {
+    draftsStoreRef.value.splice(idx, 1);
+    return true;
+  }
+  return false;
+}
+
 export async function approveDraft(id: string): Promise<EmailDraft | null> {
   const current = await getDraftById(id);
   if (!current) return null;

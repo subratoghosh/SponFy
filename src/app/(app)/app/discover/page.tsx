@@ -9,7 +9,8 @@ import { CSVImportModal } from "@/components/sponsors/CSVImportModal";
 import { Campaign } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, Layers } from "lucide-react";
+import { FileSpreadsheet, Layers, BarChart2 } from "lucide-react";
+import { DiscoveryAnalyticsModal } from "@/components/discover/DiscoveryAnalyticsModal";
 
 export default function DiscoverPage() {
   const { toast } = useToast();
@@ -20,6 +21,7 @@ export default function DiscoverPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [approving, setApproving] = useState(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
 
@@ -251,6 +253,18 @@ export default function DiscoverPage() {
             </div>
           )}
 
+          {results.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAnalyticsOpen(true)}
+              className="font-bold border-green-mid/40 bg-green-light/10 text-green-dark hover:bg-green-light/20 gap-1.5 shadow-xs cursor-pointer"
+            >
+              <BarChart2 className="w-4 h-4 text-green-mid" />
+              Discovery Analytics
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -282,8 +296,16 @@ export default function DiscoverPage() {
           onRejectSelected={handleRejectSelected}
           onClearResults={handleClearResults}
           approving={approving}
+          onOpenAnalytics={() => setIsAnalyticsOpen(true)}
         />
       )}
+
+      {/* Discovery Analytics Modal */}
+      <DiscoveryAnalyticsModal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        candidates={results}
+      />
 
       {/* CSV Import Modal */}
       <CSVImportModal

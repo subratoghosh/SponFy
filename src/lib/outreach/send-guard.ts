@@ -37,7 +37,7 @@ export type GuardFailure = {
 };
 
 export type RecipientResult = { ok: true; recipient: string } | GuardFailure;
-export type GuardResult = { ok: true } | GuardFailure;
+export type GuardResult = { ok: true; warning?: string } | GuardFailure;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -103,6 +103,7 @@ export interface SendGuardInput {
   sentInWindow: number;
   dailyLimit: number;
   now?: Date;
+  allowOverLimit?: boolean;
 }
 
 export function evaluateSend(input: SendGuardInput): GuardResult {
@@ -170,10 +171,18 @@ export function evaluateSend(input: SendGuardInput): GuardResult {
     }
   }
 
-  // 6. Daily send cap (rolling window).
+  // 6. Daily send cap (rolling window)
   const limit = effectiveDailyLimit(input.dailyLimit);
   if (input.sentInWindow >= limit) {
-    return fail(429, "daily_cap_reached", `Daily send cap reached (${input.sentInWindow}/${limit} in the last ${SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS}h). Try again later.`);
+    const warning = `Warning: You have reached your recommended daily limit (${input.sentInWindow}/${limit} sent in the last ${SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS}h). Sending more emails today increases the risk of corporate mail servers routing your outreach to the spam folder or temporarily flagging your sending domain reputation.`;
+    if (input.allowOverLimit) {
+      return { ok: true, warning };
+    }
+    return fail(
+      429,
+      "daily_cap_reached",
+      `Blocked: you have reached your workspace daily limit of ${limit} email(s) in the last ${SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS} hours. Sending further emails increases spam risk.`
+    );
   }
 
   return { ok: true };

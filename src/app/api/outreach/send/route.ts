@@ -31,14 +31,14 @@ export async function POST(req: Request) {
     return createRateLimitResponse(rateLimit);
   }
 
-  let body: { draftId?: string; toEmail?: string };
+  let body: { draftId?: string; toEmail?: string; allowOverLimit?: boolean };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { draftId, toEmail } = body;
+  const { draftId, toEmail, allowOverLimit } = body;
   if (!draftId) {
     return NextResponse.json({ error: "Draft ID required" }, { status: 400 });
   }
@@ -91,6 +91,7 @@ export async function POST(req: Request) {
       priorOutbound: companyMessages.filter((m) => m.direction === "outbound"),
       sentInWindow,
       dailyLimit: profile.dailySendLimit,
+      allowOverLimit: Boolean(allowOverLimit),
     });
     if (!verdict.ok) {
       return NextResponse.json({ error: verdict.error, code: verdict.code }, { status: verdict.status });
@@ -120,7 +121,11 @@ export async function POST(req: Request) {
     try {
       const msg = await recordSentMessage(draft.id, recipient.recipient, sendResult.messageId, sendResult.threadId);
       if (!msg) throw new Error("draft disappeared while recording");
-      return NextResponse.json({ success: true, message: msg });
+      return NextResponse.json({
+        success: true,
+        message: msg,
+        warning: (verdict as any).warning || undefined,
+      });
     } catch (err: any) {
       // The email DID go out. Leave the draft claimed (SENDING) so it can never be re-sent.
       console.error(`Email for draft ${draft.id} was sent but could not be recorded:`, err);

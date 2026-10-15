@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { name: "Workflow", href: "/workflow" },
+  { name: "Why Us", href: "/why-us" },
   { name: "Showcase", href: "/showcase" },
   { name: "Intelligence", href: "/intelligence" },
   { name: "FAQ", href: "/faq" },

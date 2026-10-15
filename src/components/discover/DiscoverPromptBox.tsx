@@ -13,16 +13,13 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
   onSearch,
   loading,
 }) => {
-  const [prompt, setPrompt] = useState(
-    "Find 20 cloud, developer tools and fintech companies with active event and campaign sponsorship budgets"
-  );
-  const [count, setCount] = useState(20);
+  const [prompt, setPrompt] = useState("");
+  const [count, setCount] = useState(15);
 
   const samplePrompts = [
-    { text: "Find 20 cloud, developer tools and fintech companies with active event and campaign sponsorship budgets", count: 20 },
-    { text: "Find top 15 Web3 & AI companies actively sponsoring tech events, conferences, and campaigns", count: 15 },
-    { text: "Find 10 SaaS and enterprise software companies with brand partnership programs", count: 10 },
-    { text: "Find 10 fintech and developer API platforms with active partnership grants", count: 10 },
+    { text: "Find top AI and developer tool companies sponsoring campus hackathons and student developer events", count: 15 },
+    { text: "Find enterprise SaaS platforms and cloud providers with active student developer grants", count: 10 },
+    { text: "Find fintech and web infrastructure brands offering student community partnerships", count: 10 },
   ];
 
   const countOptions = [5, 10, 15, 20, 25];
@@ -101,7 +98,7 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
             onChange={(e) => handlePromptChange(e.target.value)}
             rows={3}
             className="w-full p-4 bg-butter-panel text-green-dark text-sm sm:text-base font-medium rounded-2xl border border-green-dark/20 focus:border-green-dark focus:ring-2 focus:ring-butter-cream/60 outline-none transition-all placeholder:text-text-muted"
-            placeholder="Describe what kind of sponsors you need (e.g. Find 20 cloud and fintech companies...)"
+            placeholder="Describe what kind of sponsors you need for your event or campaign..."
           />
         </div>
 

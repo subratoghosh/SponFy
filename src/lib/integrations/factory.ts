@@ -20,10 +20,16 @@ import {
 } from "./gmail";
 import { IntegrationHealth } from "@/types";
 
+function isValidGeminiApiKey(key?: string): boolean {
+  if (!key) return false;
+  const trimmed = key.trim();
+  return trimmed.startsWith("AIza");
+}
+
 export function getGeminiClient(): IGeminiClient {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (apiKey && apiKey.length > 5 && !apiKey.includes("your-")) {
-    return new RealGeminiClient(apiKey);
+  if (isValidGeminiApiKey(apiKey)) {
+    return new RealGeminiClient(apiKey!);
   }
   return new MockGeminiClient();
 }

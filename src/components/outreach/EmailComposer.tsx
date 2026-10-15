@@ -14,6 +14,7 @@ import {
   Plus,
   Bot,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "next-auth/react";
@@ -29,6 +30,7 @@ interface EmailComposerProps {
   company?: Company;
   onSave: (subject: string, body: string) => void;
   onApprove: () => void;
+  onRejectDraft?: () => void;
   onOpenSendDialog: () => void;
 }
 
@@ -37,6 +39,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
   company,
   onSave,
   onApprove,
+  onRejectDraft,
   onOpenSendDialog,
 }) => {
   const { toast } = useToast();
@@ -135,7 +138,9 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
     }
   };
 
-  const recipientEmail = company?.contacts?.[0]?.email || "contact@company.com";
+  const primaryContact = company?.contacts?.find((c) => c.email) || company?.contacts?.[0];
+  const domain = company?.domain || (company?.website ? company.website.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
+  const recipientEmail = primaryContact?.email || (domain ? `partnerships@${domain}` : "partnerships@sponsor.com");
 
   return (
     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/12 shadow-sm space-y-5">
@@ -178,12 +183,28 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
 
       {/* Recipient Bar */}
       <div className="p-3 bg-butter-panel rounded-xl text-xs flex items-center justify-between border border-green-dark/8">
-        <div>
-          <span className="text-text-muted font-bold mr-2">To:</span>
-          <span className="font-mono font-bold text-green-dark">{company?.name || "Company"} &lt;{recipientEmail}&gt;</span>
+        <div className="flex items-center gap-2 truncate">
+          <span className="text-text-muted font-bold">To:</span>
+          <span className="font-mono font-bold text-green-dark truncate">
+            {primaryContact?.name ? `${primaryContact.name} • ` : ""}
+            <span className="text-green-mid">{company?.name || "Company"}</span>
+            {" "}&lt;{recipientEmail}&gt;
+          </span>
         </div>
-        <span className="text-[10px] font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full">
-          Public Contact
+        <span
+          className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+            primaryContact?.status === "verified"
+              ? "text-emerald-800 bg-emerald-100 border border-emerald-300"
+              : primaryContact?.email
+              ? "text-green-800 bg-green-100"
+              : "text-amber-800 bg-amber-100 border border-amber-300"
+          }`}
+        >
+          {primaryContact?.status === "verified"
+            ? "Verified Contact"
+            : primaryContact?.email
+            ? "Corporate Contact"
+            : "Direct Outreach Address"}
         </span>
       </div>
 
@@ -214,7 +235,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
             }`}
           >
             <Bot className="w-3.5 h-3.5" />
-            <span>AI Pitch (Gemini)</span>
+            <span>AI Pitch Generator</span>
           </button>
 
           {templates.map((tmpl) => (
@@ -265,9 +286,23 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
 
       {/* Action Footer */}
       <div className="pt-4 border-t border-green-dark/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Button variant="glass" size="sm" onClick={handleSave} className="text-xs font-bold">
-          <Save className="w-3.5 h-3.5 mr-1" /> Save Changes
-        </Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button variant="glass" size="sm" onClick={handleSave} className="text-xs font-bold">
+            <Save className="w-3.5 h-3.5 mr-1" /> Save Changes
+          </Button>
+
+          {onRejectDraft && draft.status !== "sent" && draft.status !== "sending" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRejectDraft}
+              className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+              title="Discard and reject this draft"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1 text-rose-500" /> Reject Draft
+            </Button>
+          )}
+        </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
           {draft.status === "draft" && (
