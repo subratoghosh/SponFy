@@ -14,12 +14,14 @@ import {
   Compass,
   Clock,
   BarChart3,
+  Download,
 } from "lucide-react";
 import { getCampaigns } from "@/lib/data/repositories/campaigns";
 import { Campaign } from "@/types";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 import { cn } from "@/lib/utils";
 import { MAIN_NAV_ITEMS } from "@/lib/config/nav";
+import { useInstallPrompt } from "@/lib/hooks/useInstallPrompt";
 
 const MOBILE_DROPDOWN_LABELS = ["Discover", "Follow-ups", "Analytics", "Settings"] as const;
 
@@ -36,6 +38,7 @@ const mobileNavItems = MOBILE_DROPDOWN_LABELS.map(
 
 export const TopBar: React.FC = () => {
   const { data: session } = useSession();
+  const { canInstall, promptInstall } = useInstallPrompt();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [campaignDropdownOpen, setCampaignDropdownOpen] = useState(false);
@@ -303,6 +306,23 @@ export const TopBar: React.FC = () => {
                       Admin
                     </span>
                   </Link>
+                </div>
+              )}
+
+              {/* Optional Install App Item */}
+              {canInstall && (
+                <div className="border-t border-green-dark/10 pt-1.5">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setProfileDropdownOpen(false);
+                      await promptInstall();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-green-dark hover:bg-butter-warm/60 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-green-mid shrink-0" />
+                    <span>Install app</span>
+                  </button>
                 </div>
               )}
 

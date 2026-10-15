@@ -49,7 +49,15 @@ export const metadata: Metadata = {
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
     shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "SponFy",
+    statusBarStyle: "black-translucent",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
   },
   openGraph: {
     title: "SponFy — AI Sponsorship Operating System",
@@ -62,6 +70,7 @@ export const metadata: Metadata = {
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { OfflineScreen } from "@/components/ui/OfflineScreen";
+import { PwaRegister } from "@/components/ui/PwaRegister";
 
 export default function RootLayout({
   children,
@@ -78,6 +87,7 @@ export default function RootLayout({
           {children}
           <SplashScreen />
           <OfflineScreen />
+          <PwaRegister />
         </AuthProvider>
       </body>
     </html>
