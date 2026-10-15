@@ -29,12 +29,15 @@ const DB_TO_DRAFT_STATUS: Record<string, DraftStatus> = {
   FAILED: "failed",
 };
 
-export async function getDrafts(status?: DraftStatus): Promise<EmailDraft[]> {
+export async function getDrafts(status?: DraftStatus, userId?: string): Promise<EmailDraft[]> {
   if (isDatabaseConfigured()) {
     try {
       const dbStatus = status ? DRAFT_STATUS_TO_DB[status] : undefined;
+      const where: any = {};
+      if (dbStatus) where.status = dbStatus;
+      if (userId) where.userId = userId;
       const records = await prisma.emailDraft.findMany({
-        where: dbStatus ? { status: dbStatus } : undefined,
+        where: Object.keys(where).length > 0 ? where : undefined,
         orderBy: { createdAt: "desc" },
       });
       return records.map((r) => ({
@@ -54,10 +57,11 @@ export async function getDrafts(status?: DraftStatus): Promise<EmailDraft[]> {
     }
   }
 
+  let list = draftsStoreRef.value;
   if (status) {
-    return draftsStoreRef.value.filter((d) => d.status === status);
+    list = list.filter((d) => d.status === status);
   }
-  return [...draftsStoreRef.value];
+  return [...list];
 }
 
 export async function getDraftById(id: string): Promise<EmailDraft | null> {
@@ -122,7 +126,7 @@ export async function getDraftByCompanyId(companyId: string): Promise<EmailDraft
 }
 
 export async function saveDraft(
-  draft: Partial<EmailDraft> & { companyId: string; subject: string; body: string }
+  draft: Partial<EmailDraft> & { companyId: string; subject: string; body: string; userId?: string }
 ): Promise<EmailDraft> {
   if (draft.id) {
     const existing = await getDraftById(draft.id);
@@ -132,6 +136,7 @@ export async function saveDraft(
     }
   }
   return createDraft({
+    userId: draft.userId,
     companyId: draft.companyId,
     contactId: draft.contactId,
     subject: draft.subject,
@@ -151,16 +156,19 @@ export async function saveDraft(
 }
 
 export async function createDraft(
-  draft: Omit<EmailDraft, "id" | "createdAt" | "approvedAt">
+  draft: Omit<EmailDraft, "id" | "createdAt" | "approvedAt"> & { userId?: string }
 ): Promise<EmailDraft> {
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      let resolvedUserId = draft.userId;
+      if (!resolvedUserId) {
+        const user = await prisma.user.findFirst();
+        resolvedUserId = user?.id || "usr-demo-lead";
+      }
 
       const created = await prisma.emailDraft.create({
         data: {
-          userId,
+          userId: resolvedUserId,
           companyId: draft.companyId,
           contactId: draft.contactId,
           subject: draft.subject,

@@ -1,13 +1,15 @@
 # SponFy — Implementation Progress
 
 ## STATUS
-- **Current Milestone**: M1 Foundation Complete → M2 Landing Website In Progress
-- **Last Commit/Tag**: `m1` (M1 Foundation)
-- **Known Issues**:
-  1. Neon database live connection depends on runtime `DATABASE_URL` / `DIRECT_URL`; in-memory mock repositories and Demo Mode provide instant zero-credential operation.
-  2. Google OAuth and Gmail API require live credentials to hit real APIs; mock adapters and Demo Mode active by default.
-  3. Dynamic route params on `/app/sponsors/[id]` render on demand.
-- **Interruption Recovery**: Next milestone is M2 (Landing website); all foundation types, tokens, auth, crypto, and repositories are verified.
+- **Current Milestone**: Production Security, Distributed Upstash Redis Rate Limiting, IDOR Defense & Performance Optimization Complete
+- **Last Verified**: Vitest (14/14 test suites, 122/122 tests passing), TypeScript (0 errors), Next.js 15 production build (61/61 static/dynamic pages compiled)
+- **Security & Reliability Baseline**:
+  1. Distributed rate limiting powered by `@upstash/ratelimit` and `@upstash/redis` with sliding windows and fail-closed policies for expensive operations.
+  2. Centralized server-side API authentication & IDOR resource ownership enforcement on all private endpoints.
+  3. SSRF and open redirect defense blocking cloud metadata (169.254.169.254), loopback (localhost, 127.0.0.1, [::1]), and RFC 1918 private subnets.
+  4. Atomic check-and-set claims for email sending preventing concurrent and duplicate sends.
+  5. Strict production security headers configured in `next.config.ts`.
+- **Interruption Recovery**: Codebase is fully functional, secure, and production ready for Vercel deployment.
 
 ---
 

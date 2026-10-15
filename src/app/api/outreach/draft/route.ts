@@ -113,6 +113,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limiting: 10 draft requests/minute/user
+    const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+    const rateLimit = await checkRateLimit("draft", userId);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit);
+    }
+
+    const { verifyCompanyOwnership } = await import("@/lib/security/auth-guard");
+
     const body = await req.json();
     const { companyId, companyIds, campaignId, tone = "professional", templateId, regenerate } = body;
 
@@ -192,6 +201,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
+    // IDOR Ownership Check
+    const owned = await verifyCompanyOwnership(companyId, userId);
+    if (!owned) {
+      return NextResponse.json(
+        { error: "Forbidden. You do not own this company.", code: "FORBIDDEN" },
+        { status: 403 }
+      );
+    }
+
     // Enforce: only approved sponsors can have drafts
     if (company.stage === "Discovered" && (company as any).sponsorApproved === false) {
       return NextResponse.json(
@@ -240,11 +258,24 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const companyId = searchParams.get("companyId");
     if (!companyId) {
       return NextResponse.json({ error: "companyId required" }, { status: 400 });
     }
+
+    const { verifyCompanyOwnership } = await import("@/lib/security/auth-guard");
+    const owned = await verifyCompanyOwnership(companyId, userId);
+    if (!owned) {
+      return NextResponse.json({ error: "Forbidden. You do not own this company." }, { status: 403 });
+    }
+
     const drafts = await getDraftsByCompanyId(companyId);
     return NextResponse.json({ success: true, draft: drafts[0] || null });
   } catch (err: any) {

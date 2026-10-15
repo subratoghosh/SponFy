@@ -25,8 +25,8 @@ export async function GET(req: Request) {
     }
 
     const [allDrafts, allSponsors, profile] = await Promise.all([
-      getDrafts(),
-      getSponsors(),
+      getDrafts(undefined, userId),
+      getSponsors(undefined, userId),
       getUserProfile(),
     ]);
 
@@ -132,6 +132,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Apply send rate limit
+    const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+    const rateLimit = await checkRateLimit("send", userId);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit);
+    }
+
     let targetDraftIds: string[] = [];
     try {
       const body = await req.json();
@@ -143,8 +150,8 @@ export async function POST(req: Request) {
     }
 
     const [allDrafts, allSponsors, profile] = await Promise.all([
-      getDrafts(),
-      getSponsors(),
+      getDrafts(undefined, userId),
+      getSponsors(undefined, userId),
       getUserProfile(),
     ]);
 

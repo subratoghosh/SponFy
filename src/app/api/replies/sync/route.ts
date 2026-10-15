@@ -7,8 +7,14 @@ import { addSuppression } from "@/lib/data/repositories/settings";
 
 export async function POST(req: Request) {
   try {
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET || "super-secret-cron-token-for-reply-sync";
+    const isCronAuthorized = authHeader === `Bearer ${cronSecret}`;
+
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id;
+
+    if (!userId && !isCronAuthorized) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

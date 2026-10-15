@@ -1,10 +1,12 @@
 import { HunterVerifier } from "./hunter";
 import { ZeroBounceVerifier } from "./zerobounce";
 import { VerificationResult, NormalizedVerificationStatus } from "./types";
+import { getRedisClient } from "@/lib/security/redis";
 
 // In-memory cache for fast verification lookup (prevents duplicate API spending)
 const memoryCache = new Map<string, { result: VerificationResult; cachedAt: number }>();
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days cache freshness
+const REDIS_TTL_SEC = 7 * 24 * 60 * 60; // 7 days in Redis
 
 export class TieredVerificationService {
   private hunter: HunterVerifier;
@@ -25,15 +27,16 @@ export class TieredVerificationService {
 
   /**
    * Verify an email using intelligent tiered verification:
-   * 1. Check local cache (within TTL)
+   * 1. Check local memory cache and distributed Redis cache (within TTL)
    * 2. Call Layer 1: Hunter
    * 3. If Layer 1 is ACCEPT_ALL or UNKNOWN, or if high-risk, call Layer 2: ZeroBounce
    * 4. Cache and return normalized verdict
    */
   async verify(email: string, forceFresh = false): Promise<VerificationResult> {
     const cleanEmail = email.trim().toLowerCase();
+    const redis = getRedisClient();
 
-    // 1. Check cache
+    // 1. Check local memory cache
     if (!forceFresh) {
       const cached = memoryCache.get(cleanEmail);
       if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
@@ -42,7 +45,31 @@ export class TieredVerificationService {
           provider: "cache",
         };
       }
+
+      // Check distributed Upstash Redis cache
+      if (redis) {
+        try {
+          const redisCached = await redis.get<VerificationResult | string>(`verif:${cleanEmail}`);
+          if (redisCached) {
+            const parsed = typeof redisCached === "string" ? JSON.parse(redisCached) : redisCached;
+            memoryCache.set(cleanEmail, { result: parsed, cachedAt: Date.now() });
+            return {
+              ...parsed,
+              provider: "cache",
+            };
+          }
+        } catch {
+          // Gracefully continue to fresh check on Redis read error
+        }
+      }
     }
+
+    const persistCache = (res: VerificationResult) => {
+      memoryCache.set(cleanEmail, { result: res, cachedAt: Date.now() });
+      if (redis) {
+        redis.set(`verif:${cleanEmail}`, JSON.stringify(res), { ex: REDIS_TTL_SEC }).catch(() => {});
+      }
+    };
 
     // Check basic email syntax first before spending any credits
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,7 +85,7 @@ export class TieredVerificationService {
         recommendation: "block",
         checkedAt: new Date().toISOString(),
       };
-      memoryCache.set(cleanEmail, { result, cachedAt: Date.now() });
+      persistCache(result);
       return result;
     }
 
@@ -69,7 +96,7 @@ export class TieredVerificationService {
     } else if (this.zeroBounce.isConfigured()) {
       // Fallback directly to ZeroBounce if only ZeroBounce is configured
       primaryResult = await this.zeroBounce.verifyEmail(cleanEmail);
-      memoryCache.set(cleanEmail, { result: primaryResult, cachedAt: Date.now() });
+      persistCache(primaryResult);
       return primaryResult;
     } else {
       // Neither API configured: return graceful UNAVAILABLE (do not crash or fake VALID)
@@ -126,7 +153,7 @@ export class TieredVerificationService {
     }
 
     // Cache final verdict
-    memoryCache.set(cleanEmail, { result: primaryResult, cachedAt: Date.now() });
+    persistCache(primaryResult);
     return primaryResult;
   }
 

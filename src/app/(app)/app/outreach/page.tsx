@@ -7,13 +7,23 @@ import { DraftQueueList } from "@/components/outreach/DraftQueueList";
 import { EmailComposer } from "@/components/outreach/EmailComposer";
 import { QualityScorePanel } from "@/components/outreach/QualityScorePanel";
 import { SafetyChecklist } from "@/components/outreach/SafetyChecklist";
-import { SendConfirmationDialog } from "@/components/outreach/SendConfirmationDialog";
-import { BulkSendModal } from "@/components/outreach/BulkSendModal";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+
+const SendConfirmationDialog = dynamic(
+  () => import("@/components/outreach/SendConfirmationDialog").then((m) => m.SendConfirmationDialog),
+  { ssr: false }
+);
+
+const BulkSendModal = dynamic(
+  () => import("@/components/outreach/BulkSendModal").then((m) => m.BulkSendModal),
+  { ssr: false }
+);
 import { useToast } from "@/components/ui/toast";
 import { Send, SendHorizontal, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OutreachSkeleton } from "@/components/skeletons/OutreachSkeleton";
+import { useOutreachData } from "@/lib/hooks/useOutreachData";
 
 function OutreachContent() {
   const { toast } = useToast();
@@ -21,9 +31,7 @@ function OutreachContent() {
   const urlDraftId = searchParams.get("draftId");
   const urlCompanyId = searchParams.get("companyId");
 
-  const [drafts, setDrafts] = useState<EmailDraft[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { drafts, companies, loading, refetch: loadData } = useOutreachData();
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -32,66 +40,28 @@ function OutreachContent() {
   const [selectedDraftIds, setSelectedDraftIds] = useState<string[]>([]);
   const [approvingBulk, setApprovingBulk] = useState(false);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/outreach/state", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load outreach data");
-      let allDrafts: EmailDraft[] = data.drafts || [];
-      const allCompanies: Company[] = data.companies || [];
-      setDrafts(allDrafts);
-      setCompanies(allCompanies);
-
-      // Resolve selected draft from URL params or default
-      if (urlDraftId && allDrafts.some((d) => d.id === urlDraftId)) {
-        setSelectedDraftId(urlDraftId);
-      } else if (urlCompanyId) {
-        const existingDraft = allDrafts.find((d) => d.companyId === urlCompanyId);
-        if (existingDraft) {
-          setSelectedDraftId(existingDraft.id);
-        } else {
-          // If no draft exists for this company, check if the company is in allCompanies (approved sponsor)
-          const targetCompany = allCompanies.find((c) => c.id === urlCompanyId);
-          if (targetCompany) {
-            try {
-              const draftRes = await fetch("/api/outreach/draft", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ companyId: urlCompanyId }),
-              });
-              const draftData = await draftRes.json();
-              if (draftData.success && draftData.draft) {
-                allDrafts = [draftData.draft, ...allDrafts];
-                setDrafts(allDrafts);
-                setSelectedDraftId(draftData.draft.id);
-              }
-            } catch (e) {
-              console.warn("Failed auto-generating draft for company:", e);
-              if (allDrafts.length > 0) setSelectedDraftId(allDrafts[0].id);
-            }
-          } else if (allDrafts.length > 0) {
-            setSelectedDraftId(allDrafts[0].id);
-          }
-        }
-      } else {
-        setSelectedDraftId((prev) => prev || (allDrafts.length > 0 ? allDrafts[0].id : null));
-      }
-    } catch (err: any) {
-      toast(err.message || "Failed to load outreach data", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [toast, urlDraftId, urlCompanyId]);
-
+  // Sync selected draft when drafts load or URL changes
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (drafts.length === 0) return;
 
-  const activeDraft = drafts.find((d) => d.id === selectedDraftId) || drafts[0];
-  const activeCompany = companies.find((c) => c.id === activeDraft?.companyId);
+    if (urlDraftId && drafts.some((d: EmailDraft) => d.id === urlDraftId)) {
+      setSelectedDraftId(urlDraftId);
+    } else if (urlCompanyId) {
+      const existingDraft = drafts.find((d: EmailDraft) => d.companyId === urlCompanyId);
+      if (existingDraft) {
+        setSelectedDraftId(existingDraft.id);
+      } else if (!selectedDraftId) {
+        setSelectedDraftId(drafts[0].id);
+      }
+    } else if (!selectedDraftId) {
+      setSelectedDraftId(drafts[0].id);
+    }
+  }, [drafts, urlDraftId, urlCompanyId, selectedDraftId]);
 
-  const approvedDraftsCount = drafts.filter((d) => d.status === "approved").length;
+  const activeDraft = drafts.find((d: EmailDraft) => d.id === selectedDraftId) || drafts[0];
+  const activeCompany = companies.find((c: Company) => c.id === activeDraft?.companyId);
+
+  const approvedDraftsCount = drafts.filter((d: EmailDraft) => d.status === "approved").length;
 
   const handleToggleDraftSelect = (id: string) => {
     setSelectedDraftIds((prev) =>
@@ -101,8 +71,8 @@ function OutreachContent() {
 
   const handleSelectAllEligible = () => {
     const eligible = drafts
-      .filter((d) => d.status === "draft" && !d.needsAttention)
-      .map((d) => d.id);
+      .filter((d: EmailDraft) => d.status === "draft" && !d.needsAttention)
+      .map((d: EmailDraft) => d.id);
     setSelectedDraftIds(eligible);
   };
 

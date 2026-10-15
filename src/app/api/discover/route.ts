@@ -8,6 +8,7 @@ import { normalizeName, normalizeDomain } from "@/lib/outreach/duplicates";
 import { FALLBACK_SPONSOR_CATALOG, DiscoveryCandidate } from "@/lib/discovery/catalog";
 import { DEMO_CAMPAIGN } from "@/lib/data/seed-data";
 import { Campaign } from "@/types";
+import { getRedisClient } from "@/lib/security/redis";
 
 export const runtime = "nodejs";
 
@@ -52,13 +53,14 @@ async function fetchLiveWebIntelligence(
 
   const tasks: Promise<any>[] = [];
 
-  // 1. Tavily Live Web Search
+  // 1. Tavily Live Web Search (Bounded timeout of 6s)
   if (tavilyKey && tavilyKey.length > 5) {
     for (const q of queries) {
       tasks.push(
         fetch("https://api.tavily.com/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(6000),
           body: JSON.stringify({
             api_key: tavilyKey,
             query: q,
@@ -87,7 +89,7 @@ async function fetchLiveWebIntelligence(
     }
   }
 
-  // 2. Firecrawl Live Web Search
+  // 2. Firecrawl Live Web Search (Bounded timeout of 6s)
   if (firecrawlKey && firecrawlKey.startsWith("fc-")) {
     tasks.push(
       fetch("https://api.firecrawl.dev/v1/search", {
@@ -96,6 +98,7 @@ async function fetchLiveWebIntelligence(
           Authorization: `Bearer ${firecrawlKey}`,
           "Content-Type": "application/json",
         },
+        signal: AbortSignal.timeout(6000),
         body: JSON.stringify({
           query: queries[0],
           limit: 6,
@@ -138,7 +141,18 @@ export async function POST(req: Request) {
     } catch {
       // outside Next.js request context or unauthenticated
     }
-    const userId = session?.user?.id || "usr-demo-lead";
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized. Please sign in to discover sponsors." }, { status: 401 });
+    }
+
+    // Rate limiting: 5 requests/minute/user
+    const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+    const rateLimit = await checkRateLimit("discover", userId);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit);
+    }
+
     const body = await req.json();
     const { campaignId, prompt = "", targetCount = 5 } = body;
 
@@ -237,6 +251,25 @@ export async function POST(req: Request) {
     const finalTargetCount = extractedCount && extractedCount >= 1 && extractedCount <= 30
       ? extractedCount
       : Math.min(Math.max(Number(targetCount) || 5, 1), 30);
+
+    // Check distributed Redis cache for identical prompt and campaign to save external API costs
+    const redis = getRedisClient();
+    const promptNorm = (prompt || "").trim().toLowerCase();
+    const redisKey = `disc:${userId}:${campaign.id}:${promptNorm}:${finalTargetCount}`;
+    if (redis) {
+      try {
+        const cached = await redis.get<any>(redisKey);
+        if (cached) {
+          const parsed = typeof cached === "string" ? JSON.parse(cached) : cached;
+          return NextResponse.json({
+            ...parsed,
+            fromCache: true,
+          });
+        }
+      } catch {
+        // gracefully fall back to fresh live search
+      }
+    }
 
     let candidates: DiscoveryCandidate[] = [];
 
@@ -422,14 +455,20 @@ Return ONLY a valid JSON array:
     // 7. Save discovered candidates separately from approved sponsor records
     const saved = await saveDiscoveryResults(userId, campaign.id, finalCandidates, prompt);
 
-    return NextResponse.json({
+    const payload = {
       success: true,
       count: saved.length,
       candidates: saved,
       campaignId: campaign.id,
       campaignName: campaign.name,
       existingTotal: existing.length,
-    });
+    };
+
+    if (redis) {
+      redis.set(redisKey, JSON.stringify(payload), { ex: 24 * 3600 }).catch(() => {});
+    }
+
+    return NextResponse.json(payload);
   } catch (err: any) {
     console.error("Discovery API route error:", err);
     return NextResponse.json({ error: err.message || "Discovery failed" }, { status: 500 });

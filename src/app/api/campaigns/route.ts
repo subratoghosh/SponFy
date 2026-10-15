@@ -21,6 +21,20 @@ export async function GET(request: NextRequest) {
 
     const records = await prisma.campaign.findMany({
       where,
+      select: {
+        id: true,
+        name: true,
+        eventType: true,
+        audienceSize: true,
+        location: true,
+        targetAmount: true,
+        preferredIndustries: true,
+        tiers: true,
+        deckUrl: true,
+        description: true,
+        archived: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 

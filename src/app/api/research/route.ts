@@ -2,14 +2,50 @@ import { NextResponse } from "next/server";
 import { runResearchWorkflow } from "@/lib/workflows/research-graph";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
 import { getSponsorById, updateSponsor } from "@/lib/data/repositories/sponsors";
+import { requireAuth, verifyCompanyOwnership } from "@/lib/security/auth-guard";
+import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limit";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  // 1. Server-side authentication
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
+
+  // 2. Rate limiting (relevance / research quota)
+  const rateLimit = await checkRateLimit("relevance", userId);
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
   try {
-    const { companyId, campaignId } = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const { companyId, campaignId } = body || {};
+    if (!companyId) {
+      return NextResponse.json({ error: "companyId is required" }, { status: 400 });
+    }
 
     const company = await getSponsorById(companyId);
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    // 3. IDOR Resource Ownership Check
+    const owned = await verifyCompanyOwnership(companyId, userId);
+    if (!owned) {
+      return NextResponse.json(
+        { error: "Forbidden. You do not own this company.", code: "FORBIDDEN" },
+        { status: 403 }
+      );
     }
 
     const campaign = await getCampaignById(campaignId || company.campaignId);
@@ -40,6 +76,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, company: updated });
   } catch (err: any) {
+    console.error("[API research error]:", err);
     return NextResponse.json({ error: err.message || "Research failed" }, { status: 500 });
   }
 }

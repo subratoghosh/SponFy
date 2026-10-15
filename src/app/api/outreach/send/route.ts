@@ -12,8 +12,25 @@ import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
 import { executeApprovedSend } from "@/lib/workflows/outreach-graph";
 import { resolveRecipient, evaluateSend } from "@/lib/outreach/send-guard";
 import { SYSTEM_LIMITS } from "@/lib/config/limits";
+import { requireAuth, verifyCompanyOwnership } from "@/lib/security/auth-guard";
+import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limit";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  // 1. Server-side authentication
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
+
+  // 2. Strict rate limit on email sending (10 requests/minute/user)
+  const rateLimit = await checkRateLimit("send", userId);
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
   let body: { draftId?: string; toEmail?: string };
   try {
     body = await req.json();
@@ -35,6 +52,15 @@ export async function POST(req: Request) {
     const company = await getSponsorById(draft.companyId);
     if (!company) {
       return NextResponse.json({ error: "Company not found for this draft" }, { status: 404 });
+    }
+
+    // 3. IDOR Resource Ownership Check: ensure company belongs to authenticated user
+    const ownedCompany = await verifyCompanyOwnership(company.id, userId);
+    if (!ownedCompany) {
+      return NextResponse.json(
+        { error: "Forbidden. You do not own the company associated with this draft.", code: "FORBIDDEN" },
+        { status: 403 }
+      );
     }
 
     // Recipient always comes from the stored contact; the client's value must match it.
@@ -70,7 +96,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: verdict.error, code: verdict.code }, { status: verdict.status });
     }
 
-    // Atomically claim the draft so a double click or a teammate cannot send it twice.
+    // Atomically claim the draft so a double click or a concurrent request cannot send it twice.
     const claimed = await claimDraftForSending(draft.id);
     if (!claimed) {
       return NextResponse.json(
@@ -81,7 +107,7 @@ export async function POST(req: Request) {
 
     let sendResult: { messageId: string; threadId: string };
     try {
-      sendResult = await executeApprovedSend(draft, recipient.recipient, draft.userId);
+      sendResult = await executeApprovedSend(draft, recipient.recipient, userId);
     } catch (err: any) {
       // Nothing went out: give the approval back so the organizer can retry.
       await releaseDraftClaim(draft.id);
@@ -107,6 +133,7 @@ export async function POST(req: Request) {
       );
     }
   } catch (err: any) {
+    console.error("[outreach/send error]:", err);
     return NextResponse.json({ error: err?.message || "Send failed" }, { status: 500 });
   }
 }

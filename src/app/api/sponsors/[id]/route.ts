@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { DEMO_COMPANIES } from "@/lib/data/seed-data";
+import { requireAuth, verifyCompanyOwnership } from "@/lib/security/auth-guard";
+import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limit";
 
 const STAGE_MAP: Record<string, string> = {
   Discovered: "DISCOVERED",
@@ -39,6 +40,19 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // 1. Server-side authentication
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
+
+  // 2. Read rate limiting
+  const rateLimit = await checkRateLimit("read", userId);
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ success: false, error: "Missing ID" }, { status: 400 });
@@ -46,8 +60,9 @@ export async function GET(
 
   if (isDatabaseConfigured()) {
     try {
-      const c = await prisma.company.findUnique({
-        where: { id },
+      // 3. IDOR Protection: Query company scoped to the authenticated user
+      const c = await prisma.company.findFirst({
+        where: { id, userId },
         include: {
           contacts: true,
           report: true,
@@ -98,13 +113,16 @@ export async function GET(
         };
 
         return NextResponse.json({ success: true, data });
+      } else {
+        return NextResponse.json({ success: false, error: "Sponsor not found or unauthorized" }, { status: 404 });
       }
     } catch (err: any) {
       console.error("GET /api/sponsors/[id] error:", err);
+      return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
     }
   }
 
-  // Fallback to seed demo list if database has no record
+  // Fallback to seed demo list if database is not configured
   const demoFound = DEMO_COMPANIES.find((d) => d.id === id);
   if (demoFound) {
     return NextResponse.json({ success: true, data: demoFound });
@@ -117,6 +135,13 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // 1. Server-side authentication
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
+
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ success: false, error: "Missing ID" }, { status: 400 });
@@ -124,14 +149,23 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const { stage, pipelineValue, securedFunds } = body;
+    const { stage, pipelineValue } = body;
 
     if (isDatabaseConfigured()) {
+      // 2. IDOR Protection: Verify ownership before update
+      const owned = await verifyCompanyOwnership(id, userId);
+      if (!owned) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden. You do not own this sponsor company.", code: "FORBIDDEN" },
+          { status: 403 }
+        );
+      }
+
       const updateData: any = {};
       if (stage) {
         updateData.stage = (STAGE_MAP as any)[stage] || stage.toUpperCase().replace(/\s+/g, "_");
       }
-      if (typeof pipelineValue === "number") {
+      if (typeof pipelineValue === "number" && pipelineValue >= 0 && pipelineValue <= 100000000) {
         updateData.pipelineValue = pipelineValue;
       }
 
@@ -147,7 +181,7 @@ export async function PATCH(
     return NextResponse.json({ success: true, data: { id, ...body } });
   } catch (err: any) {
     console.error("PATCH /api/sponsors/[id] error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to update sponsor" }, { status: 500 });
   }
 }
 
@@ -155,16 +189,26 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // 1. Server-side authentication
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
+
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ success: false, error: "Missing ID" }, { status: 400 });
   }
 
   try {
-    const session = await auth();
-    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    // 2. IDOR Protection: Verify ownership before delete
+    const owned = await verifyCompanyOwnership(id, userId);
+    if (!owned) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden. You do not own this sponsor company.", code: "FORBIDDEN" },
+        { status: 403 }
+      );
     }
 
     const { removeSponsor } = await import("@/lib/data/repositories/sponsors");
@@ -173,7 +217,6 @@ export async function DELETE(
     return NextResponse.json({ success: true, removed: ok, id });
   } catch (err: any) {
     console.error("DELETE /api/sponsors/[id] error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to delete sponsor" }, { status: 500 });
   }
 }
-
