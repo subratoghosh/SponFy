@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { Mail } from "lucide-react";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 import { SITE_CONTACT } from "@/lib/config/constants";
@@ -22,76 +23,6 @@ export const Footer: React.FC = () => {
             <p className="text-xs sm:text-sm text-text-onDarkSub/80 leading-relaxed">
               The AI sponsorship operating system for campaigns, conferences, and organizations.
             </p>
-          </div>
-
-          {/* Product Links */}
-          <div className="space-y-3">
-            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
-              Product
-            </h4>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href="/workflow" className="footer-link">
-                  Workflow Engine
-                </Link>
-              </li>
-              <li>
-                <Link href="/showcase" className="footer-link">
-                  Sponsor Dossiers
-                </Link>
-              </li>
-              <li>
-                <Link href="/intelligence" className="footer-link">
-                  Reply Intelligence
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Safety & Ethics */}
-          <div className="space-y-3">
-            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
-              Safety & Ethics
-            </h4>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href="/privacy" className="footer-link">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="footer-link">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="footer-link">
-                  Human Approval Gate
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="footer-link">
-                  Gmail OAuth Security
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact & Social Links */}
-          <div className="space-y-3">
-            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
-              Contact
-            </h4>
-            {SITE_CONTACT.email && (
-              <div>
-                <a
-                  href={`mailto:${SITE_CONTACT.email}`}
-                  className="footer-link text-xs sm:text-sm"
-                >
-                  {SITE_CONTACT.email}
-                </a>
-              </div>
-            )}
             {hasSocials && (
               <div className="flex items-center gap-3 pt-1">
                 {SITE_CONTACT.instagram && (
@@ -169,6 +100,77 @@ export const Footer: React.FC = () => {
                     </svg>
                   </a>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Product Links */}
+          <div className="space-y-3">
+            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
+              Product
+            </h4>
+            <ul className="space-y-2 text-xs sm:text-sm">
+              <li>
+                <Link href="/workflow" className="footer-link">
+                  Workflow Engine
+                </Link>
+              </li>
+              <li>
+                <Link href="/showcase" className="footer-link">
+                  Sponsor Dossiers
+                </Link>
+              </li>
+              <li>
+                <Link href="/intelligence" className="footer-link">
+                  Reply Intelligence
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Safety & Ethics */}
+          <div className="space-y-3">
+            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
+              Safety & Ethics
+            </h4>
+            <ul className="space-y-2 text-xs sm:text-sm">
+              <li>
+                <Link href="/privacy" className="footer-link">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="footer-link">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="footer-link">
+                  Human Approval Gate
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="footer-link">
+                  Gmail OAuth Security
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact & Social Links */}
+          <div className="space-y-3">
+            <h4 className="font-heading font-bold text-sm text-butter-cream uppercase tracking-wider">
+              Contact
+            </h4>
+            {SITE_CONTACT.email && (
+              <div>
+                <a
+                  href={`mailto:${SITE_CONTACT.email}`}
+                  className="footer-link inline-flex items-center gap-2 text-xs sm:text-sm break-all"
+                >
+                  <Mail className="w-4 h-4 shrink-0 text-butter-cream" aria-hidden="true" />
+                  {SITE_CONTACT.email}
+                </a>
               </div>
             )}
           </div>
