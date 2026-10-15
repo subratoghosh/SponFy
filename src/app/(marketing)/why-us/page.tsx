@@ -4,7 +4,7 @@ import {
   ShieldCheck,
   Zap,
   CheckCircle2,
-  Sparkles,
+  Target,
   ArrowRight,
   TrendingUp,
   Inbox,
@@ -47,7 +47,7 @@ export default function WhyUsPage() {
       ],
     },
     {
-      icon: Sparkles,
+      icon: Target,
       title: "Hyper-Personalized Pitch Synthesis",
       subtitle: "Every company receives a tailored, context-aware proposal",
       description:

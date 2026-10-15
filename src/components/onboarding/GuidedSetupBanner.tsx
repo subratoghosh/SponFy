@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, ArrowRight, X, CheckCircle2, ShieldCheck, Mail, AlertCircle } from "lucide-react";
+import { Compass, ArrowRight, X, CheckCircle2, ShieldCheck, Mail, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 interface GuidedStep {
@@ -76,7 +76,7 @@ export const GuidedSetupBanner: React.FC = () => {
     <div className="rounded-2xl border border-green-dark/15 bg-gradient-to-r from-butter-warm to-white p-3.5 sm:p-4 shadow-xs flex items-center justify-between gap-4 animate-fade-in">
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-8 h-8 rounded-xl bg-green-light flex items-center justify-center text-green-dark shrink-0">
-          <Sparkles className="w-4 h-4 text-green-dark" />
+          <Compass className="w-4 h-4 text-green-dark" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">

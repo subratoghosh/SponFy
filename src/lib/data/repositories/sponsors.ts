@@ -465,3 +465,37 @@ export async function removeSponsor(companyId: string): Promise<boolean> {
   return false;
 }
 
+export async function removeSponsors(companyIds: string[], userId?: string): Promise<number> {
+  if (!companyIds || companyIds.length === 0) return 0;
+
+  const { deleteDraftsByCompanyId } = await import("./outreach");
+  for (const id of companyIds) {
+    try {
+      await deleteDraftsByCompanyId(id);
+    } catch {
+      // Continue deleting remaining
+    }
+  }
+
+  let dbCount = 0;
+  if (isDatabaseConfigured()) {
+    try {
+      const res = await prisma.company.deleteMany({
+        where: {
+          id: { in: companyIds },
+          ...(userId ? { userId } : {}),
+        },
+      });
+      dbCount = res.count;
+    } catch (err) {
+      console.warn("Prisma removeSponsors failed, falling back to memory store:", err);
+    }
+  }
+
+  const initialLen = sponsorsStoreRef.value.length;
+  sponsorsStoreRef.value = sponsorsStoreRef.value.filter((c) => !companyIds.includes(c.id));
+  const memoryCount = initialLen - sponsorsStoreRef.value.length;
+
+  return Math.max(dbCount, memoryCount);
+}
+

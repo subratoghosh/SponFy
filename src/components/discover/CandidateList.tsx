@@ -16,7 +16,6 @@ import {
   Shield,
   CheckCircle2,
   Trash2,
-  Sparkles,
   ShieldCheck,
   X,
   BarChart2,

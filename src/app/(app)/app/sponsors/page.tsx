@@ -8,7 +8,7 @@ import { SponsorTableView } from "@/components/sponsors/SponsorTableView";
 import { SponsorFilters } from "@/components/sponsors/SponsorFilters";
 import { CSVImportModal } from "@/components/sponsors/CSVImportModal";
 import { useToast } from "@/components/ui/toast";
-import { Building2, Compass, FileSpreadsheet, Plus, Mail, CheckSquare, Square } from "lucide-react";
+import { Building2, Compass, FileSpreadsheet, Plus, Mail, CheckSquare, Square, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
@@ -34,10 +34,12 @@ export default function SponsorsPipelinePage() {
   const [sponsorToRemove, setSponsorToRemove] = useState<Company | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  // Bulk Selection and Direct Draft State
+  // Bulk Selection and Direct Draft & Delete State
   const [selectedSponsorIds, setSelectedSponsorIds] = useState<string[]>([]);
   const [draftModalSponsor, setDraftModalSponsor] = useState<Company | null>(null);
   const [isBulkDraftModalOpen, setIsBulkDraftModalOpen] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   // Load user active campaign for draft context
   const { data: campaignsData } = useSWR(
@@ -59,6 +61,7 @@ export default function SponsorsPipelinePage() {
     refetch,
     updateStage,
     removeSponsor,
+    removeSelectedSponsors,
   } = useSponsorsData({
     search: debouncedSearch,
     industry: selectedIndustry,
@@ -100,6 +103,20 @@ export default function SponsorsPipelinePage() {
       setSponsorToRemove(null);
     } finally {
       setRemoving(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedSponsorIds.length === 0) return;
+    setIsDeletingBulk(true);
+    try {
+      const success = await removeSelectedSponsors(selectedSponsorIds);
+      if (success) {
+        setSelectedSponsorIds([]);
+        setShowBulkDeleteConfirm(false);
+      }
+    } finally {
+      setIsDeletingBulk(false);
     }
   };
 
@@ -205,11 +222,22 @@ export default function SponsorsPipelinePage() {
               >
                 Clear
               </button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                <span>Delete Selected ({selectedSponsorIds.length})</span>
+              </Button>
+
               <Button
                 variant="butter"
                 size="sm"
                 onClick={() => setIsBulkDraftModalOpen(true)}
-                className="text-xs font-black gap-1.5 shadow-xs"
+                className="text-xs font-black gap-1.5 shadow-xs cursor-pointer"
               >
                 <Mail className="w-3.5 h-3.5 text-green-dark" />
                 <span>Bulk Draft Outreach ({selectedSponsorIds.length})</span>
@@ -377,6 +405,51 @@ export default function SponsorsPipelinePage() {
                 className="text-xs font-bold"
               >
                 Remove from Campaign
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Selected Sponsors Confirmation Modal */}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-green-dark/15 shadow-2xl space-y-4">
+            <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-200">
+              <Trash2 className="w-5 h-5" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-heading font-black text-lg text-green-dark">
+                Delete {selectedSponsorIds.length} Selected Sponsor{selectedSponsorIds.length > 1 ? "s" : ""}?
+              </h3>
+              <p className="text-xs text-text-dim leading-relaxed">
+                This will permanently remove <strong>{selectedSponsorIds.length} companies</strong> from this campaign&apos;s tracker and delete their pending unsent drafts.
+              </p>
+              <div className="p-3 mt-2 rounded-xl bg-amber-50/70 border border-amber-200 text-[11px] text-amber-900 leading-normal">
+                <strong>Note:</strong> Past sent outreach records, incoming responses, and sender suppression lists are permanently preserved.
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                disabled={isDeletingBulk}
+                className="text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleBulkDelete}
+                loading={isDeletingBulk}
+                className="text-xs font-bold gap-1.5 cursor-pointer bg-rose-600 hover:bg-rose-700"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete {selectedSponsorIds.length} Companies</span>
               </Button>
             </div>
           </div>

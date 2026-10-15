@@ -163,3 +163,39 @@ export async function GET(request: NextRequest) {
     });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const session = await auth();
+  const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+
+  if (!userId) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const { companyIds } = body;
+
+    if (!Array.isArray(companyIds) || companyIds.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "companyIds must be a non-empty array of company IDs" },
+        { status: 400 }
+      );
+    }
+
+    const { removeSponsors } = await import("@/lib/data/repositories/sponsors");
+    const count = await removeSponsors(companyIds, userId);
+
+    return NextResponse.json({
+      success: true,
+      count,
+      message: `Successfully deleted ${count} sponsor(s)`,
+    });
+  } catch (err: any) {
+    console.error("DELETE /api/sponsors error:", err);
+    return NextResponse.json(
+      { success: false, error: err.message || "Failed to delete sponsors" },
+      { status: 500 }
+    );
+  }
+}

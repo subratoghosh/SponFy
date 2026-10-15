@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
 import { useSession } from "next-auth/react";
 import {
-  Sparkles,
+  Zap,
   FileText,
   X,
   Mail,
@@ -165,7 +165,7 @@ export function GenerateDraftModal({
                   : "text-text-dim hover:text-green-dark"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-butter-gold" />
+              <Zap className="w-3.5 h-3.5 text-butter-gold" />
               <span>AI Pitch Generator</span>
             </button>
             <button
@@ -217,7 +217,7 @@ export function GenerateDraftModal({
 
               <div className="p-3.5 bg-green-50/70 border border-green-200/60 rounded-2xl text-xs text-green-900 space-y-1">
                 <span className="font-bold flex items-center gap-1.5 text-green-800">
-                  <Sparkles className="w-3.5 h-3.5 text-green-700" />
+                  <Zap className="w-3.5 h-3.5 text-green-700" />
                   Hyper-Personalized Generation
                 </span>
                 <p className="text-[11px] text-green-800/80 leading-relaxed">

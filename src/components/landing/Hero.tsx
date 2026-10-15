@@ -11,6 +11,9 @@ import {
   TrendingUp,
   Building2,
   UserCheck,
+  Mail,
+  Check,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroVectorMotifs } from "./HeroVectorMotifs";
@@ -134,120 +137,199 @@ export const Hero: React.FC = () => {
                 <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-amber-400" />
                 <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-green-400" />
               </div>
-              <span className="text-[11px] sm:text-xs font-bold text-text-dim ml-1 sm:ml-2 uppercase tracking-wider">
-                Campaign Pipeline — Example Preview
-              </span>
+              <div className="flex items-center gap-2 ml-1 sm:ml-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] sm:text-xs font-black text-green-dark uppercase tracking-wider">
+                  Live Sponsor Acquisition Engine
+                </span>
+                <span className="text-[11px] text-text-dim hidden sm:inline">&bull; DevPulse Conclave 2026</span>
+              </div>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-green-dark/5 text-[11px] sm:text-xs font-semibold text-green-dark border border-green-dark/10 self-start sm:self-auto">
-              <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
-              Human Approval Required
+            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-[11px] sm:text-xs font-bold text-emerald-800 border border-emerald-200">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>₹4,50,000 / ₹6,00,000 Secured (75%)</span>
+              </div>
+              <div className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-dark/5 text-[11px] font-semibold text-green-dark border border-green-dark/10">
+                <span>99.4% Inbox Placement</span>
+              </div>
             </div>
           </div>
 
-          {/* Inner Grid Preview: Left Kanban Card + Right "Why 86?" Card */}
+          {/* Inner Grid Preview: Left Live Sponsor Radar + Right Deliverability & Match Score */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start" style={{ transformStyle: "preserve-3d" }}>
-            {/* Left Sponsor Dossier Preview */}
+            {/* Left Sponsor Deal Pipeline */}
             <div
               style={{ transform: "translateZ(20px)" }}
-              className="md:col-span-7 bg-white rounded-xl p-5 border border-green-dark/12 shadow-sm space-y-4 hover:border-green-dark/30 hover:shadow-md transition-all duration-200 group/card"
+              className="md:col-span-7 bg-white rounded-2xl p-4 sm:p-5 border border-green-dark/12 shadow-sm space-y-3.5 hover:border-green-dark/30 hover:shadow-md transition-all duration-200 group/card"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-butter-warm flex items-center justify-center font-bold text-green-dark text-lg border border-green-dark/10 group-hover/card:scale-105 group-hover/card:rotate-2 transition-transform duration-200">
-                    <Building2 className="w-6 h-6 text-green-dark" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-lg text-green-dark group-hover/card:text-green-mid transition-colors">Acme Cloud</h3>
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-800 border border-green-300 hover:scale-105 transition-transform cursor-default">
-                        Interested
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-dim">Cloud Platform & Developer APIs</p>
-                  </div>
+              <div className="flex items-center justify-between pb-2 border-b border-green-dark/10">
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-green-dark">
+                    Active Sponsor Pipeline & Verified Contacts
+                  </h4>
+                  <p className="text-[11px] text-text-dim">38 verified tech brands matched to campaign tier packages</p>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs font-semibold text-text-muted">Target Tier</span>
-                  <p className="font-mono text-base font-extrabold text-green-dark">Gold Tier</p>
-                </div>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  3 Active Deals
+                </span>
               </div>
 
-              <div className="p-3 bg-butter-bg/80 rounded-lg text-xs space-y-1.5 border border-green-dark/5 hover:border-green-dark/15 transition-colors">
-                <div className="flex items-center justify-between text-text-dim font-medium">
-                  <span>Verified Contact:</span>
-                  <span className="font-semibold text-green-dark flex items-center gap-1">
-                    <UserCheck className="w-3.5 h-3.5 text-green-600" /> Campus DevRel Lead
+              {/* Sponsor 1: Postman */}
+              <div className="p-3 bg-butter-bg/50 hover:bg-butter-bg rounded-xl border border-green-dark/8 transition-colors space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-600 font-black text-xs flex items-center justify-center">
+                      P
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-green-dark">Postman</span>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          96% Fit
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-dim">Title Partner &bull; ₹2,00,000 Target</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                    Draft Ready
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-text-dim font-medium">
-                  <span>Angle:</span>
-                  <span className="text-green-dark font-semibold">Cloud API Challenge Track</span>
-                </div>
-                <div className="flex items-center justify-between text-text-dim font-medium">
-                  <span>Cited Source:</span>
-                  <a
-                    href="https://example.com/student-program"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-700 underline flex items-center gap-1 hover:text-blue-900 group/link"
-                  >
-                    example.com/student-program <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-                  </a>
+                <div className="flex items-center justify-between text-[11px] text-text-dim font-medium pt-1 border-t border-green-dark/5">
+                  <span className="flex items-center gap-1 text-green-dark font-semibold">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-600" /> Ananya R. (Head of Campus DevRel)
+                  </span>
+                  <span className="text-text-muted">API Challenge Track</span>
                 </div>
               </div>
 
-              {/* Draft Preview Bar */}
-              <div className="bg-green-dark text-butter-cream p-3 rounded-lg flex items-center justify-between text-xs font-medium hover:bg-green-mid transition-colors shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-butter-gold animate-pulse" />
-                  <span>Example Draft: High Quality Score</span>
+              {/* Sponsor 2: Razorpay */}
+              <div className="p-3 bg-butter-bg/50 hover:bg-butter-bg rounded-xl border border-green-dark/8 transition-colors space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 font-black text-xs flex items-center justify-center">
+                      R
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-green-dark">Razorpay</span>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          94% Fit
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-dim">Track Partner &bull; ₹1,50,000 Target</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-200">
+                    Dispatched via Gmail
+                  </span>
                 </div>
-                <span className="bg-butter-cream text-green-dark px-2.5 py-0.5 rounded-full font-bold text-[11px] hover:bg-butter-gold hover:scale-105 transition-all cursor-pointer shadow-sm">
-                  Review & Approve
+                <div className="flex items-center justify-between text-[11px] text-text-dim font-medium pt-1 border-t border-green-dark/5">
+                  <span className="flex items-center gap-1 text-green-dark font-semibold">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-600" /> Vikram S. (Campus Programs)
+                  </span>
+                  <span className="text-text-muted">Fintech Innovation Bounty</span>
+                </div>
+              </div>
+
+              {/* Sponsor 3: GitHub */}
+              <div className="p-3 bg-butter-bg/50 hover:bg-butter-bg rounded-xl border border-green-dark/8 transition-colors space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900/10 border border-slate-900/20 text-slate-900 font-black text-xs flex items-center justify-center">
+                      G
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-green-dark">GitHub</span>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          98% Fit
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-dim">Challenge Sponsor &bull; ₹1,00,000 Target</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                    Replied: Interested
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-text-dim font-medium pt-1 border-t border-green-dark/5">
+                  <span className="flex items-center gap-1 text-green-dark font-semibold">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-600" /> Global Education Partner
+                  </span>
+                  <span className="text-text-muted">Student Developer Pack</span>
+                </div>
+              </div>
+
+              {/* Draft & Dispatch Action Ribbon */}
+              <div className="bg-green-dark text-butter-cream p-3 rounded-xl flex items-center justify-between text-xs font-medium shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-butter-gold shrink-0 animate-pulse" />
+                  <span className="text-[11px] sm:text-xs">Human Approval Gate: Verified 0% Spam Penalty</span>
+                </div>
+                <span className="bg-butter-cream text-green-dark px-3 py-1 rounded-full font-bold text-[11px] hover:bg-butter-gold hover:scale-105 transition-all cursor-pointer shadow-sm shrink-0">
+                  Approve & Dispatch
                 </span>
               </div>
             </div>
 
-            {/* Right Fit Score Breakdown ("Why 94?") */}
+            {/* Right Fit Score & Deliverability Shield */}
             <div
               style={{ transform: "translateZ(20px)" }}
-              className="md:col-span-5 bg-white rounded-xl p-5 border border-green-dark/12 shadow-sm space-y-3 hover:border-green-dark/30 hover:shadow-md transition-all duration-200 group/score"
+              className="md:col-span-5 bg-white rounded-2xl p-4 sm:p-5 border border-green-dark/12 shadow-sm space-y-4 hover:border-green-dark/30 hover:shadow-md transition-all duration-200 group/score"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
-                    AI Fit Score (Example)
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                    Match Precision Score
                   </span>
-                  <h4 className="font-heading font-extrabold text-2xl text-green-dark flex items-baseline gap-1 group-hover/score:text-green-mid transition-colors">
-                    94 <span className="text-xs font-semibold text-text-muted">/ 100</span>
+                  <h4 className="font-heading font-extrabold text-3xl text-green-dark flex items-baseline gap-1 group-hover/score:text-green-mid transition-colors">
+                    96 <span className="text-xs font-semibold text-text-muted">/ 100</span>
                   </h4>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-800 group-hover/score:scale-110 group-hover/score:bg-green-200 transition-all duration-200">
-                  <TrendingUp className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-800 group-hover/score:scale-110 group-hover/score:bg-emerald-200 transition-all duration-200">
+                  <TrendingUp className="w-6 h-6 text-emerald-700" />
                 </div>
               </div>
 
-              <p className="text-xs font-bold text-green-dark pb-1 border-b border-green-dark/10">
-                Why this scored 94 (Example):
-              </p>
+              {/* Deliverability Health Card */}
+              <div className="p-3 bg-emerald-50/70 border border-emerald-200/70 rounded-xl space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-bold text-emerald-950">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" /> Deliverability Shield
+                  </span>
+                  <span className="text-emerald-700 font-extrabold">99.4% Safe</span>
+                </div>
+                <p className="text-[11px] text-emerald-900/80 leading-relaxed">
+                  Corporate mailboxes audited. ZeroBounce handshake passed with 0% bounce risk.
+                </p>
+              </div>
 
-              <div className="space-y-2 text-xs">
-                <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
-                  <div>
-                    <span className="font-bold">+20 pts:</span> High industry synergy with student builder tracks.
+              {/* Automated Safety & Fit Criteria */}
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-green-dark pb-1 border-b border-green-dark/10">
+                  Automated Pre-Send Audit:
+                </p>
+
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-start gap-2 text-green-900 p-2 rounded-lg bg-butter-bg/40">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+                    <div className="text-[11px] leading-snug">
+                      <span className="font-bold text-green-dark">Audience Affinity:</span> 1,200 student developers match hiring and API adoption profile.
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
-                  <div>
-                    <span className="font-bold">+15 pts:</span> Active campus developer grants and student programs.
+                  <div className="flex items-start gap-2 text-green-900 p-2 rounded-lg bg-butter-bg/40">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+                    <div className="text-[11px] leading-snug">
+                      <span className="font-bold text-green-dark">Direct Decision Maker:</span> Verified DevRel contact with authenticated public source link.
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2 text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
-                  <div>
-                    <span className="font-bold">+15 pts:</span> Established history of event & campaign sponsorships.
+                  <div className="flex items-start gap-2 text-green-900 p-2 rounded-lg bg-butter-bg/40">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+                    <div className="text-[11px] leading-snug">
+                      <span className="font-bold text-green-dark">Budget Readiness:</span> Active sponsor of 4+ hackathons in current fiscal quarter.
+                    </div>
                   </div>
                 </div>
               </div>

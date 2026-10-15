@@ -133,6 +133,42 @@ export function useSponsorsData(options: UseSponsorsOptions = {}) {
     }
   };
 
+  /**
+   * Safe optimistic bulk removal of sponsors
+   */
+  const removeSelectedSponsorsOptimistic = async (sponsorIds: string[]) => {
+    if (!sponsorIds.length) return false;
+    const previousData = data;
+
+    // Optimistically filter out selected sponsors
+    mutate(
+      {
+        ...data,
+        data: sponsors.filter((s) => !sponsorIds.includes(s.id)),
+      },
+      false
+    );
+
+    try {
+      const res = await fetch("/api/sponsors", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyIds: sponsorIds }),
+      });
+      const resJson = await res.json();
+      if (!res.ok || !resJson.success) {
+        throw new Error(resJson.error || "Failed to delete selected sponsors");
+      }
+      toast(`Deleted ${sponsorIds.length} sponsor${sponsorIds.length > 1 ? "s" : ""} from campaign`, "success");
+      mutate();
+      return true;
+    } catch (err: any) {
+      mutate(previousData, false);
+      toast(err.message || "Failed to delete sponsors. Rolled back.", "error");
+      return false;
+    }
+  };
+
   return {
     sponsors,
     pagination,
@@ -142,5 +178,6 @@ export function useSponsorsData(options: UseSponsorsOptions = {}) {
     refetch: () => mutate(),
     updateStage: updateStageOptimistic,
     removeSponsor: removeSponsorOptimistic,
+    removeSelectedSponsors: removeSelectedSponsorsOptimistic,
   };
 }

@@ -25,7 +25,7 @@ const BulkDraftModal = dynamic(
   { ssr: false }
 );
 import { useToast } from "@/components/ui/toast";
-import { Send, SendHorizontal, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Send, SendHorizontal, CheckCircle2, Layers, AlertTriangle, ShieldCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OutreachSkeleton } from "@/components/skeletons/OutreachSkeleton";
 import { useOutreachData } from "@/lib/hooks/useOutreachData";
@@ -266,7 +266,7 @@ function OutreachContent() {
             onClick={() => setIsMassOutreachOpen(true)}
             className="font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5 text-butter-gold" />
+            <Layers className="w-3.5 h-3.5 text-butter-gold" />
             Mass Outreach
           </Button>
 

@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
 import { useSession } from "next-auth/react";
 import {
-  Sparkles,
+  Zap,
   FileText,
   X,
   Mail,
@@ -202,7 +202,7 @@ export function BulkDraftModal({
                       : "text-text-dim hover:text-green-dark"
                   }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-butter-gold" />
+                  <Zap className="w-3.5 h-3.5 text-butter-gold" />
                   <span>Individual Personalized AI</span>
                 </button>
                 <button
