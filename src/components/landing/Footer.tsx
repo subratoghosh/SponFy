@@ -4,6 +4,7 @@ import { Mail, MapPin } from "lucide-react";
 
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 import { SITE_CONTACT } from "@/lib/config/constants";
+import { InstallAppButton } from "@/components/ui/InstallAppButton";
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -124,6 +125,7 @@ export const Footer: React.FC = () => {
                 )}
               </div>
             )}
+            <InstallAppButton />
           </div>
 
           {/* Product Links */}
