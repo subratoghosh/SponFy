@@ -3,6 +3,16 @@ import { NextResponse, type NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Explicitly allow public PWA assets and static routes
+  if (
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js" ||
+    pathname === "/offline.html" ||
+    pathname.startsWith("/icons/")
+  ) {
+    return NextResponse.next();
+  }
+
   // In Demo Mode or development with no DB, allow immediate access to /app
   const isDemo =
     process.env.NEXT_PUBLIC_DEMO_MODE === "true" ||

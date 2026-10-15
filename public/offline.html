@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0C382E">
+  <title>Offline — SponFy</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #0C382E;
+      color: #FBF7EE;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 380px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+    }
+    .brand-name {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #FBF7EE;
+    }
+    .brand-name span {
+      color: #F5D061;
+    }
+    .icon-badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      background: rgba(22, 78, 62, 0.7);
+      border: 1px solid rgba(255, 240, 179, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #F5D061;
+      margin-top: 4px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #FBF7EE;
+      letter-spacing: -0.02em;
+    }
+    p {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #D8EAE1;
+      max-width: 290px;
+    }
+    .btn {
+      width: 100%;
+      max-width: 200px;
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+      background-color: #FBF7EE;
+      color: #0C382E;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: background-color 0.15s ease, transform 0.15s ease;
+      margin-top: 8px;
+    }
+    .btn:hover {
+      background-color: #F5D061;
+    }
+    .btn:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="50" cy="12" r="4.5" fill="#FBF7EE" />
+        <path d="M50 16.5V23" stroke="#FBF7EE" stroke-width="3.5" stroke-linecap="round" />
+        <rect x="18" y="32" width="5" height="12" rx="2.5" fill="#FBF7EE" />
+        <rect x="77" y="32" width="5" height="12" rx="2.5" fill="#FBF7EE" />
+        <rect x="21" y="23" width="58" height="40" rx="12" fill="#FBF7EE" />
+        <rect x="26" y="28" width="48" height="30" rx="8" stroke="#0C3729" stroke-width="3.2" fill="none" />
+        <path d="M34 43C36 38.5 40 38.5 42 43" stroke="#0C3729" stroke-width="3.2" stroke-linecap="round" />
+        <path d="M58 43C60 38.5 64 38.5 66 43" stroke="#0C3729" stroke-width="3.2" stroke-linecap="round" />
+        <path d="M46.5 48.5C48 51.5 52 51.5 53.5 48.5" stroke="#0C3729" stroke-width="2.8" stroke-linecap="round" />
+        <path d="M35 66C32 75 32 94 50 95C68 94 68 75 65 66Z" fill="#FBF7EE" />
+        <path d="M34 68C28.5 73 24.5 81 27 86.5C28.5 89 33 87 34 81C34.5 77 34.5 72 34 68Z" fill="#FBF7EE" />
+        <path d="M66 68C72 65 83 58 85 49.5C86.5 46.5 83.5 45.5 81 48C76 53 68 62 65 71Z" fill="#FBF7EE" />
+        <ellipse cx="50" cy="80.5" rx="10.5" ry="7.5" fill="#FFFFFF" />
+        <path d="M44 80.5C44 77.5 47 75.5 50 78.5L52.5 81C53.5 82 53.5 83.5 52 84.5C50.5 85.5 48.5 85.5 47 84L44 80.5Z" fill="#F5D061" />
+        <path d="M56 80.5C56 83.5 53 85.5 50 82.5L47.5 80C46.5 79 46.5 77.5 48 76.5C49.5 75.5 51.5 75.5 53 77L56 80.5Z" fill="#0C3729" />
+        <path d="M47.5 79.5C49 78.2 51 78.2 52.5 79.5L50 82L47.5 79.5Z" fill="#F5D061" />
+      </svg>
+      <span class="brand-name">Spon<span>Fy</span></span>
+    </div>
+
+    <div class="icon-badge" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
+    </div>
+
+    <h1>You&apos;re offline</h1>
+    <p>Check your connection and try again.</p>
+
+    <button class="btn" type="button" onclick="window.location.reload()">Try again</button>
+  </div>
+</body>
+</html>
