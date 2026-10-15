@@ -8,7 +8,6 @@ import { getReplyAnalyses } from "@/lib/data/repositories/replies";
 import { DEMO_ACTIVITIES } from "@/lib/data/seed-data";
 import { CampaignDashboardView } from "@/components/dashboard/CampaignDashboardView";
 import { auth } from "@/lib/auth";
-import { Calendar, Clock, Send, CheckCircle2, MessageSquare, AlertCircle } from "lucide-react";
 
 export default async function OverviewPage() {
   const session = await auth();
@@ -81,7 +80,6 @@ export default async function OverviewPage() {
       text: `Follow-up ${f.nextTouch ? f.nextTouch - 1 : 1} is due (${Math.floor(f.daysSinceLast)}d since last email).`,
       cta: "Review Follow-up",
       href: "/app/followups",
-      icon: Clock,
     });
   }
 
@@ -102,7 +100,6 @@ export default async function OverviewPage() {
         : `Personalized email pitch ready for review. Quality score: ${d.quality?.overall || 90}%.`,
       cta: "Review Draft",
       href: "/app/outreach",
-      icon: Send,
     });
   }
 
@@ -119,7 +116,6 @@ export default async function OverviewPage() {
       text: "Draft approved by organizer. Ready to send via connected Gmail.",
       cta: "Send via Gmail",
       href: "/app/outreach",
-      icon: Send,
     });
   }
 
@@ -137,7 +133,6 @@ export default async function OverviewPage() {
       text: `Approved sponsor in pipeline. Fit score: ${s.fitScore}%. Generate personalized pitch.`,
       cta: "Draft Pitch",
       href: "/app/outreach",
-      icon: MessageSquare,
     });
   }
 
@@ -155,7 +150,6 @@ export default async function OverviewPage() {
       text: r.summary || `Sponsor responded with ${r.intent} intent. Check the reply thread.`,
       cta: "View Reply",
       href: "/app/replies",
-      icon: r.meetingRequested ? Calendar : MessageSquare,
     });
   }
 
@@ -171,7 +165,6 @@ export default async function OverviewPage() {
       text: `Sent 1 initial + 2 follow-ups with no response. Close prospect or handle manually.`,
       cta: "Manage Prospect",
       href: "/app/followups",
-      icon: AlertCircle,
     });
   }
 
