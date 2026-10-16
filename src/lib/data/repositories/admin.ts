@@ -9,7 +9,6 @@ import {
 } from "@/types";
 import { getCampaigns } from "./campaigns";
 import { getSponsors } from "./sponsors";
-import { getDrafts } from "./outreach";
 import { getReplyAnalyses } from "./replies";
 
 // In-memory store for empty states / test fallback
@@ -75,8 +74,67 @@ function getTimeBoundary(timeRange: string): Date {
   }
 }
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const POSITIVE_INTENTS = ["INTERESTED", "POSITIVE", "NEGOTIATING"];
+const CONTACTED_STAGES = ["CONTACTED", "REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"];
+const REPLIED_STAGES = ["REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"];
+const INTERESTED_STAGES = ["INTERESTED", "NEGOTIATION", "COMMITTED"];
+// Heartbeats more than this far apart start a new session
+const SESSION_GAP_MS = 30 * 60 * 1000;
+const ACTIVE_SESSION_WINDOW_MS = 60 * 60 * 1000;
+
+/** Percent change of the current period vs the previous one of equal length */
+function percentChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function monthKey(d: Date): string {
+  return `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function buildFunnel(stages: string[]) {
+  const total = stages.length;
+  const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+  const contacted = stages.filter((s) => CONTACTED_STAGES.includes(s)).length;
+  const replied = stages.filter((s) => REPLIED_STAGES.includes(s)).length;
+  const interested = stages.filter((s) => INTERESTED_STAGES.includes(s)).length;
+  const committed = stages.filter((s) => s === "COMMITTED").length;
+  return [
+    { stage: "Discovered", count: total, percentage: total > 0 ? 100 : 0 },
+    { stage: "Contacted", count: contacted, percentage: pct(contacted) },
+    { stage: "Replied", count: replied, percentage: pct(replied) },
+    { stage: "Interested", count: interested, percentage: pct(interested) },
+    { stage: "Committed", count: committed, percentage: pct(committed) },
+  ];
+}
+
+function buildIndustryPerformance(companies: { industry: string | null; stage: string }[]) {
+  const indMap = new Map<string, { count: number; replies: number; committed: number }>();
+  for (const c of companies) {
+    const ind = c.industry || "Uncategorized";
+    const cur = indMap.get(ind) || { count: 0, replies: 0, committed: 0 };
+    cur.count++;
+    if (REPLIED_STAGES.includes(c.stage)) cur.replies++;
+    if (c.stage === "COMMITTED") cur.committed++;
+    indMap.set(ind, cur);
+  }
+  return Array.from(indMap.entries())
+    .map(([industry, stats]) => ({
+      industry,
+      sponsorsCount: stats.count,
+      replyRate: Math.round((stats.replies / stats.count) * 100),
+      conversionRate: Math.round((stats.committed / stats.count) * 100),
+    }))
+    .sort((a, b) => b.sponsorsCount - a.sponsorsCount);
+}
+
 /**
  * 1. Overview KPI Metrics
+ *
+ * Platform totals (users, campaigns, confirmed sponsorships, revenue) are cumulative.
+ * Flow metrics (new/active users, sponsors discovered, emails, replies) follow the
+ * selected time range, and deltas compare against the previous range of equal length.
  */
 export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminOverviewMetrics> {
   const cutoff = getTimeBoundary(timeRange);
@@ -84,66 +142,79 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
-      // Batch 1: User and campaign metrics
-      const [
-        totalUsers,
-        newUsers,
-        activeUsers,
-        totalCampaigns,
-        activeCampaigns,
-        completedCampaigns,
-      ] = await Promise.all([
-        p.user.count(),
-        p.user.count({ where: { createdAt: { gte: cutoff } } }),
-        p.user.count({ where: { status: "ACTIVE" } }),
-        p.campaign.count(),
-        p.campaign.count({ where: { archived: false } }),
-        p.campaign.count({ where: { archived: true } }),
-      ]);
+      const now = new Date();
+      const hasPreviousPeriod = timeRange !== "all";
+      const prevCutoff = new Date(cutoff.getTime() - (now.getTime() - cutoff.getTime()));
+      const inRange = { gte: cutoff };
+      const inPrevRange = { gte: prevCutoff, lt: cutoff };
 
-      // Batch 2: Company, message, and session metrics
-      const [
-        totalCompanies,
-        totalSent,
-        totalReplies,
-        positiveReplies,
-        committedCompanies,
-        activeSessionsCount,
-      ] = await Promise.all([
-        p.company.count(),
-        p.message.count({ where: { direction: "OUTBOUND" } }),
-        p.message.count({ where: { direction: "INBOUND" } }),
-        p.replyAnalysis.count({
+      // Batch 1: User metrics
+      const [totalUsers, newUsers, prevNewUsers, activeUsers, activeSessions] = await Promise.all([
+        p.user.count(),
+        p.user.count({ where: { createdAt: inRange } }),
+        hasPreviousPeriod ? p.user.count({ where: { createdAt: inPrevRange } }) : 0,
+        p.user.count({
           where: {
-            intent: { in: ["INTERESTED", "POSITIVE", "NEGOTIATING"] },
+            OR: [
+              { lastActiveAt: inRange },
+              { campaigns: { some: { createdAt: inRange } } },
+              { companies: { some: { createdAt: inRange } } },
+              { messages: { some: { direction: "OUTBOUND", sentAt: inRange } } },
+            ],
           },
         }),
-        p.company.count({ where: { stage: "COMMITTED" } }),
-        p.session.count({ where: { expires: { gt: new Date() } } }),
+        p.user.count({
+          where: { lastActiveAt: { gte: new Date(now.getTime() - ACTIVE_SESSION_WINDOW_MS) } },
+        }),
       ]);
 
-      const committedRevenue = await p.company.aggregate({
-        where: { stage: "COMMITTED" },
-        _sum: { pipelineValue: true },
-      });
+      // Batch 2: Campaign and sponsor metrics
+      const [totalCampaigns, activeCampaigns, completedCampaigns, newCampaigns, prevNewCampaigns, sponsorsDiscovered] =
+        await Promise.all([
+          p.campaign.count(),
+          p.campaign.count({ where: { archived: false } }),
+          p.campaign.count({ where: { archived: true } }),
+          p.campaign.count({ where: { createdAt: inRange } }),
+          hasPreviousPeriod ? p.campaign.count({ where: { createdAt: inPrevRange } }) : 0,
+          p.company.count({ where: { createdAt: inRange } }),
+        ]);
+
+      // Batch 3: Outreach and deal metrics
+      const [emailsSent, prevEmailsSent, repliesReceived, positiveResponses, confirmedSponsorships, committedRevenue] =
+        await Promise.all([
+          p.message.count({ where: { direction: "OUTBOUND", sentAt: inRange } }),
+          hasPreviousPeriod ? p.message.count({ where: { direction: "OUTBOUND", sentAt: inPrevRange } }) : 0,
+          p.message.count({ where: { direction: "INBOUND", sentAt: inRange } }),
+          p.replyAnalysis.count({
+            where: {
+              message: { sentAt: inRange },
+              OR: [{ intent: { in: POSITIVE_INTENTS } }, { meetingRequested: true }],
+            },
+          }),
+          p.company.count({ where: { stage: "COMMITTED" } }),
+          p.company.aggregate({
+            where: { stage: "COMMITTED" },
+            _sum: { pipelineValue: true },
+          }),
+        ]);
 
       return {
         totalUsers,
         newUsers,
         activeUsers,
-        activeSessions: activeSessionsCount,
+        activeSessions,
         totalCampaigns,
         activeCampaigns,
         completedCampaigns,
-        totalSponsorsDiscovered: totalCompanies,
-        totalEmailsSent: totalSent,
-        totalRepliesReceived: totalReplies,
-        positiveResponses: positiveReplies,
-        confirmedSponsorships: committedCompanies,
+        totalSponsorsDiscovered: sponsorsDiscovered,
+        totalEmailsSent: emailsSent,
+        totalRepliesReceived: repliesReceived,
+        positiveResponses,
+        confirmedSponsorships,
         committedRevenueTotal: committedRevenue._sum.pipelineValue || 0,
-        usersDelta: 0,
-        campaignsDelta: 0,
-        outreachDelta: 0,
+        usersDelta: hasPreviousPeriod ? percentChange(newUsers, prevNewUsers) : undefined,
+        campaignsDelta: hasPreviousPeriod ? percentChange(newCampaigns, prevNewCampaigns) : undefined,
+        outreachDelta: hasPreviousPeriod ? percentChange(emailsSent, prevEmailsSent) : undefined,
       };
     } catch (err) {
       console.warn("Prisma getAdminOverviewMetrics failed, using repository aggregations:", err);
@@ -153,12 +224,13 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
   // Memory/seed fallback
   const campaigns = await getCampaigns();
   const sponsors = await getSponsors();
-  const drafts = await getDrafts();
   const replies = await getReplyAnalyses();
 
   const totalUsers = inMemoryUsers.length;
   const newUsers = inMemoryUsers.filter((u) => new Date(u.createdAt) >= cutoff).length;
-  const activeUsers = inMemoryUsers.filter((u) => u.status === "ACTIVE").length;
+  const activeUsers = inMemoryUsers.filter(
+    (u) => u.lastActiveAt && new Date(u.lastActiveAt) >= cutoff
+  ).length;
   const activeCampaigns = campaigns.filter((c) => c.status !== "archived").length;
   const completedCampaigns = campaigns.filter((c) => c.status === "archived").length;
   const confirmedSponsors = sponsors.filter((s) => s.stage === "Committed");
@@ -186,9 +258,6 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
     positiveResponses: positiveCount,
     confirmedSponsorships: confirmedSponsors.length,
     committedRevenueTotal,
-    usersDelta: 0,
-    campaignsDelta: 0,
-    outreachDelta: 0,
   };
 }
 
@@ -196,99 +265,126 @@ export async function getAdminOverviewMetrics(timeRange = "30d"): Promise<AdminO
  * 2. Deep Admin Analytics
  */
 export async function getAdminAnalytics(timeRange = "30d"): Promise<AdminAnalyticsData> {
+  const cutoff = getTimeBoundary(timeRange);
+
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
-      const days = timeRange === "7d" ? 7 : timeRange === "60d" ? 60 : 30;
-      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const now = new Date();
 
-      const [users, campaigns, companies, messages, analyses] = await Promise.all([
-        p.user.findMany({
-          select: { id: true, name: true, createdAt: true, status: true },
-          orderBy: { createdAt: "asc" },
-        }),
+      const users: { id: string; createdAt: Date }[] = await p.user.findMany({
+        select: { id: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      });
+
+      // Growth chart window: last 6 months, or since the first signup (up to 24 months) for "all"
+      let growthMonths = 6;
+      if (timeRange === "all" && users.length > 0) {
+        const first = users[0].createdAt;
+        const spanned = (now.getFullYear() - first.getFullYear()) * 12 + (now.getMonth() - first.getMonth()) + 1;
+        growthMonths = Math.min(24, Math.max(6, spanned));
+      }
+      const growthStart = new Date(now.getFullYear(), now.getMonth() - (growthMonths - 1), 1);
+      const fetchFrom = cutoff < growthStart ? cutoff : growthStart;
+
+      const [campaigns, companies, outboundMessages, activityLogs] = await Promise.all([
         p.campaign.findMany({
-          include: {
-            user: { select: { id: true, name: true, email: true } },
-            companies: { select: { id: true, stage: true, pipelineValue: true } },
+          select: {
+            id: true,
+            name: true,
+            userId: true,
+            eventType: true,
+            archived: true,
+            createdAt: true,
+            user: { select: { name: true, email: true } },
+            companies: { select: { stage: true, pipelineValue: true } },
           },
-          orderBy: { createdAt: "desc" },
         }),
         p.company.findMany({
-          select: { id: true, stage: true, industry: true, pipelineValue: true, campaignId: true },
+          where: { createdAt: { gte: fetchFrom } },
+          select: { userId: true, stage: true, industry: true, createdAt: true },
         }),
         p.message.findMany({
-          select: { id: true, direction: true, createdAt: true },
+          where: { direction: "OUTBOUND", sentAt: { gte: fetchFrom } },
+          select: { userId: true, sentAt: true },
         }),
-        p.replyAnalysis.findMany({
-          select: { id: true, intent: true },
+        p.userActivityLog.findMany({
+          where: { createdAt: { gte: fetchFrom } },
+          select: { userId: true, createdAt: true },
+          orderBy: { createdAt: "asc" },
         }),
       ]);
 
-      // 1. userGrowth: group by month
-      const monthsMap = new Map<string, { users: number; active: number }>();
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const now = new Date();
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-        monthsMap.set(key, { users: 0, active: 0 });
+      // 1. userGrowth: cumulative registrations + distinct active users per month
+      const activeByMonth = new Map<string, Set<string>>();
+      const markActive = (userId: string, at: Date) => {
+        if (at < growthStart) return;
+        const key = monthKey(at);
+        if (!activeByMonth.has(key)) activeByMonth.set(key, new Set());
+        activeByMonth.get(key)!.add(userId);
+      };
+      activityLogs.forEach((l: any) => markActive(l.userId, l.createdAt));
+      outboundMessages.forEach((m: any) => markActive(m.userId, m.sentAt));
+      companies.forEach((c: any) => markActive(c.userId, c.createdAt));
+      campaigns.forEach((c: any) => markActive(c.userId, c.createdAt));
+
+      const userGrowth = [];
+      for (let i = growthMonths - 1; i >= 0; i--) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+        const key = monthKey(monthStart);
+        userGrowth.push({
+          date: key,
+          users: users.filter((u) => u.createdAt < monthEnd).length,
+          active: activeByMonth.get(key)?.size || 0,
+        });
       }
 
-      let cumulative = 0;
-      for (const u of users) {
-        const d = new Date(u.createdAt);
-        const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-        cumulative++;
-        const curr = monthsMap.get(key) || { users: 0, active: 0 };
-        curr.users = cumulative;
-        if (u.status === "ACTIVE") curr.active++;
-        monthsMap.set(key, curr);
+      // 2. sessionTrends: group each user's heartbeats into sessions, bucket the range into 6 periods
+      const logsInRange = activityLogs.filter((l: any) => l.createdAt >= cutoff);
+      const sessions: { start: Date; durationMs: number }[] = [];
+      const lastSessionByUser = new Map<string, { start: Date; end: Date }>();
+      for (const log of logsInRange) {
+        const current = lastSessionByUser.get(log.userId);
+        if (current && log.createdAt.getTime() - current.end.getTime() <= SESSION_GAP_MS) {
+          current.end = log.createdAt;
+        } else {
+          if (current) sessions.push({ start: current.start, durationMs: current.end.getTime() - current.start.getTime() });
+          lastSessionByUser.set(log.userId, { start: log.createdAt, end: log.createdAt });
+        }
       }
+      lastSessionByUser.forEach((s) => sessions.push({ start: s.start, durationMs: s.end.getTime() - s.start.getTime() }));
 
-      let runningUsers = 0;
-      let runningActive = 0;
-      const userGrowth = Array.from(monthsMap.entries()).map(([date, val]) => {
-        if (val.users > 0) runningUsers = val.users;
-        if (val.active > 0) runningActive = val.active;
+      // "all" spans from the first heartbeat, but never less than 30 days so buckets stay readable
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const firstLogAt: Date | undefined = logsInRange[0]?.createdAt;
+      const trendStart =
+        timeRange === "all"
+          ? firstLogAt && firstLogAt < thirtyDaysAgo ? firstLogAt : thirtyDaysAgo
+          : cutoff;
+      const bucketCount = 6;
+      const bucketMs = Math.max(1, (now.getTime() - trendStart.getTime()) / bucketCount);
+      const sessionTrends = Array.from({ length: bucketCount }, (_, i) => {
+        const bucketStart = new Date(trendStart.getTime() + i * bucketMs);
+        const bucketEnd = new Date(trendStart.getTime() + (i + 1) * bucketMs);
+        const inBucket = sessions.filter(
+          (s) => s.start >= bucketStart && (i === bucketCount - 1 ? s.start <= now : s.start < bucketEnd)
+        );
+        const avgMs = inBucket.length > 0 ? inBucket.reduce((sum, s) => sum + s.durationMs, 0) / inBucket.length : 0;
         return {
-          date,
-          users: runningUsers,
-          active: runningActive,
+          date: `${MONTH_NAMES[bucketStart.getMonth()]} ${bucketStart.getDate()}`,
+          sessions: inBucket.length,
+          avgDurationMinutes: Math.round((avgMs / 60000) * 10) / 10,
         };
       });
 
-      // 2. registrationsByDay
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const dayCounts = { Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
-      users
-        .filter((u: any) => new Date(u.createdAt) >= cutoff)
-        .forEach((u: any) => {
-          const d = dayNames[new Date(u.createdAt).getDay()];
-          dayCounts[d as keyof typeof dayCounts]++;
-        });
-      const registrationsByDay = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => ({
-        date: d,
-        count: dayCounts[d as keyof typeof dayCounts],
-      }));
-
-      // 3. sessionTrends
-      const sessionTrends = [
-        { date: "Day 1-5", sessions: 0, avgDurationMinutes: 0 },
-        { date: "Day 6-10", sessions: 0, avgDurationMinutes: 0 },
-        { date: "Day 11-15", sessions: 0, avgDurationMinutes: 0 },
-        { date: "Day 16-20", sessions: 0, avgDurationMinutes: 0 },
-        { date: "Day 21-25", sessions: 0, avgDurationMinutes: 0 },
-        { date: "Day 26-30", sessions: 0, avgDurationMinutes: 0 },
-      ];
-
-      // 4. campaignStatusBreakdown
+      // 3. campaignStatusBreakdown
       const campaignStatusBreakdown = [
         { status: "Active Pipeline", count: campaigns.filter((c: any) => !c.archived).length },
         { status: "Archived", count: campaigns.filter((c: any) => c.archived).length },
       ];
 
-      // 5. campaignsByEventType
+      // 4. campaignsByEventType
       const eventTypeMap = new Map<string, number>();
       campaigns.forEach((c: any) => {
         const type = c.eventType || "General";
@@ -298,71 +394,29 @@ export async function getAdminAnalytics(timeRange = "30d"): Promise<AdminAnalyti
         type,
         count,
       }));
-      if (campaignsByEventType.length === 0) {
-        campaignsByEventType.push({ type: "General", count: 0 });
-      }
 
-      // 6. outreachFunnel
-      const totalSponsors = companies.length;
-      const contacted = companies.filter((s: any) =>
-        ["CONTACTED", "REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"].includes(s.stage)
-      ).length;
-      const replied = companies.filter((s: any) =>
-        ["REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"].includes(s.stage)
-      ).length;
-      const interested = companies.filter((s: any) =>
-        ["INTERESTED", "NEGOTIATION", "COMMITTED"].includes(s.stage)
-      ).length;
-      const committed = companies.filter((s: any) => s.stage === "COMMITTED").length;
+      // 5 & 6. outreachFunnel + industryPerformance: sponsors discovered in range
+      const companiesInRange = companies.filter((c: any) => c.createdAt >= cutoff);
+      const outreachFunnel = buildFunnel(companiesInRange.map((c: any) => c.stage));
+      const industryPerformance = buildIndustryPerformance(companiesInRange);
 
-      const outreachFunnel = [
-        { stage: "Discovered", count: totalSponsors, percentage: totalSponsors > 0 ? 100 : 0 },
-        { stage: "Contacted", count: contacted, percentage: totalSponsors > 0 ? Math.round((contacted / totalSponsors) * 100) : 0 },
-        { stage: "Replied", count: replied, percentage: totalSponsors > 0 ? Math.round((replied / totalSponsors) * 100) : 0 },
-        { stage: "Interested", count: interested, percentage: totalSponsors > 0 ? Math.round((interested / totalSponsors) * 100) : 0 },
-        { stage: "Committed", count: committed, percentage: totalSponsors > 0 ? Math.round((committed / totalSponsors) * 100) : 0 },
-      ];
-
-      // 7. industryPerformance
-      const indMap = new Map<string, { count: number; replies: number; committed: number }>();
-      companies.forEach((c: any) => {
-        const ind = c.industry || "General";
-        const cur = indMap.get(ind) || { count: 0, replies: 0, committed: 0 };
-        cur.count++;
-        if (["REPLIED", "INTERESTED", "NEGOTIATION", "COMMITTED"].includes(c.stage)) {
-          cur.replies++;
-        }
-        if (c.stage === "COMMITTED") {
-          cur.committed++;
-        }
-        indMap.set(ind, cur);
-      });
-
-      const industryPerformance = Array.from(indMap.entries()).map(([industry, stats]) => ({
-        industry,
-        sponsorsCount: stats.count,
-        replyRate: stats.count > 0 ? Math.round((stats.replies / stats.count) * 100) : 0,
-        conversionRate: stats.count > 0 ? Math.round((stats.committed / stats.count) * 100) : 0,
-      }));
-      if (industryPerformance.length === 0) {
-        industryPerformance.push({ industry: "Technology", sponsorsCount: 0, replyRate: 0, conversionRate: 0 });
-      }
-
-      // 8. topCampaigns
-      const topCampaigns = campaigns.map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        ownerName: c.user?.name || "Campus Organizer",
-        sponsorsCount: c.companies?.length || 0,
-        committedAmount: (c.companies || [])
-          .filter((cmp: any) => cmp.stage === "COMMITTED")
-          .reduce((sum: number, cmp: any) => sum + (cmp.pipelineValue || 0), 0),
-        status: c.archived ? "archived" : "active",
-      }));
+      // 7. topCampaigns: ranked by committed value, then sponsor count
+      const topCampaigns = campaigns
+        .map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          ownerName: c.user?.name || c.user?.email || "Unknown owner",
+          sponsorsCount: c.companies?.length || 0,
+          committedAmount: (c.companies || [])
+            .filter((cmp: any) => cmp.stage === "COMMITTED")
+            .reduce((sum: number, cmp: any) => sum + (cmp.pipelineValue || 0), 0),
+          status: c.archived ? "archived" : "active",
+        }))
+        .sort((a: any, b: any) => b.committedAmount - a.committedAmount || b.sponsorsCount - a.sponsorsCount)
+        .slice(0, 10);
 
       return {
         userGrowth,
-        registrationsByDay,
         sessionTrends,
         campaignStatusBreakdown,
         campaignsByEventType,
@@ -380,65 +434,39 @@ export async function getAdminAnalytics(timeRange = "30d"): Promise<AdminAnalyti
   const sponsors = await getSponsors();
 
   const userGrowth = [
-    { date: "Oct 2026", users: inMemoryUsers.length, active: inMemoryUsers.filter((u) => u.status === "ACTIVE").length },
+    {
+      date: monthKey(new Date()),
+      users: inMemoryUsers.length,
+      active: inMemoryUsers.filter((u) => u.lastActiveAt && new Date(u.lastActiveAt) >= cutoff).length,
+    },
   ];
 
-  const registrationsByDay = [
-    { date: "Mon", count: 0 },
-    { date: "Tue", count: 0 },
-    { date: "Wed", count: 0 },
-    { date: "Thu", count: 0 },
-    { date: "Fri", count: 0 },
-    { date: "Sat", count: 0 },
-    { date: "Sun", count: 0 },
-  ];
-
-  const sessionTrends = [
-    { date: "Day 1-5", sessions: 0, avgDurationMinutes: 0 },
-    { date: "Day 6-10", sessions: 0, avgDurationMinutes: 0 },
-    { date: "Day 11-15", sessions: 0, avgDurationMinutes: 0 },
-    { date: "Day 16-20", sessions: 0, avgDurationMinutes: 0 },
-    { date: "Day 21-25", sessions: 0, avgDurationMinutes: 0 },
-    { date: "Day 26-30", sessions: 0, avgDurationMinutes: 0 },
-  ];
+  const sessionTrends: AdminAnalyticsData["sessionTrends"] = [];
 
   const campaignStatusBreakdown = [
     { status: "Active Pipeline", count: campaigns.filter((c) => c.status !== "archived").length },
     { status: "Archived", count: campaigns.filter((c) => c.status === "archived").length },
   ];
 
-  const campaignsByEventType = [
-    { type: "Hackathons", count: campaigns.length },
-  ];
+  const eventTypeMap = new Map<string, number>();
+  campaigns.forEach((c) => {
+    const type = c.eventType || "General";
+    eventTypeMap.set(type, (eventTypeMap.get(type) || 0) + 1);
+  });
+  const campaignsByEventType = Array.from(eventTypeMap.entries()).map(([type, count]) => ({ type, count }));
 
-  const totalSponsors = sponsors.length;
-  const contacted = sponsors.filter((s) =>
-    ["Contacted", "Replied", "Interested", "Negotiation", "Committed"].includes(s.stage)
-  ).length;
-  const replied = sponsors.filter((s) =>
-    ["Replied", "Interested", "Negotiation", "Committed"].includes(s.stage)
-  ).length;
-  const interested = sponsors.filter((s) =>
-    ["Interested", "Negotiation", "Committed"].includes(s.stage)
-  ).length;
-  const committed = sponsors.filter((s) => s.stage === "Committed").length;
-
-  const outreachFunnel = [
-    { stage: "Discovered", count: totalSponsors, percentage: totalSponsors > 0 ? 100 : 0 },
-    { stage: "Contacted", count: contacted, percentage: totalSponsors > 0 ? Math.round((contacted / totalSponsors) * 100) : 0 },
-    { stage: "Replied", count: replied, percentage: totalSponsors > 0 ? Math.round((replied / totalSponsors) * 100) : 0 },
-    { stage: "Interested", count: interested, percentage: totalSponsors > 0 ? Math.round((interested / totalSponsors) * 100) : 0 },
-    { stage: "Committed", count: committed, percentage: totalSponsors > 0 ? Math.round((committed / totalSponsors) * 100) : 0 },
-  ];
-
-  const industryPerformance = [
-    { industry: "Technology", sponsorsCount: sponsors.length, replyRate: 0, conversionRate: 0 },
-  ];
+  // Repository sponsors use title-case stages; normalize to the DB enum for shared helpers
+  const normalizedSponsors = sponsors.map((s) => ({
+    industry: s.industry || null,
+    stage: String(s.stage).toUpperCase(),
+  }));
+  const outreachFunnel = buildFunnel(normalizedSponsors.map((s) => s.stage));
+  const industryPerformance = buildIndustryPerformance(normalizedSponsors);
 
   const topCampaigns = campaigns.map((c) => ({
     id: c.id,
     name: c.name,
-    ownerName: "Campus Organizer",
+    ownerName: "Unknown owner",
     sponsorsCount: sponsors.filter((s) => s.campaignId === c.id).length,
     committedAmount: sponsors.filter((s) => s.campaignId === c.id && s.stage === "Committed").reduce((sum, s) => sum + (s.pipelineValue || 0), 0),
     status: c.status || "active",
@@ -446,7 +474,6 @@ export async function getAdminAnalytics(timeRange = "30d"): Promise<AdminAnalyti
 
   return {
     userGrowth,
-    registrationsByDay,
     sessionTrends,
     campaignStatusBreakdown,
     campaignsByEventType,
@@ -496,7 +523,7 @@ export async function getAdminUsers(params: {
             _count: {
               select: {
                 campaigns: true,
-                messages: true,
+                messages: { where: { direction: "OUTBOUND" } },
               },
             },
           },
