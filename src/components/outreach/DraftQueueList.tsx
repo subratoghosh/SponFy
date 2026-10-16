@@ -130,7 +130,7 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
               )}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   {onToggleDraftSelect && canCheck && (
                     <button
                       type="button"
@@ -147,11 +147,11 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
                       )}
                     </button>
                   )}
-                  <span className="font-bold text-green-dark truncate max-w-[130px]">
+                  <span className="font-bold text-green-dark truncate">
                     {comp?.name || "Company"}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   {d.needsAttention && (
                     <span
                       title={d.attentionReason || "Draft needs attention"}
@@ -177,8 +177,8 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
                 {d.subject}
               </p>
               <div className="flex items-center justify-between text-[10px] text-text-muted pt-1 border-t border-green-dark/6">
-                <span>Quality: {d.quality?.overall || 94}%</span>
-                <span>{comp?.contacts?.[0]?.name || "Verified Contact"}</span>
+                <span>Quality: {d.quality?.overall != null ? `${d.quality.overall}%` : "–"}</span>
+                <span className="truncate ml-2">{comp?.contacts?.[0]?.name || comp?.contacts?.[0]?.email || "No contact yet"}</span>
               </div>
             </div>
           );

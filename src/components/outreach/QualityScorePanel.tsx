@@ -6,7 +6,7 @@ import { CheckCircle2, AlertCircle } from "lucide-react";
 
 export const QualityScorePanel: React.FC<{ quality: EmailQuality }> = ({ quality }) => {
   return (
-    <div className="bg-white rounded-3xl p-6 border border-green-dark/12 shadow-sm space-y-4 text-xs">
+    <div className="bg-white rounded-3xl p-4 sm:p-6 border border-green-dark/12 shadow-sm space-y-4 text-xs">
       <div className="flex items-center justify-between border-b border-green-dark/10 pb-3">
         <span className="font-bold uppercase tracking-wider text-text-muted text-[11px]">
           AI Quality Evaluation
@@ -16,7 +16,7 @@ export const QualityScorePanel: React.FC<{ quality: EmailQuality }> = ({ quality
         </span>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
         <div>
           <div className="flex justify-between font-bold text-green-dark mb-1">
             <span>Personalization</span>

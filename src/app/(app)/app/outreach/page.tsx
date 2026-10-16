@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { EmailDraft, Company } from "@/types";
 import { DraftQueueList } from "@/components/outreach/DraftQueueList";
 import { EmailComposer } from "@/components/outreach/EmailComposer";
 import { QualityScorePanel } from "@/components/outreach/QualityScorePanel";
-import { SafetyChecklist } from "@/components/outreach/SafetyChecklist";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 
@@ -25,7 +24,7 @@ const BulkDraftModal = dynamic(
   { ssr: false }
 );
 import { useToast } from "@/components/ui/toast";
-import { Send, SendHorizontal, CheckCircle2, Layers, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Send, SendHorizontal, CheckCircle2, Layers, AlertTriangle, ShieldCheck, FileText } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OutreachSkeleton } from "@/components/skeletons/OutreachSkeleton";
 import { useOutreachData } from "@/lib/hooks/useOutreachData";
@@ -46,6 +45,7 @@ function OutreachContent() {
   const [approvingBulk, setApprovingBulk] = useState(false);
   const [isMassOutreachOpen, setIsMassOutreachOpen] = useState(false);
   const [dailyStats, setDailyStats] = useState({ sent: 0, limit: 30 });
+  const composerRef = useRef<HTMLDivElement>(null);
 
   // Fetch real-time daily send quota and sent counts (resets at 12:00 AM midnight)
   useEffect(() => {
@@ -229,77 +229,122 @@ function OutreachContent() {
     }
   };
 
+  const limitReached = dailyStats !== null && dailyStats.sent >= dailyStats.limit;
+  const queueStats = [
+    { label: "To Review", value: drafts.filter((d: EmailDraft) => d.status === "draft").length, icon: FileText },
+    { label: "Approved", value: approvedDraftsCount, icon: CheckCircle2 },
+    { label: "Sent", value: drafts.filter((d: EmailDraft) => d.status === "sent").length, icon: Send },
+  ];
+
+  const handleSelectDraft = (id: string) => {
+    setSelectedDraftId(id);
+    // On stacked (mobile/tablet) layouts, bring the composer into view
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      requestAnimationFrame(() => composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 sm:space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="font-heading font-black text-2xl sm:text-3xl text-green-dark">
             Outreach Approval Hub
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Review personalized pitch drafts, inspect quality metrics, and approve sends with human-in-the-loop control.
+            Review personalized pitch drafts, check their quality, and approve every send yourself.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
-          {/* Top-Right Real-Time Daily Send Limit Badge */}
-          <div
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-              dailyStats.sent >= dailyStats.limit
-                ? "bg-amber-50 text-amber-900 border-amber-300 shadow-xs"
-                : "bg-emerald-50 text-emerald-800 border-emerald-200"
-            }`}
-            title="Real-time daily sender volume monitored to ensure 0% domain spam penalty."
-          >
-            {dailyStats.sent >= dailyStats.limit ? (
-              <AlertTriangle className="w-4 h-4 text-amber-600 animate-pulse" />
-            ) : (
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            )}
-            <span>
-              Daily Limit: {dailyStats.sent} / {dailyStats.limit} Sent
-            </span>
-            <span className="text-[10px] uppercase tracking-wide opacity-80">
-              ({Math.max(0, dailyStats.limit - dailyStats.sent)} Left)
-            </span>
-          </div>
-
-          {/* Mass Outreach Button */}
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
           <Button
             variant="green"
             size="sm"
             onClick={() => setIsMassOutreachOpen(true)}
-            className="font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer"
+            className="w-full sm:w-auto justify-center font-bold text-xs shadow-sm gap-1.5 cursor-pointer"
           >
             <Layers className="w-3.5 h-3.5 text-butter-gold" />
             Mass Outreach
           </Button>
 
-          {approvedDraftsCount > 0 && (
-            <Button
-              variant="butter"
-              size="sm"
-              onClick={() => setBulkSendOpen(true)}
-              className="font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer"
-            >
-              <SendHorizontal className="w-4 h-4" />
-              Send Approved ({approvedDraftsCount})
-            </Button>
-          )}
+          <Button
+            variant="butter"
+            size="sm"
+            disabled={approvedDraftsCount === 0}
+            onClick={() => setBulkSendOpen(true)}
+            className="w-full sm:w-auto justify-center font-bold text-xs shadow-sm gap-1.5 cursor-pointer disabled:opacity-50"
+            title={approvedDraftsCount === 0 ? "Approve drafts first to send them in bulk" : undefined}
+          >
+            <SendHorizontal className="w-4 h-4" />
+            <span className="sm:hidden">Send ({approvedDraftsCount})</span>
+            <span className="hidden sm:inline">Send Approved ({approvedDraftsCount})</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Strip: queue counts + daily send quota */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {queueStats.map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-white rounded-2xl border border-green-dark/10 px-4 py-3 flex items-center justify-between shadow-xs"
+          >
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted block">
+                {stat.label}
+              </span>
+              <span className="stat-font text-xl font-black text-green-dark">{stat.value}</span>
+            </div>
+            <stat.icon className="w-4 h-4 text-green-mid" />
+          </div>
+        ))}
+
+        <div
+          className={`rounded-2xl border px-4 py-3 shadow-xs space-y-1.5 ${
+            limitReached ? "bg-amber-50 border-amber-300" : "bg-white border-green-dark/10"
+          }`}
+          title="Daily send volume is capped to protect your sender reputation."
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+              Daily Limit
+            </span>
+            {limitReached ? (
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+            ) : (
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            )}
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="stat-font text-xl font-black text-green-dark">
+              {dailyStats ? dailyStats.sent : "–"}
+            </span>
+            <span className="text-xs font-bold text-text-muted">
+              / {dailyStats ? dailyStats.limit : "–"} sent
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-butter-warm rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${limitReached ? "bg-amber-500" : "bg-green-600"}`}
+              style={{
+                width: dailyStats ? `${Math.min(100, (dailyStats.sent / Math.max(1, dailyStats.limit)) * 100)}%` : "0%",
+              }}
+            />
+          </div>
         </div>
       </div>
 
       {/* Alert banner if user exceeds recommended daily limit */}
-      {dailyStats.sent >= dailyStats.limit && (
+      {limitReached && dailyStats && (
         <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 flex items-start gap-3 text-xs text-amber-900 animate-fade-in shadow-xs">
           <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold block text-amber-950">
-              Deliverability Alert: Recommended Daily Sending Limit Reached
+              Recommended daily sending limit reached
             </span>
             <p className="text-amber-800 leading-relaxed">
-              You have dispatched {dailyStats.sent} of {dailyStats.limit} recommended emails today. You are not prevented from sending further pitches, but corporate email filters (Google Workspace & Microsoft 365) monitor high sudden spikes. Additional sends today carry an increased risk of landing in the sponsor&apos;s spam folder.
+              You&apos;ve sent {dailyStats.sent} of {dailyStats.limit} recommended emails today. You can keep sending, but sudden spikes raise the chance of landing in sponsors&apos; spam folders.
             </p>
           </div>
         </div>
@@ -318,14 +363,14 @@ function OutreachContent() {
           secondaryActionHref="/app/discover"
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Queue List */}
-          <div className="lg:col-span-4 h-[750px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+          {/* Left Column: Queue List (sticky on desktop, shorter on phones) */}
+          <div className="lg:col-span-4 h-[420px] lg:h-[calc(100vh-7rem)] lg:sticky lg:top-20">
             <DraftQueueList
               drafts={drafts}
               companies={companies}
               selectedDraftId={selectedDraftId}
-              onSelectDraft={setSelectedDraftId}
+              onSelectDraft={handleSelectDraft}
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
               selectedDraftIds={selectedDraftIds}
@@ -338,7 +383,7 @@ function OutreachContent() {
           </div>
 
           {/* Right Column: Composer & Quality / Safety Panel */}
-          <div className="lg:col-span-8 space-y-6">
+          <div ref={composerRef} className="lg:col-span-8 space-y-5 lg:space-y-6 scroll-mt-20">
             {activeDraft ? (
               <>
                 <EmailComposer
@@ -352,9 +397,7 @@ function OutreachContent() {
                   onContactUpdated={loadData}
                 />
 
-                <div className="w-full">
-                  <QualityScorePanel quality={activeDraft.quality} />
-                </div>
+                {activeDraft.quality && <QualityScorePanel quality={activeDraft.quality} />}
               </>
             ) : (
               <div className="p-12 text-center bg-white rounded-3xl border border-green-dark/10">

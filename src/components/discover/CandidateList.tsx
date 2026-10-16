@@ -125,13 +125,13 @@ export const CandidateList: React.FC<CandidateListProps> = ({
         </div>
 
         {/* Global Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap">
           {onOpenAnalytics && (
             <Button
               variant="outline"
               size="sm"
               onClick={onOpenAnalytics}
-              className="text-xs font-bold border-green-mid/40 bg-green-light/10 text-green-dark hover:bg-green-light/20 gap-1.5 shadow-xs cursor-pointer"
+              className="w-full sm:w-auto justify-center text-xs font-bold border-green-mid/40 bg-green-light/10 text-green-dark hover:bg-green-light/20 gap-1.5 shadow-xs cursor-pointer"
             >
               <BarChart2 className="w-3.5 h-3.5 text-green-mid" />
               Discovery Analytics
@@ -142,7 +142,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
             variant="outline"
             size="sm"
             onClick={selectAll}
-            className="text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel cursor-pointer"
+            className="w-full sm:w-auto justify-center text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel cursor-pointer"
           >
             {allSelected ? "Deselect All" : "Select All"}
           </Button>
@@ -151,7 +151,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
             variant="outline"
             size="sm"
             onClick={onClearResults}
-            className="text-xs font-bold border-red-200 text-red-700 hover:bg-red-50 gap-1 cursor-pointer"
+            className="w-full sm:w-auto justify-center text-xs font-bold border-red-200 text-red-700 hover:bg-red-50 gap-1 cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Clear Results
@@ -162,7 +162,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
             size="sm"
             disabled={approving}
             onClick={onApproveAll}
-            className="text-xs font-bold shadow-xs cursor-pointer gap-1"
+            className="w-full sm:w-auto justify-center text-xs font-bold shadow-xs cursor-pointer gap-1"
           >
             <Check className="w-3.5 h-3.5" />
             Approve All ({candidates.length})
@@ -180,7 +180,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
             </span>
           </span>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap [&>*]:flex-1 sm:[&>*]:flex-none">
             <Button
               variant="outline"
               size="sm"
@@ -295,13 +295,13 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                 </div>
               </div>
 
-              {/* Right Side: Fit Score, Review, and Approve Button */}
-              <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-green-dark/6">
-                <div className="text-right px-2">
+              {/* Right Side: Fit Score, Review, and Approve Button (2x2 grid on phones) */}
+              <div className="grid grid-cols-2 items-center gap-2 md:flex md:justify-end md:gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-green-dark/6">
+                <div className="text-left md:text-right px-1 md:px-2">
                   <span className="text-[10px] uppercase font-bold text-text-muted block">
                     Fit Score
                   </span>
-                  <span className="stat-font font-black text-base text-green-800 flex items-center gap-1 justify-end">
+                  <span className="stat-font font-black text-base text-green-800 flex items-center gap-1 md:justify-end">
                     <TrendingUp className="w-3.5 h-3.5 text-green-600" />
                     {company.fitScore ?? 85}%
                   </span>
@@ -311,7 +311,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setReviewCandidate(company)}
-                  className="text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel gap-1.5 cursor-pointer shadow-xs"
+                  className="w-full md:w-auto justify-center text-xs font-bold border-green-dark/20 text-green-dark hover:bg-butter-panel gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
                 >
                   <FileText className="w-3.5 h-3.5 text-green-mid" />
                   Company Report
@@ -321,7 +321,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => onRejectCandidate(company.id, company.name)}
-                  className="text-xs font-bold border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 gap-1 cursor-pointer transition-colors"
+                  className="w-full md:w-auto justify-center text-xs font-bold border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 gap-1 cursor-pointer transition-colors"
                   title={`Reject ${company.name}`}
                 >
                   <X className="w-3.5 h-3.5" />
@@ -333,7 +333,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   size="sm"
                   disabled={approving}
                   onClick={() => onApproveSelected([company.id])}
-                  className="text-xs font-bold shadow-xs gap-1 cursor-pointer whitespace-nowrap"
+                  className="w-full md:w-auto justify-center text-xs font-bold shadow-xs gap-1 cursor-pointer whitespace-nowrap"
                 >
                   <Check className="w-3.5 h-3.5" />
                   Approve Sponsor

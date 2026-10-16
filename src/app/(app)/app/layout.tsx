@@ -8,6 +8,7 @@ import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { ToastProvider } from "@/components/ui/toast";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { GuidedSetupBanner } from "@/components/onboarding/GuidedSetupBanner";
+import { ActivityHeartbeat } from "@/components/activity/ActivityHeartbeat";
 
 export default async function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default async function AppLayout({
 
   return (
     <ToastProvider>
+      <ActivityHeartbeat />
       <div className="flex min-h-screen bg-butter-bg text-text-main overscroll-y-contain">
         {/* Left Desktop Sidebar */}
         <Sidebar />

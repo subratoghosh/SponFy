@@ -5,8 +5,6 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   LineChart,
   Line,
   XAxis,
@@ -113,14 +111,13 @@ export function AdminAnalyticsView({ initialData, adminUser }: Props) {
           )}
         </div>
 
-        {/* Row 1: User Growth & Daily Registrations */}
+        {/* Row 1: User Growth */}
         {loading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <ChartSkeleton title="Loading Population Trends" height="h-64" />
-            <ChartSkeleton title="Loading Acquisition Velocity" height="h-64" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* User Growth Over Time */}
             <div className="bg-white rounded-2xl border border-[#0C382E]/10 p-6 shadow-xs space-y-4">
               <div>
@@ -167,41 +164,6 @@ export function AdminAnalyticsView({ initialData, adminUser }: Props) {
                 </ResponsiveContainer>
               </div>
             </div>
-
-            {/* Registrations By Day */}
-            <div className="bg-white rounded-2xl border border-[#0C382E]/10 p-6 shadow-xs space-y-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#0C382E]">
-                    Acquisition Velocity
-                  </span>
-                  <span className="text-xs text-neutral-400">Daily breakdown</span>
-                </div>
-                <h3 className="text-base font-bold text-[#0C382E]">
-                  New Registrations per Day
-                </h3>
-              </div>
-
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.registrationsByDay} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#888" }} />
-                    <YAxis tick={{ fontSize: 11, fill: "#888" }} allowDecimals={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0C382E",
-                        color: "#FFF",
-                        borderRadius: "12px",
-                        border: "none",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Bar dataKey="count" name="Signups" fill="#0C382E" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
           </div>
         )}
 
@@ -237,7 +199,7 @@ export function AdminAnalyticsView({ initialData, adminUser }: Props) {
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
-                  <Line type="monotone" dataKey="sessions" name="Daily Sessions" stroke="#0C382E" strokeWidth={2.5} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="sessions" name="Sessions" stroke="#0C382E" strokeWidth={2.5} dot={{ r: 4 }} />
                   <Line type="monotone" dataKey="avgDurationMinutes" name="Avg Duration (min)" stroke="#2D6A4F" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -304,6 +266,13 @@ export function AdminAnalyticsView({ initialData, adminUser }: Props) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
+                  {data.industryPerformance.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-neutral-400">
+                        No sponsors discovered in this period
+                      </td>
+                    </tr>
+                  )}
                   {data.industryPerformance.map((ind, idx) => (
                     <tr key={idx} className="hover:bg-neutral-50/50">
                       <td className="py-2.5 font-bold text-[#0C382E]">{ind.industry}</td>
@@ -334,6 +303,13 @@ export function AdminAnalyticsView({ initialData, adminUser }: Props) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
+                  {data.topCampaigns.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-neutral-400">
+                        No campaigns created yet
+                      </td>
+                    </tr>
+                  )}
                   {data.topCampaigns.map((camp) => (
                     <tr key={camp.id} className="hover:bg-neutral-50/50">
                       <td className="py-2.5 font-bold text-[#0C382E]">{camp.name}</td>

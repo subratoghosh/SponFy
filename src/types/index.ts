@@ -403,7 +403,6 @@ export interface AdminOverviewMetrics {
 
 export interface AdminAnalyticsData {
   userGrowth: { date: string; users: number; active: number }[];
-  registrationsByDay: { date: string; count: number }[];
   sessionTrends: { date: string; sessions: number; avgDurationMinutes: number }[];
   campaignStatusBreakdown: { status: string; count: number }[];
   campaignsByEventType: { type: string; count: number }[];

@@ -175,9 +175,9 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
   const recipientEmail = primaryContact?.email || "";
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/12 shadow-sm space-y-5">
+    <div className="bg-white rounded-3xl p-4 sm:p-8 border border-green-dark/12 shadow-sm space-y-5">
       {/* Top Stepper Indicator */}
-      <div className="flex items-center justify-between border-b border-green-dark/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-green-dark/10 pb-4">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
             Outreach Stepper:
@@ -190,7 +190,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
         </div>
 
         {/* Tone Switcher */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 [&>select]:flex-1 sm:[&>select]:flex-none">
           <select
             value={tone}
             onChange={(e: any) => setTone(e.target.value)}
@@ -237,17 +237,17 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
           </div>
         </div>
       ) : (
-        <div className="p-3 bg-butter-panel rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border border-green-dark/8">
-          <div className="flex items-center gap-2 truncate">
+        <div className="p-3 bg-butter-panel rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-green-dark/8">
+          <div className="flex items-start sm:items-center gap-2 min-w-0">
             <span className="text-text-muted font-bold">To:</span>
-            <span className="font-mono font-bold text-green-dark truncate">
+            <span className="font-mono font-bold text-green-dark break-all sm:truncate">
               {primaryContact?.name ? `${primaryContact.name} • ` : ""}
               <span className="text-green-mid">{company?.name || "Company"}</span>
               {" "}&lt;{recipientEmail}&gt;
             </span>
           </div>
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 self-start sm:self-auto ${
               primaryContact?.status === "verified"
                 ? "text-emerald-800 bg-emerald-100 border border-emerald-300"
                 : "text-amber-800 bg-amber-100 border border-amber-300"
@@ -260,7 +260,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
 
       {/* Pitch Source & Custom Template Selector */}
       <div className="p-3.5 bg-butter-panel/80 rounded-2xl border border-green-dark/12 space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="flex items-center gap-1.5">
             <FileText className="w-3.5 h-3.5 text-green-mid" />
             <span className="text-xs font-bold text-green-dark">Pitch Source & Email Templates</span>
@@ -335,8 +335,8 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
       />
 
       {/* Action Footer */}
-      <div className="pt-4 border-t border-green-dark/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="pt-4 border-t border-green-dark/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
           <Button variant="glass" size="sm" onClick={handleSave} className="text-xs font-bold">
             <Save className="w-3.5 h-3.5 mr-1" /> Save Changes
           </Button>
@@ -354,7 +354,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end [&>*]:flex-1 sm:[&>*]:flex-none">
           {draft.status === "draft" && (
             <Button
               variant="green"
