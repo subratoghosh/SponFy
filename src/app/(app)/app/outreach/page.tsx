@@ -193,16 +193,14 @@ function OutreachContent() {
   const getRecipientEmail = (comp?: Company) => {
     if (!comp) return "";
     const primaryContact = comp.contacts?.find((c) => c.email && c.email.trim() !== "") || comp.contacts?.[0];
-    if (primaryContact?.email) return primaryContact.email;
-    const domain = comp.domain || (comp.website ? comp.website.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
-    return domain ? `partnerships@${domain}` : "partnerships@sponsor.com";
+    return primaryContact?.email || "";
   };
 
-  const handleConfirmSend = async () => {
+  const handleConfirmSend = async (targetEmail?: string) => {
     if (!activeDraft || !activeCompany) return;
-    const recipientEmail = getRecipientEmail(activeCompany);
+    const recipientEmail = targetEmail || getRecipientEmail(activeCompany);
     if (!recipientEmail) {
-      toast("Add a verified contact for this company before sending.", "error");
+      toast("Please add or discover a verified contact email for this company first.", "error");
       return;
     }
     setSending(true);
@@ -351,6 +349,7 @@ function OutreachContent() {
                   onApprove={handleApprove}
                   onRejectDraft={handleRejectDraft}
                   onOpenSendDialog={() => setConfirmOpen(true)}
+                  onContactUpdated={loadData}
                 />
 
                 <div className="w-full">
@@ -376,6 +375,7 @@ function OutreachContent() {
           companyName={activeCompany.name}
           onConfirmSend={handleConfirmSend}
           loading={sending}
+          isPatternGuess={!activeCompany.contacts?.some((c) => c.email && c.status === "verified")}
         />
       )}
 

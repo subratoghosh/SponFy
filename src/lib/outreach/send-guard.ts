@@ -80,20 +80,15 @@ export function resolveRecipient(input: {
 
   let email = (contact?.email || "").trim();
 
-  // If no contact email stored, fall back to requestedTo or domain-derived direct outreach address
+  // If no contact email stored, fall back to explicitly requestedTo if valid
   if (!email || !EMAIL_RE.test(email)) {
     if (requestedTo && EMAIL_RE.test(requestedTo.trim())) {
       email = requestedTo.trim();
-    } else {
-      const domain = companyDomain || (companyWebsite ? companyWebsite.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
-      if (domain) {
-        email = `partnerships@${domain}`;
-      }
     }
   }
 
   if (!email || !EMAIL_RE.test(email)) {
-    return fail(422, "no_recipient", "No valid recipient email on file for this company. Add a verified contact first.");
+    return fail(422, "no_recipient", "No valid recipient email on file for this company. Discover or add a verified contact first.");
   }
 
   if (requestedTo && requestedTo.trim().toLowerCase() !== email.toLowerCase()) {

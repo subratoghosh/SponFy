@@ -410,9 +410,10 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                 </div>
 
                 <div className="p-3 rounded-xl border border-green-dark/10 bg-white">
-                  <span className="text-[10px] font-bold text-text-muted uppercase block">Primary Contact Channel</span>
-                  <span className="font-mono font-bold text-green-dark text-xs block mt-0.5 truncate">
-                    {reviewCandidate.domain ? `partnerships@${reviewCandidate.domain}` : "Direct Sponsor Email Channel"}
+                  <span className="text-[10px] font-bold text-text-muted uppercase block">Deliverability Status</span>
+                  <span className="font-sans font-semibold text-emerald-700 text-xs flex items-center gap-1.5 mt-0.5 truncate">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    Zero-Bounce AI Verified on Pipeline Add
                   </span>
                 </div>
               </div>

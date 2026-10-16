@@ -13,6 +13,7 @@ import { getSponsors, getSponsorById, updateSponsorStage } from "@/lib/data/repo
 import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
 import { executeApprovedSend } from "@/lib/workflows/outreach-graph";
 import { resolveRecipient, evaluateSend } from "@/lib/outreach/send-guard";
+import { verifyEmailStrictly } from "@/lib/integrations/verification/strict-verifier";
 import { SYSTEM_LIMITS } from "@/lib/config/limits";
 import { EmailDraft, Company } from "@/types";
 
@@ -68,6 +69,13 @@ export async function GET(req: Request) {
 
       if (!recipient.ok) {
         excluded.push({ draftId: draft.id, companyName, reason: recipient.error });
+        continue;
+      }
+
+      // Zero-Bounce Pre-flight Deliverability Shield
+      const verif = await verifyEmailStrictly(recipient.recipient, { companyName: company.name });
+      if (!verif.isDeliverable || verif.status === "NO_MX" || verif.status === "INVALID" || verif.status === "BOUNCED" || verif.status === "DISPOSABLE") {
+        excluded.push({ draftId: draft.id, companyName, reason: `Deliverability Shield: ${verif.reason}` });
         continue;
       }
 
@@ -201,6 +209,13 @@ export async function POST(req: Request) {
       });
       if (!recipient.ok) {
         failed.push({ draftId: draft.id, companyName: company.name, reason: recipient.error });
+        continue;
+      }
+
+      // Zero-Bounce Pre-flight Deliverability Shield
+      const verif = await verifyEmailStrictly(recipient.recipient, { companyName: company.name });
+      if (!verif.isDeliverable || verif.status === "NO_MX" || verif.status === "INVALID" || verif.status === "BOUNCED" || verif.status === "DISPOSABLE") {
+        failed.push({ draftId: draft.id, companyName: company.name, reason: `Deliverability Shield: ${verif.reason}` });
         continue;
       }
 

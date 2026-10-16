@@ -15,6 +15,9 @@ import {
   Bot,
   AlertTriangle,
   Trash2,
+  AlertCircle,
+  Search,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "next-auth/react";
@@ -32,6 +35,7 @@ interface EmailComposerProps {
   onApprove: () => void;
   onRejectDraft?: () => void;
   onOpenSendDialog: () => void;
+  onContactUpdated?: () => void;
 }
 
 export const EmailComposer: React.FC<EmailComposerProps> = ({
@@ -41,6 +45,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
   onApprove,
   onRejectDraft,
   onOpenSendDialog,
+  onContactUpdated,
 }) => {
   const { toast } = useToast();
   const { data: session } = useSession();
@@ -48,6 +53,7 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
   const [body, setBody] = useState(draft.body);
   const [tone, setTone] = useState<"professional" | "enthusiastic" | "value_first" | "short">("professional");
   const [regenerating, setRegenerating] = useState(false);
+  const [discoveringContact, setDiscoveringContact] = useState(false);
 
   // Template State
   const [templates, setTemplates] = useState<CustomEmailTemplate[]>([]);
@@ -138,9 +144,31 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
     }
   };
 
-  const primaryContact = company?.contacts?.find((c) => c.email) || company?.contacts?.[0];
-  const domain = company?.domain || (company?.website ? company.website.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
-  const recipientEmail = primaryContact?.email || (domain ? `partnerships@${domain}` : "partnerships@sponsor.com");
+  const handleDiscoverContact = async () => {
+    if (!company?.id) return;
+    setDiscoveringContact(true);
+    try {
+      const res = await fetch("/api/sponsors/discover-contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId: company.id }),
+      });
+      const data = await res.json();
+      if (data.success && data.contact?.email) {
+        toast(`Discovered verified contact: ${data.contact.email}`, "success");
+        onContactUpdated?.();
+      } else {
+        toast(data.reason || "No verified public contact found. Please add manually.", "info");
+      }
+    } catch {
+      toast("Contact discovery failed. Try adding manually.", "error");
+    } finally {
+      setDiscoveringContact(false);
+    }
+  };
+
+  const primaryContact = company?.contacts?.find((c) => c.email && c.email.trim() !== "") || company?.contacts?.[0];
+  const recipientEmail = primaryContact?.email || "";
 
   return (
     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-green-dark/12 shadow-sm space-y-5">
@@ -182,31 +210,49 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
       </div>
 
       {/* Recipient Bar */}
-      <div className="p-3 bg-butter-panel rounded-xl text-xs flex items-center justify-between border border-green-dark/8">
-        <div className="flex items-center gap-2 truncate">
-          <span className="text-text-muted font-bold">To:</span>
-          <span className="font-mono font-bold text-green-dark truncate">
-            {primaryContact?.name ? `${primaryContact.name} • ` : ""}
-            <span className="text-green-mid">{company?.name || "Company"}</span>
-            {" "}&lt;{recipientEmail}&gt;
+      {!recipientEmail ? (
+        <div className="p-4 bg-amber-50/90 rounded-2xl border border-amber-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+          <div className="flex items-center gap-2 text-amber-950">
+            <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+            <div>
+              <span className="font-bold block">No verified contact email on file for {company?.name || "this company"}</span>
+              <span className="text-[11px] text-amber-800">Guessed/synthetic pattern emails are disabled to prevent bounces. Auto-discover or add a real contact.</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="butter"
+              size="sm"
+              loading={discoveringContact}
+              onClick={handleDiscoverContact}
+              className="text-xs font-bold shadow-sm"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1" />
+              {discoveringContact ? "Searching Web..." : "Find Contact with AI"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="p-3 bg-butter-panel rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border border-green-dark/8">
+          <div className="flex items-center gap-2 truncate">
+            <span className="text-text-muted font-bold">To:</span>
+            <span className="font-mono font-bold text-green-dark truncate">
+              {primaryContact?.name ? `${primaryContact.name} • ` : ""}
+              <span className="text-green-mid">{company?.name || "Company"}</span>
+              {" "}&lt;{recipientEmail}&gt;
+            </span>
+          </div>
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+              primaryContact?.status === "verified"
+                ? "text-emerald-800 bg-emerald-100 border border-emerald-300"
+                : "text-amber-800 bg-amber-100 border border-amber-300"
+            }`}
+          >
+            {primaryContact?.status === "verified" ? "Verified Public Contact" : "Needs Verification"}
           </span>
         </div>
-        <span
-          className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-            primaryContact?.status === "verified"
-              ? "text-emerald-800 bg-emerald-100 border border-emerald-300"
-              : primaryContact?.email
-              ? "text-green-800 bg-green-100"
-              : "text-amber-800 bg-amber-100 border border-amber-300"
-          }`}
-        >
-          {primaryContact?.status === "verified"
-            ? "Verified Contact"
-            : primaryContact?.email
-            ? "Corporate Contact"
-            : "Direct Outreach Address"}
-        </span>
-      </div>
+      )}
 
       {/* Pitch Source & Custom Template Selector */}
       <div className="p-3.5 bg-butter-panel/80 rounded-2xl border border-green-dark/12 space-y-2">

@@ -19,13 +19,12 @@ export async function runOutreachWorkflow(
 
   // Step 3: Check Safety Gate rules
   const primaryContact = company.contacts?.find((c) => c.email && c.email.trim() !== "") || company.contacts?.[0];
-  const domain = company.domain || (company.website ? company.website.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
-  const recipientEmail = primaryContact?.email || (domain ? `partnerships@${domain}` : "");
+  const recipientEmail = primaryContact?.email || "";
   const suppressed = recipientEmail ? await isSuppressed(recipientEmail) : false;
 
   const safetyChecklist = {
     recipientFound: !!recipientEmail,
-    recipientStatus: primaryContact?.status || "verified",
+    recipientStatus: primaryContact?.status || "unknown",
     hasSponsorshipAsk: draftRes.body.includes("₹") || draftRes.body.includes("$") || draftRes.body.includes("Tier"),
     isSuppressed: suppressed,
     canSend: !!recipientEmail && !suppressed,

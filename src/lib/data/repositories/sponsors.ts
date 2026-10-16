@@ -88,28 +88,16 @@ export async function getSponsors(campaignId?: string, userId?: string): Promise
 
       return companies.map((c) => {
         const domain = c.domain || (c.website ? normalizeDomain(c.website) : normalizeName(c.name).replace(/\s+/g, "") + ".com");
-        const contacts: Contact[] = c.contacts.length > 0
-          ? c.contacts.map((con) => ({
-              id: con.id,
-              companyId: con.companyId,
-              name: con.name || "",
-              role: con.role || "",
-              email: con.email || "",
-              status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
-              sourceUrl: con.sourceUrl || undefined,
-              createdAt: con.createdAt.toISOString(),
-            }))
-          : [
-              {
-                id: `con-auto-${c.id}`,
-                companyId: c.id,
-                name: `${c.name} Partnerships`,
-                role: "Partnerships / Direct Outreach",
-                email: `partnerships@${domain}`,
-                status: "verified" as any,
-                createdAt: c.createdAt.toISOString(),
-              },
-            ];
+        const contacts: Contact[] = c.contacts.map((con) => ({
+          id: con.id,
+          companyId: con.companyId,
+          name: con.name || "",
+          role: con.role || "",
+          email: con.email || "",
+          status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
+          sourceUrl: con.sourceUrl || undefined,
+          createdAt: con.createdAt.toISOString(),
+        }));
 
         return {
           id: c.id,
@@ -186,28 +174,16 @@ export async function getSponsorById(id: string): Promise<Company | null> {
 
       if (c) {
         const domain = c.domain || (c.website ? normalizeDomain(c.website) : normalizeName(c.name).replace(/\s+/g, "") + ".com");
-        const contacts: Contact[] = c.contacts.length > 0
-          ? c.contacts.map((con) => ({
-              id: con.id,
-              companyId: con.companyId,
-              name: con.name || "",
-              role: con.role || "",
-              email: con.email || "",
-              status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
-              sourceUrl: con.sourceUrl || undefined,
-              createdAt: con.createdAt.toISOString(),
-            }))
-          : [
-              {
-                id: `con-auto-${c.id}`,
-                companyId: c.id,
-                name: `${c.name} Partnerships`,
-                role: "Partnerships / Direct Outreach",
-                email: `partnerships@${domain}`,
-                status: "verified" as any,
-                createdAt: c.createdAt.toISOString(),
-              },
-            ];
+        const contacts: Contact[] = c.contacts.map((con) => ({
+          id: con.id,
+          companyId: con.companyId,
+          name: con.name || "",
+          role: con.role || "",
+          email: con.email || "",
+          status: (con.status === "VERIFIED" ? "verified" : con.status === "PUBLIC" ? "public" : "unknown") as any,
+          sourceUrl: con.sourceUrl || undefined,
+          createdAt: con.createdAt.toISOString(),
+        }));
 
         return {
           id: c.id,
@@ -246,24 +222,6 @@ export async function getSponsorById(id: string): Promise<Company | null> {
   }
 
   const found = sponsorsStoreRef.value.find((c) => c.id === id);
-  if (found && (!found.contacts || found.contacts.length === 0)) {
-    const domain = found.domain || (found.website ? normalizeDomain(found.website) : normalizeName(found.name).replace(/\s+/g, "") + ".com");
-    return {
-      ...found,
-      domain,
-      contacts: [
-        {
-          id: `con-auto-${found.id}`,
-          companyId: found.id,
-          name: `${found.name} Partnerships`,
-          role: "Partnerships / Direct Outreach",
-          email: `partnerships@${domain}`,
-          status: "verified" as any,
-          createdAt: found.createdAt,
-        },
-      ],
-    };
-  }
   return found || null;
 }
 
@@ -375,7 +333,6 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
     ? normalizeDomain(company.website)
     : normalizeName(company.name).replace(/\s+/g, "") + ".com";
   const dbStage = company.stage ? STAGE_MAP[company.stage] || "DISCOVERED" : "DISCOVERED";
-  const defaultEmail = `partnerships@${domain}`;
 
   if (isDatabaseConfigured()) {
     try {
@@ -407,17 +364,6 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
           signals: (company.signals as any) || [],
           confidence: company.confidence || 0,
           researchStatus: "NOT_STARTED",
-          contacts: {
-            create: [
-              {
-                userId,
-                name: `${company.name} Partnerships`,
-                role: "Partnerships / Direct Outreach",
-                email: defaultEmail,
-                status: "VERIFIED",
-              },
-            ],
-          },
         },
         include: {
           contacts: true,
@@ -456,19 +402,7 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
   const newCompany: Company = {
     ...company,
     domain,
-    contacts: company.contacts && company.contacts.length > 0
-      ? company.contacts
-      : [
-          {
-            id: `con-${Date.now()}`,
-            companyId: `comp-${Date.now()}`,
-            name: `${company.name} Partnerships`,
-            role: "Partnerships / Direct Outreach",
-            email: defaultEmail,
-            status: "verified",
-            createdAt: new Date().toISOString(),
-          },
-        ],
+    contacts: company.contacts || [],
     id: `comp-${Date.now()}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

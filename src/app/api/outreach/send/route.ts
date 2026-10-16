@@ -11,6 +11,7 @@ import { getSponsorById, addContact } from "@/lib/data/repositories/sponsors";
 import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
 import { executeApprovedSend } from "@/lib/workflows/outreach-graph";
 import { resolveRecipient, evaluateSend } from "@/lib/outreach/send-guard";
+import { verifyEmailStrictly } from "@/lib/integrations/verification/strict-verifier";
 import { SYSTEM_LIMITS } from "@/lib/config/limits";
 import { requireAuth, verifyCompanyOwnership } from "@/lib/security/auth-guard";
 import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limit";
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Recipient comes from the stored contact or verified direct outreach domain address
+    // Recipient comes from the stored contact or verified direct outreach address
     const recipient = resolveRecipient({
       contactId: draft.contactId,
       contacts: company.contacts ?? [],
@@ -75,13 +76,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: recipient.error, code: recipient.code }, { status: recipient.status });
     }
 
-    // Auto-persist contact in database if missing so followups and thread sync attach seamlessly
+    // Zero-Bounce Pre-flight Deliverability Shield: Check MX, SPF, DMARC, and suppression
+    const verif = await verifyEmailStrictly(recipient.recipient, { companyName: company.name });
+    if (!verif.isDeliverable || verif.status === "NO_MX" || verif.status === "INVALID" || verif.status === "BOUNCED" || verif.status === "DISPOSABLE") {
+      return NextResponse.json(
+        {
+          error: `Zero-Bounce Shield: Email failed deliverability check (${verif.reason}). Sending blocked to protect your domain from bouncing.`,
+          code: "deliverability_failed",
+          details: verif,
+        },
+        { status: 422 }
+      );
+    }
+
+    // Auto-persist contact in database if verified and missing so followups and thread sync attach seamlessly
     if (!company.contacts?.some((c) => c.email?.toLowerCase() === recipient.recipient.toLowerCase())) {
       try {
         await addContact(company.id, {
-          name: `${company.name} Partnerships`,
+          name: `${company.name} Team`,
           email: recipient.recipient,
-          role: "Partnerships / Direct Outreach",
+          role: "Partnerships / Sponsor Relations",
           status: "verified",
         });
       } catch (cErr) {
