@@ -65,6 +65,27 @@ export async function POST(req: Request) {
       );
     }
 
+    // If the user specified a custom or typed email in the modal/dialog:
+    if (toEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail.trim())) {
+      const cleanTo = toEmail.trim().toLowerCase();
+      const existingContact = company.contacts?.find((c) => c.email?.toLowerCase() === cleanTo);
+      if (!existingContact) {
+        try {
+          const newContact = await addContact(company.id, {
+            name: `${company.name} Contact`,
+            email: cleanTo,
+            role: "Direct Outreach / Sponsor Relations",
+            status: "verified",
+          });
+          if (newContact) {
+            company.contacts = [...(company.contacts ?? []), newContact];
+          }
+        } catch (cErr) {
+          console.warn("Could not auto-persist custom contact:", cErr);
+        }
+      }
+    }
+
     // Recipient comes from the stored contact or verified direct outreach address
     const recipient = resolveRecipient({
       contactId: draft.contactId,
@@ -77,20 +98,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: recipient.error, code: recipient.code }, { status: recipient.status });
     }
 
-    // Zero-Bounce Pre-flight Deliverability Shield: Check MX, SPF, DMARC, and suppression
-    const verif = await verifyEmailStrictly(recipient.recipient, { companyName: company.name });
-    if (!verif.isDeliverable || verif.status === "NO_MX" || verif.status === "INVALID" || verif.status === "BOUNCED" || verif.status === "DISPOSABLE") {
-      return NextResponse.json(
-        {
-          error: `Zero-Bounce Shield: Email failed deliverability check (${verif.reason}). Sending blocked to protect your domain from bouncing.`,
-          code: "deliverability_failed",
-          details: verif,
-        },
-        { status: 422 }
-      );
+    // Pre-flight Deliverability Assessment: MX, SPF, DMARC check for auditing (alert shown in UI; user authorized to send)
+    const verif = await verifyEmailStrictly(recipient.recipient, { companyName: company.name }).catch(() => null);
+    if (verif && (!verif.isDeliverable || verif.status === "NO_MX" || verif.status === "INVALID")) {
+      console.warn(`[Send Route] Dispatching email despite safety alert on ${recipient.recipient} (${verif.reason}) per user authorization.`);
     }
 
-    // Auto-persist contact in database if verified and missing so followups and thread sync attach seamlessly
+    // Auto-persist contact in database if missing so followups and thread sync attach seamlessly
     if (!company.contacts?.some((c) => c.email?.toLowerCase() === recipient.recipient.toLowerCase())) {
       try {
         await addContact(company.id, {

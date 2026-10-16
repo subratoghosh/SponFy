@@ -60,6 +60,90 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const name = (body.name || "").trim() || "New Sponsorship Campaign";
+  const eventType = body.eventType || "Tech Conference & Summit";
+  const audienceSize = Number(body.audienceSize) || 500;
+  const location = body.location || "India";
+  const targetAmount = Number(body.targetAmount) || 100000;
+  const preferredIndustries = Array.isArray(body.preferredIndustries) ? body.preferredIndustries : [];
+  const tiers = Array.isArray(body.tiers) ? body.tiers : [];
+  const deckUrl = body.deckUrl || null;
+  const description = body.description || "";
+
+  if (isDatabaseConfigured()) {
+    try {
+      const record = await prisma.campaign.create({
+        data: {
+          userId,
+          name,
+          eventType,
+          audienceSize,
+          location,
+          targetAmount,
+          preferredIndustries,
+          tiers,
+          deckUrl,
+          description,
+          archived: false,
+        },
+      });
+
+      const formatted = {
+        id: record.id,
+        name: record.name,
+        eventType: record.eventType,
+        audienceSize: record.audienceSize,
+        location: record.location,
+        targetAmount: record.targetAmount,
+        preferredIndustries: record.preferredIndustries,
+        tiers: (record.tiers as any) || [],
+        deckUrl: record.deckUrl || undefined,
+        description: record.description || "",
+        status: record.archived ? "archived" : "active",
+        createdAt: record.createdAt.toISOString(),
+      };
+
+      return NextResponse.json({ success: true, data: formatted });
+    } catch (err: any) {
+      console.error("POST /api/campaigns prisma error:", err);
+      return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    }
+  }
+
+  // In-memory fallback
+  const newCamp = {
+    id: `camp-${Date.now()}`,
+    name,
+    eventType,
+    audienceSize,
+    location,
+    targetAmount,
+    preferredIndustries,
+    tiers,
+    deckUrl: deckUrl || undefined,
+    description,
+    status: "active" as const,
+    createdAt: new Date().toISOString(),
+    userId,
+  };
+
+  return NextResponse.json({ success: true, data: newCamp });
+}
+
 export async function DELETE(request: NextRequest) {
   const session = await auth();
   const url = new URL(request.url);

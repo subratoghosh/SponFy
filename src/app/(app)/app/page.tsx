@@ -204,6 +204,7 @@ export default async function OverviewPage() {
       activities={isDemoUser ? DEMO_ACTIVITIES : []}
       insights={isDemoUser ? demoInsights : []}
       actionQueue={finalActionQueue}
+      hasCampaigns={isDemoUser || userCampaigns.length > 0}
     />
   );
 }

@@ -1,11 +1,13 @@
 "use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Eye,
   EyeOff,
   Maximize2,
   Minimize2,
+  Rocket,
+  Sparkles,
 } from "lucide-react";
 import { KPIRow } from "./KPIRow";
 import { TodayActionQueue } from "./TodayActionQueue";
@@ -15,6 +17,8 @@ import { AIInsightCard } from "./AIInsightCard";
 import { SenderHealthCard } from "./SenderHealthCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { StartFirstCampaignModal } from "@/components/campaigns/StartFirstCampaignModal";
+import { Campaign } from "@/types";
 
 interface Props {
   analytics: {
@@ -25,6 +29,7 @@ interface Props {
   activities: any[];
   insights: string[];
   actionQueue?: any[];
+  hasCampaigns?: boolean;
 }
 
 export function CampaignDashboardView({
@@ -33,9 +38,37 @@ export function CampaignDashboardView({
   activities,
   insights,
   actionQueue,
+  hasCampaigns = true,
 }: Props) {
+  const router = useRouter();
   const [showKpis, setShowKpis] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [startModalOpen, setStartModalOpen] = useState(!hasCampaigns);
+  const [localHasCampaigns, setLocalHasCampaigns] = useState(hasCampaigns);
+
+  useEffect(() => {
+    setLocalHasCampaigns(hasCampaigns);
+    if (!hasCampaigns) {
+      setStartModalOpen(true);
+    }
+  }, [hasCampaigns]);
+
+  useEffect(() => {
+    const handleCampaignsUpdated = () => {
+      router.refresh();
+      setLocalHasCampaigns(true);
+    };
+    window.addEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    return () => {
+      window.removeEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    };
+  }, [router]);
+
+  const handleCampaignCreated = (campaign: Campaign) => {
+    setLocalHasCampaigns(true);
+    setStartModalOpen(false);
+    router.refresh();
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -94,6 +127,33 @@ export function CampaignDashboardView({
         </div>
       </div>
 
+      {/* 0. Onboarding Hero for New Users without Campaigns */}
+      {!localHasCampaigns && (
+        <div className="p-6 rounded-3xl bg-gradient-to-r from-butter-panel to-butter-warm border border-green-dark/15 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-5 animate-fade-in">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-dark/10 text-green-dark text-[11px] font-bold tracking-wide uppercase">
+              <Sparkles className="w-3.5 h-3.5 text-green-mid" />
+              <span>Workspace Setup</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black font-heading text-green-dark">
+              Launch your first sponsorship campaign
+            </h2>
+            <p className="text-xs sm:text-sm text-text-dim max-w-xl leading-relaxed">
+              Define your event to automatically discover verified sponsor contacts, generate high-converting personalized pitches, and track meetings.
+            </p>
+          </div>
+          <Button
+            variant="butter"
+            size="md"
+            onClick={() => setStartModalOpen(true)}
+            className="font-bold shadow-md cursor-pointer shrink-0 flex items-center gap-2"
+          >
+            <Rocket className="w-4 h-4 text-green-dark" />
+            <span>Start Your First Campaign</span>
+          </Button>
+        </div>
+      )}
+
       {/* 1. Optional / Toggleable KPI Row */}
       {showKpis && (
         <div className="animate-fade-in">
@@ -118,6 +178,13 @@ export function CampaignDashboardView({
           </div>
         </div>
       </div>
+
+      {/* 3. Onboarding Campaign Launch Modal */}
+      <StartFirstCampaignModal
+        open={startModalOpen}
+        onClose={() => setStartModalOpen(false)}
+        onCreated={handleCampaignCreated}
+      />
     </div>
   );
 }

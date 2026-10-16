@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { EmailDraft } from "@/types";
-import { Send, ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, XCircle, Search } from "lucide-react";
+import { Send, ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, UserCheck, Edit3 } from "lucide-react";
 
 interface VerificationDetails {
   status: "VALID" | "RISKY" | "INVALID" | "NO_MX" | "BOUNCED" | "DISPOSABLE";
@@ -52,16 +52,19 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
   remainingDailyCap,
   dailyCapLimit,
 }) => {
-  const [recipient, setRecipient] = useState(toEmail);
+  const [selectedSource, setSelectedSource] = useState<"discovered" | "custom">(toEmail ? "discovered" : "custom");
+  const [customEmail, setCustomEmail] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verifResult, setVerifResult] = useState<VerificationDetails | null>(null);
 
   useEffect(() => {
-    setRecipient(toEmail);
+    setSelectedSource(toEmail ? "discovered" : "custom");
+    setCustomEmail("");
     setVerifResult(null);
   }, [toEmail, open]);
 
-  const isValidSyntax = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.trim());
+  const activeEmail = (selectedSource === "discovered" && toEmail ? toEmail : customEmail).trim();
+  const isValidSyntax = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(activeEmail);
 
   const handleRunVerification = async (emailToCheck: string) => {
     const clean = emailToCheck.trim();
@@ -85,102 +88,157 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
     }
   };
 
-  // Auto-verify on open if valid
+  // Auto-verify on open or email selection change
   useEffect(() => {
-    if (open && isValidSyntax && !verifResult && !verifying) {
-      handleRunVerification(recipient);
+    if (open && isValidSyntax && !verifying) {
+      handleRunVerification(activeEmail);
     }
-  }, [open, recipient, isValidSyntax]);
+  }, [open, activeEmail, isValidSyntax]);
 
-  const isBlockedByShield =
+  const hasAlert =
     verifResult &&
     (!verifResult.isDeliverable ||
       verifResult.status === "NO_MX" ||
       verifResult.status === "INVALID" ||
       verifResult.status === "BOUNCED" ||
-      verifResult.status === "DISPOSABLE");
+      verifResult.status === "DISPOSABLE" ||
+      verifResult.status === "RISKY");
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title="Confirm Email Outreach Send"
-      description="Zero-Bounce Deliverability Shield & Human Authorization before dispatching via Gmail API."
+      description="Select your target recipient and review deliverability safety before dispatching via Gmail."
     >
       <div className="space-y-4 text-xs">
-        {/* Zero-Bounce Deliverability Shield Banner */}
-        {isBlockedByShield ? (
-          <div className="p-3.5 rounded-2xl border bg-rose-50 border-rose-300 text-rose-950 space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-[13px] text-rose-800">
-              <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>Zero-Bounce Shield: Dispatch Blocked</span>
+        {/* Recipient Source Decision: Discovered vs Custom */}
+        <div className="space-y-2">
+          <label className="font-bold text-text-muted uppercase text-[10px] block">
+            Choose Recipient Email:
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {toEmail ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSource("discovered");
+                  setVerifResult(null);
+                }}
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  selectedSource === "discovered"
+                    ? "bg-[#2D6A4F]/10 border-[#2D6A4F] text-[#0C382E] shadow-xs"
+                    : "bg-white border-green-dark/15 text-text-dim hover:bg-butter-warm/40"
+                }`}
+              >
+                <div className="truncate min-w-0 pr-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider block text-green-mid">
+                    Discovered Email
+                  </span>
+                  <span className="font-mono font-bold text-xs truncate block text-green-dark">
+                    {toEmail}
+                  </span>
+                </div>
+                <UserCheck className={`w-4 h-4 shrink-0 ${selectedSource === "discovered" ? "text-[#2D6A4F]" : "text-text-muted"}`} />
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedSource("custom");
+                setVerifResult(null);
+              }}
+              className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                selectedSource === "custom"
+                  ? "bg-[#2D6A4F]/10 border-[#2D6A4F] text-[#0C382E] shadow-xs"
+                  : "bg-white border-green-dark/15 text-text-dim hover:bg-butter-warm/40"
+              }`}
+            >
+              <div className="truncate min-w-0 pr-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider block text-green-mid">
+                  Custom / Typed Email
+                </span>
+                <span className="font-mono text-xs truncate block text-text-dim">
+                  {customEmail ? customEmail : "Input your own email address"}
+                </span>
+              </div>
+              <Edit3 className={`w-4 h-4 shrink-0 ${selectedSource === "custom" ? "text-[#2D6A4F]" : "text-text-muted"}`} />
+            </button>
+          </div>
+
+          {/* Custom Input Field when selected */}
+          {selectedSource === "custom" && (
+            <div className="mt-2 animate-fade-in">
+              <input
+                type="email"
+                value={customEmail}
+                onChange={(e) => {
+                  setCustomEmail(e.target.value);
+                  setVerifResult(null);
+                }}
+                placeholder="Enter verified direct email (e.g. contact@sponsor.com)"
+                className="w-full px-3 py-2 bg-white rounded-xl border border-green-dark/20 text-green-dark font-mono text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30"
+                autoFocus
+              />
+              {!isValidSyntax && customEmail.length > 0 && (
+                <span className="text-[11px] text-red-600 mt-1 block">Please enter a valid email address.</span>
+              )}
             </div>
-            <p className="text-[11px] leading-relaxed text-rose-900">
-              {verifResult.reason}. Sending this email will cause a bounce and hurt your domain reputation. Please enter a valid, working contact email.
+          )}
+        </div>
+
+        {/* Deliverability Risk Alert or Verified Safety Banner */}
+        {hasAlert ? (
+          <div className="p-3.5 rounded-2xl border bg-amber-50 border-amber-300 text-amber-950 space-y-1.5 animate-fade-in shadow-xs">
+            <div className="flex items-center gap-1.5 font-bold text-[13px] text-amber-900">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Deliverability Warning: Potential Risk Detected</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-900">
+              {verifResult.reason}. MX or DNS mail checks flagged potential deliverability issues. If you know this email is genuine, you can take the risk and send anyway.
             </p>
           </div>
         ) : verifResult?.status === "VALID" ? (
-          <div className="p-3.5 rounded-2xl border bg-emerald-50 border-emerald-300 text-emerald-950 space-y-1">
+          <div className="p-3.5 rounded-2xl border bg-emerald-50 border-emerald-300 text-emerald-950 space-y-1 animate-fade-in">
             <div className="flex items-center gap-1.5 font-bold text-[13px] text-emerald-800">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Zero-Bounce Shield: Verified Safe to Send ({verifResult.score}/100)</span>
+              <span>Deliverability Verified Safe ({verifResult.score}/100)</span>
             </div>
             <p className="text-[11px] leading-relaxed text-emerald-900">
               Active MX mail servers verified ({verifResult.checks.mxHosts[0] || "verified host"}). SPF/DMARC protocols confirmed.
             </p>
           </div>
         ) : (
-          <div className="p-3.5 rounded-2xl border bg-amber-50 border-amber-300 text-amber-950 space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-[13px]">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Deliverability Notice: Verify Before Sending</span>
+          <div className="p-3 bg-butter-panel rounded-xl border border-green-dark/10 text-green-dark flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-green-mid shrink-0" />
+              <span className="text-[11px] font-medium text-text-dim">
+                {verifying ? "Checking MX & DNS records..." : "Verify deliverability before dispatching."}
+              </span>
             </div>
-            <p className="text-[11px] leading-relaxed opacity-90">
-              Confirm the recipient address below. Sending to non-existent inboxes will bounce.
-            </p>
-          </div>
-        )}
-
-        {/* Message Summary & Editable Recipient Input */}
-        <div className="p-4 bg-butter-panel rounded-2xl border border-green-dark/12 space-y-3">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="font-bold text-text-muted uppercase text-[10px] block">
-                Target Recipient Email:
-              </label>
+            {isValidSyntax && (
               <button
                 type="button"
-                onClick={() => handleRunVerification(recipient)}
-                disabled={verifying || !isValidSyntax}
+                onClick={() => handleRunVerification(activeEmail)}
+                disabled={verifying}
                 className="text-[11px] font-bold text-green-mid hover:text-green-dark flex items-center gap-1 hover:underline cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`w-3 h-3 ${verifying ? "animate-spin" : ""}`} />
-                {verifying ? "Auditing MX & DNS..." : "Re-Check Deliverability"}
+                {verifying ? "Auditing..." : "Re-Check"}
               </button>
-            </div>
-
-            <input
-              type="email"
-              value={recipient}
-              onChange={(e) => {
-                setRecipient(e.target.value);
-                setVerifResult(null);
-              }}
-              placeholder="lead@company.com"
-              className="w-full px-3 py-2 bg-white rounded-xl border border-green-dark/15 text-green-dark font-mono text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-green-dark/20"
-            />
-            {!isValidSyntax && (
-              <span className="text-[11px] text-red-600 mt-1 block">Please enter a valid email address.</span>
             )}
           </div>
+        )}
 
-          {/* Real-time Technical Deliverability Badges */}
+        {/* Message Summary Card */}
+        <div className="p-4 bg-butter-panel rounded-2xl border border-green-dark/12 space-y-3">
           {verifResult && (
             <div className="p-2.5 bg-white/80 rounded-xl border border-green-dark/10 space-y-1.5 text-[11px]">
               <div className="flex items-center justify-between font-semibold">
                 <span className="text-text-muted">DNS MX Mail Exchanger:</span>
-                <span className={verifResult.checks.hasMx ? "text-emerald-700 font-mono" : "text-rose-700 font-bold"}>
-                  {verifResult.checks.hasMx ? `Active (${verifResult.checks.mxHosts[0] || "Found"})` : "None Found (Will Bounce)"}
+                <span className={verifResult.checks.hasMx ? "text-emerald-700 font-mono" : "text-amber-800 font-bold"}>
+                  {verifResult.checks.hasMx ? `Active (${verifResult.checks.mxHosts[0] || "Found"})` : "None Found (Warning)"}
                 </span>
               </div>
               <div className="flex items-center justify-between font-semibold">
@@ -189,11 +247,6 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
                   SPF: {verifResult.checks.hasSpf ? "Yes" : "No"} • DMARC: {verifResult.checks.hasDmarc ? "Yes" : "No"}
                 </span>
               </div>
-              {verifResult.checks.aiReasoning && (
-                <div className="text-[10px] text-text-dim border-t border-green-dark/8 pt-1">
-                  AI Assessment: {verifResult.checks.aiReasoning}
-                </div>
-              )}
             </div>
           )}
 
@@ -222,7 +275,7 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: Never block user from sending! */}
         <div className="pt-2 border-t border-green-dark/10 flex items-center justify-end gap-3">
           <Button variant="glass" size="sm" onClick={onClose} disabled={loading}>
             Cancel
@@ -231,13 +284,13 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
             variant="butter"
             size="sm"
             loading={loading || verifying}
-            disabled={!isValidSyntax || loading || Boolean(isBlockedByShield)}
-            onClick={() => onConfirmSend(recipient.trim())}
-            className="font-bold shadow-md disabled:opacity-50"
-            title={isBlockedByShield ? "Fix undeliverable email before sending" : undefined}
+            disabled={!isValidSyntax || loading}
+            onClick={() => onConfirmSend(activeEmail)}
+            className="font-bold shadow-md cursor-pointer disabled:opacity-50"
+            title={hasAlert ? "Alert detected: you may choose to take the risk and send" : undefined}
           >
             <Send className="w-3.5 h-3.5 mr-1" />
-            {isBlockedByShield ? "Blocked by Shield" : "Approve & Dispatch Email"}
+            {hasAlert ? "Send Anyway (Take Risk)" : "Approve & Dispatch Email"}
           </Button>
         </div>
       </div>

@@ -191,41 +191,9 @@ export async function POST(req: Request) {
             status: existingCampaign.archived ? "archived" : "active",
             createdAt: existingCampaign.createdAt.toISOString(),
           };
-        } else {
-          const newCamp = await prisma.campaign.create({
-            data: {
-              userId,
-              name: `${user?.name || "Active"} Sponsorship Campaign`,
-              eventType: "Flagship Event & Campaign",
-              audienceSize: 800,
-              location: "Auditorium / City Venue",
-              targetAmount: 500000,
-              preferredIndustries: ["Developer Tools", "AI & Cloud", "Fintech", "Software"],
-              tiers: [
-                { name: "Title Sponsor", amount: 150000, deliverables: ["Keynote", "Branded Track", "Exhibition Booth"], slots: 1 },
-                { name: "Gold Sponsor", amount: 75000, deliverables: ["Workshop", "Swag Kits"], slots: 3 },
-              ],
-              description: "Flagship annual industry gathering and innovation campaign.",
-            },
-          });
-
-          campaign = {
-            id: newCamp.id,
-            name: newCamp.name,
-            eventType: newCamp.eventType,
-            audienceSize: newCamp.audienceSize,
-            location: newCamp.location,
-            targetAmount: newCamp.targetAmount,
-            preferredIndustries: newCamp.preferredIndustries,
-            tiers: (newCamp.tiers as any) || [],
-            deckUrl: newCamp.deckUrl || undefined,
-            description: newCamp.description || "",
-            status: "active",
-            createdAt: newCamp.createdAt.toISOString(),
-          };
         }
       } catch (dbErr) {
-        console.warn("Failed resolving/creating user campaign in Prisma:", dbErr);
+        console.warn("Failed resolving user campaign in Prisma:", dbErr);
       }
     }
 

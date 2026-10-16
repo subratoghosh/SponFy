@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import {
@@ -47,7 +47,7 @@ export const TopBar: React.FC = () => {
   const campaignRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const refreshCampaigns = useCallback(() => {
     getCampaigns().then((data) => {
       const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
       const cleanData = isDemo
@@ -55,12 +55,26 @@ export const TopBar: React.FC = () => {
         : data.filter((c) => c.name !== "SponFy Hackathon 2026" && c.name !== "SponFy Flagship Campaign 2026" && c.id !== "camp-demo-1" && c.id !== "camp-sponfy-2026");
       setCampaigns(cleanData);
       if (cleanData.length > 0) {
-        setSelectedCampaign(cleanData[0]);
+        setSelectedCampaign((prev) => {
+          if (prev && cleanData.some((c) => c.id === prev.id)) {
+            return cleanData.find((c) => c.id === prev.id) || cleanData[0];
+          }
+          return cleanData[0];
+        });
       } else {
         setSelectedCampaign(null);
       }
     });
   }, [session]);
+
+  useEffect(() => {
+    refreshCampaigns();
+    const handleCampaignsUpdated = () => refreshCampaigns();
+    window.addEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    return () => {
+      window.removeEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    };
+  }, [refreshCampaigns]);
 
   // Close dropdowns on outside click or Escape key
   useEffect(() => {

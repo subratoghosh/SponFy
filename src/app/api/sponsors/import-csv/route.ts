@@ -64,23 +64,10 @@ export async function POST(req: Request) {
         if (existingCampaign) {
           targetCampaignId = existingCampaign.id;
         } else {
-          // Create default workspace campaign for the user
-          const newCampaign = await prisma.campaign.create({
-            data: {
-              userId,
-              name: `${user?.name || "Active"} Sponsorship Campaign`,
-              eventType: "Conference & Event",
-              audienceSize: 1500,
-              location: "Campus Auditorium",
-              targetAmount: 500000,
-              preferredIndustries: ["Developer Tools", "AI & Cloud", "Fintech"],
-              tiers: [
-                { name: "Title Sponsor", minAmount: 150000, perks: ["Keynote", "Branded Track", "Hiring Booth"] },
-                { name: "Track Partner", minAmount: 50000, perks: ["Dedicated Problem Statement", "Swag Kits"] },
-              ],
-            },
-          });
-          targetCampaignId = newCampaign.id;
+          return NextResponse.json(
+            { error: "No campaign found. Please create your first campaign before importing sponsors." },
+            { status: 400 }
+          );
         }
       }
     } else {

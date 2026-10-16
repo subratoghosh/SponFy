@@ -92,15 +92,37 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
   return campaignsStoreRef.value.find((c) => c.id === id) || null;
 }
 
-export async function createCampaign(data: Omit<Campaign, "id" | "createdAt">): Promise<Campaign> {
+export async function createCampaign(data: Omit<Campaign, "id" | "createdAt">, userId?: string): Promise<Campaign> {
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          window.dispatchEvent(new CustomEvent("sponfy:campaigns-updated", { detail: { action: "created", campaign: json.data } }));
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn("Client fetch POST /api/campaigns failed:", e);
+    }
+  }
+
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      let resolvedUserId = userId;
+      if (!resolvedUserId) {
+        const user = await prisma.user.findFirst();
+        resolvedUserId = user?.id || "usr-demo-lead";
+      }
 
       const r = await prisma.campaign.create({
         data: {
-          userId,
+          userId: resolvedUserId,
           name: data.name,
           eventType: data.eventType,
           audienceSize: data.audienceSize,
@@ -192,6 +214,7 @@ export async function deleteCampaign(id: string): Promise<boolean> {
       });
       if (res.ok) {
         const json = await res.json();
+        window.dispatchEvent(new CustomEvent("sponfy:campaigns-updated", { detail: { action: "deleted", id } }));
         return json.success ?? true;
       }
     } catch (e) {

@@ -69,6 +69,11 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     loadData();
+    const handleCampaignsUpdated = () => loadData();
+    window.addEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    return () => {
+      window.removeEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    };
   }, [loadData]);
 
   const eventTypes = useMemo(() => {

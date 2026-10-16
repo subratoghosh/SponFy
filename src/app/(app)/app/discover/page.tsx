@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DiscoverPromptBox } from "@/components/discover/DiscoverPromptBox";
 import { LiveJobProgress } from "@/components/discover/LiveJobProgress";
 import { CandidateList, CandidateItem } from "@/components/discover/CandidateList";
@@ -38,19 +38,33 @@ export default function DiscoverPage() {
       .catch(() => {});
   };
 
-  useEffect(() => {
+  const loadCampaigns = useCallback(() => {
     fetch("/api/campaigns")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {
           setCampaigns(data.data);
-          const firstId = data.data[0].id;
-          setSelectedCampaignId(firstId);
-          loadSavedResults(firstId);
+          setSelectedCampaignId((prev) => {
+            if (prev && data.data.some((c: Campaign) => c.id === prev)) {
+              return prev;
+            }
+            const firstId = data.data[0].id;
+            loadSavedResults(firstId);
+            return firstId;
+          });
         }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadCampaigns();
+    const handleCampaignsUpdated = () => loadCampaigns();
+    window.addEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    return () => {
+      window.removeEventListener("sponfy:campaigns-updated", handleCampaignsUpdated);
+    };
+  }, [loadCampaigns]);
 
   const handleCampaignChange = (newCampId: string) => {
     setSelectedCampaignId(newCampId);
