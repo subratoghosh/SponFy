@@ -133,5 +133,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## 🚀 Production Deployment & DevOps
+
+For detailed deployment procedures on **Vercel** with GitHub CI/CD, Neon Serverless PostgreSQL, Content Security Policy (CSP), SEO metadata verification, and environment variable configuration, see:
+
+📖 **[Production Deployment Guide](docs/PRODUCTION_DEPLOYMENT.md)**
+
+---
+
 ## 📄 License
 MIT License © 2026 SponFy. Built for student organizers worldwide.
+

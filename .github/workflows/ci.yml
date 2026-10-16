@@ -1,0 +1,55 @@
+name: SponFy CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Lint, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      CI: "true"
+      NODE_ENV: "production"
+      NEXT_PUBLIC_DEMO_MODE: "true"
+      AUTH_SECRET: "ci-dummy-auth-secret-key-32chars-minimum-length"
+      TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      CRON_SECRET: "ci-dummy-cron-secret"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      SITE_URL: "https://sponfy.vercel.app"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install dependencies (clean install from lockfile)
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Run Vitest unit & regression tests
+        run: npm test
+
+      - name: Run Next.js production build
+        run: npm run build

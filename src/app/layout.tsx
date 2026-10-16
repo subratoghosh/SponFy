@@ -50,14 +50,22 @@ const space = Space_Grotesk({
   weight: ["700"],
 });
 
+import { getSiteUrl, siteConfig } from "@/lib/config/site";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "SponFy — AI Sponsorship Operating System",
     template: "%s | SponFy",
   },
-  description:
-    "Find, research and win sponsors for campaigns, conferences, summits, and organizations — with AI that asks before it sends.",
-  keywords: ["sponsorship", "campaign", "events", "conferences", "AI outreach", "brand partnerships", "sponsor research", "SponFy"],
+  description: siteConfig.description,
+  keywords: siteConfig.keywords,
+  authors: [{ name: "SponFy Team", url: getSiteUrl() }],
+  creator: siteConfig.creator,
+  publisher: "SponFy",
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
@@ -76,9 +84,37 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "SponFy — AI Sponsorship Operating System",
-    description: "Find, research and win event sponsors with explainable AI and human-approved outreach.",
+    description: siteConfig.shortDescription,
+    url: getSiteUrl(),
+    siteName: siteConfig.name,
+    locale: "en_US",
     type: "website",
-    siteName: "SponFy",
+    images: [
+      {
+        url: "/icon.svg",
+        width: 512,
+        height: 512,
+        alt: "SponFy — AI Sponsorship Operating System",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "SponFy — AI Sponsorship Operating System",
+    description: siteConfig.shortDescription,
+    creator: siteConfig.creator,
+    images: ["/icon.svg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

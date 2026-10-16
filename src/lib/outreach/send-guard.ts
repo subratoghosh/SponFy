@@ -65,37 +65,26 @@ export function resolveRecipient(input: {
   companyDomain?: string | null;
   companyWebsite?: string | null;
 }): RecipientResult {
-  const { contactId, contacts, requestedTo, companyDomain, companyWebsite } = input;
+  const { contactId, contacts, requestedTo } = input;
 
   let contact: { id: string; email: string } | undefined;
   if (contactId) {
     contact = contacts.find((c) => c.id === contactId);
-    if (!contact && contacts.length > 0) {
-      contact = contacts.find((c) => c.email && c.email.trim() !== "");
+    if (!contact) {
+      return fail(422, "no_recipient", "The contact attached to this draft no longer exists. Re-attach a contact and try again.");
     }
   } else {
     // Drafts created before a contact existed fall back to the first contact with an email, or first contact
     contact = contacts.find((c) => c.email && c.email.trim() !== "") || contacts[0];
   }
 
-  let email = (contact?.email || "").trim();
-
-  // If no contact email stored, fall back to explicitly requestedTo if valid
-  if (!email || !EMAIL_RE.test(email)) {
-    if (requestedTo && EMAIL_RE.test(requestedTo.trim())) {
-      email = requestedTo.trim();
-    }
-  }
+  const email = (contact?.email || "").trim();
 
   if (!email || !EMAIL_RE.test(email)) {
     return fail(422, "no_recipient", "No valid recipient email on file for this company. Discover or add a verified contact first.");
   }
 
   if (requestedTo && requestedTo.trim().toLowerCase() !== email.toLowerCase()) {
-    // If user provided a valid direct address on screen, accept it
-    if (EMAIL_RE.test(requestedTo.trim())) {
-      return { ok: true, recipient: requestedTo.trim() };
-    }
     return fail(409, "recipient_mismatch", "The recipient shown does not match the contact on file. Refresh and try again.");
   }
 

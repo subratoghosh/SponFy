@@ -1,5 +1,21 @@
 import type { NextConfig } from "next";
 
+const cspHeader = `
+  default-src 'self';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://vitals.vercel-insights.com wss://*.neon.tech https://*.neon.tech https://*.upstash.io;
+  frame-src 'self' https://accounts.google.com;
+  form-action 'self' https://accounts.google.com;
+  object-src 'none';
+  base-uri 'self';
+  frame-ancestors 'none';
+`
+  .replace(/\s{2,}/g, " ")
+  .trim();
+
 const securityHeaders = [
   {
     key: "X-DNS-Prefetch-Control",
@@ -25,11 +41,16 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  {
+    key: "Content-Security-Policy",
+    value: cspHeader,
+  },
 ];
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  output: process.env.DOCKER_BUILD === "true" ? "standalone" : undefined,
   serverExternalPackages: ["@prisma/client", "prisma"],
   images: {
     remotePatterns: [
