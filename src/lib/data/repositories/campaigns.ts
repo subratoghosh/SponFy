@@ -52,6 +52,9 @@ export async function getCampaigns(userId?: string): Promise<Campaign[]> {
     }
   }
 
+  if (userId) {
+    return campaignsStoreRef.value.filter((c) => (c as any).userId === userId);
+  }
   return [...campaignsStoreRef.value];
 }
 

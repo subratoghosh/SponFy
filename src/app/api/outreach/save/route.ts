@@ -57,12 +57,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // Re-evaluate quality dynamically with Groq AI for the updated content
+    const { evaluateEmailQuality } = await import("@/lib/services/quality-evaluator");
+    const quality = await evaluateEmailQuality({
+      companyName: company.name,
+      industry: company.industry || undefined,
+      subject: subject.trim(),
+      body: body.trim(),
+    });
+
     // Only subject/body can change here. Status/approval stay server-controlled.
     const saved = await saveDraft({
       id,
       companyId: existing.companyId,
       subject: subject.trim(),
       body: body.trim(),
+      quality,
       userId,
     });
 

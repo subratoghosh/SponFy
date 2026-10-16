@@ -5,6 +5,7 @@ import { getSponsorById, getSponsors } from "@/lib/data/repositories/sponsors";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
 import { saveDraft, getDraftsByCompanyId, deleteDraft, getDraftById } from "@/lib/data/repositories/outreach";
 import { getCustomTemplates, interpolateTemplate } from "@/lib/data/repositories/templates";
+import { evaluateEmailQuality } from "@/lib/services/quality-evaluator";
 import { Company, Campaign } from "@/types";
 
 function detectUnresolvedPlaceholders(text: string): string[] {
@@ -66,6 +67,19 @@ async function generateSingleDraft({
         ? `Unresolved placeholders: ${unresolved.join(", ")}`
         : undefined;
 
+      const quality = await evaluateEmailQuality({
+        companyName: company.name,
+        industry: company.industry,
+        campaignName: campaign.name,
+        audienceSize: campaign.audienceSize,
+        subject,
+        body,
+      });
+
+      if (needsAttention) {
+        quality.suggestions.unshift("Fill unresolved placeholders before approving");
+      }
+
       const saved = await saveDraft({
         id: draftId,
         userId,
@@ -73,15 +87,7 @@ async function generateSingleDraft({
         contactId: company.contacts?.[0]?.id,
         subject,
         body,
-        quality: {
-          personalization: 85,
-          relevance: 90,
-          clarity: 92,
-          cta: 88,
-          professionalism: 90,
-          overall: 89,
-          suggestions: needsAttention ? ["Fill unresolved placeholders before approving"] : [],
-        },
+        quality,
         status: "draft",
         needsAttention,
         attentionReason,
@@ -94,6 +100,16 @@ async function generateSingleDraft({
   // AI Generated Draft
   const result = await runOutreachWorkflow(company, campaign, tone as any);
 
+  // Truly unique, dynamic AI evaluation using Groq Cloud
+  const quality = await evaluateEmailQuality({
+    companyName: company.name,
+    industry: company.industry,
+    campaignName: campaign.name,
+    audienceSize: campaign.audienceSize,
+    subject: result.subject,
+    body: result.body,
+  });
+
   const saved = await saveDraft({
     id: draftId,
     userId,
@@ -101,7 +117,7 @@ async function generateSingleDraft({
     contactId: company.contacts?.[0]?.id,
     subject: result.subject,
     body: result.body,
-    quality: result.quality,
+    quality,
     status: "draft",
     needsAttention: false,
   });

@@ -8,6 +8,7 @@ import {
   releaseDraftClaim,
   countOutboundSince,
   recordSentMessage,
+  getTodayMidnight,
 } from "@/lib/data/repositories/outreach";
 import { getSponsors, getSponsorById, updateSponsorStage } from "@/lib/data/repositories/sponsors";
 import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
@@ -31,8 +32,9 @@ export async function GET(req: Request) {
       getUserProfile(),
     ]);
 
-    const windowStart = new Date(Date.now() - SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS * 60 * 60 * 1000);
-    const sentInWindow = await countOutboundSince(windowStart);
+    // Everyday at 12:00 AM (midnight), the daily send quota cleanly resets
+    const todayMidnight = getTodayMidnight();
+    const sentInWindow = await countOutboundSince(todayMidnight, userId);
     const dailyLimit = profile.dailySendLimit || SYSTEM_LIMITS.DEFAULT_DAILY_SEND_CAP;
     let remainingCap = Math.max(0, dailyLimit - sentInWindow);
 
@@ -165,8 +167,9 @@ export async function POST(req: Request) {
       getUserProfile(),
     ]);
 
-    const windowStart = new Date(Date.now() - SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS * 60 * 60 * 1000);
-    let sentInWindow = await countOutboundSince(windowStart);
+    // Everyday at 12:00 AM (midnight), the daily send quota cleanly resets
+    const todayMidnight = getTodayMidnight();
+    let sentInWindow = await countOutboundSince(todayMidnight, userId);
     const dailyLimit = profile.dailySendLimit || SYSTEM_LIMITS.DEFAULT_DAILY_SEND_CAP;
 
     const draftsToSend = allDrafts.filter((d) => {
@@ -255,7 +258,8 @@ export async function POST(req: Request) {
           draft.id,
           recipient.recipient,
           sendResult.messageId,
-          sendResult.threadId
+          sendResult.threadId,
+          userId
         );
 
         await updateSponsorStage(company.id, "Contacted");

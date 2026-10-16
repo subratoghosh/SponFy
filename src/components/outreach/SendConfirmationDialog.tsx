@@ -36,6 +36,8 @@ interface SendConfirmationDialogProps {
   onConfirmSend: (email: string) => void;
   loading: boolean;
   isPatternGuess?: boolean;
+  remainingDailyCap?: number;
+  dailyCapLimit?: number;
 }
 
 export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
@@ -47,6 +49,8 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
   onConfirmSend,
   loading,
   isPatternGuess = false,
+  remainingDailyCap,
+  dailyCapLimit,
 }) => {
   const [recipient, setRecipient] = useState(toEmail);
   const [verifying, setVerifying] = useState(false);
@@ -205,6 +209,16 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
               Subject Line:
             </span>
             <span className="font-bold text-green-dark text-sm">{draft.subject}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-xs pt-2 border-t border-green-dark/8">
+            <span className="font-bold text-text-muted uppercase text-[10px]">
+              Daily Send Quota:
+            </span>
+            <span className="font-semibold text-green-dark">
+              {remainingDailyCap !== undefined ? `${remainingDailyCap} sends remaining today` : "Active"}
+              <span className="text-[10px] text-text-dim ml-1">(resets at 12:00 AM)</span>
+            </span>
           </div>
         </div>
 

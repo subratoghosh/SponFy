@@ -57,11 +57,15 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
     }
   }
 
-  let list = draftsStoreRef.value;
-  if (status) {
-    list = list.filter((d) => d.status === status);
+  if (process.env.NODE_ENV === "test") {
+    let list = draftsStoreRef.value;
+    if (status) {
+      list = list.filter((d) => d.status === status);
+    }
+    return [...list];
   }
-  return [...list];
+
+  return [];
 }
 
 export async function getDraftById(id: string): Promise<EmailDraft | null> {
@@ -162,13 +166,14 @@ export async function createDraft(
     try {
       let resolvedUserId = draft.userId;
       if (!resolvedUserId) {
-        const user = await prisma.user.findFirst();
-        resolvedUserId = user?.id || "usr-demo-lead";
+        const comp = await prisma.company.findUnique({ where: { id: draft.companyId }, select: { userId: true } });
+        resolvedUserId = comp?.userId;
       }
+      const finalUserId = resolvedUserId || "usr-demo-lead";
 
       const created = await prisma.emailDraft.create({
         data: {
-          userId: resolvedUserId,
+          userId: finalUserId,
           companyId: draft.companyId,
           contactId: draft.contactId,
           subject: draft.subject,
@@ -403,25 +408,55 @@ export async function deleteDraftsByCompanyId(companyId: string): Promise<number
   return initialLen - draftsStoreRef.value.length;
 }
 
-/** Number of outbound emails the workspace sent since `since` (for the daily cap). */
-export async function countOutboundSince(since: Date): Promise<number> {
-  const all = await getMessages();
-  return all.filter((m) => m.direction === "outbound" && new Date(m.sentAt).getTime() >= since.getTime()).length;
+/**
+ * Returns today's 12:00:00 AM (Midnight) Date object for daily quota resets
+ */
+export function getTodayMidnight(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+}
+
+/** Number of outbound emails sent since `since` (defaults to today's 12:00 AM reset). */
+export async function countOutboundSince(since?: Date, userId?: string): Promise<number> {
+  const windowStart = since || getTodayMidnight();
+
+  if (isDatabaseConfigured()) {
+    try {
+      const where: any = {
+        direction: "OUTBOUND",
+        sentAt: { gte: windowStart },
+      };
+      if (userId) {
+        where.userId = userId;
+      }
+      return await prisma.message.count({ where });
+    } catch (err) {
+      console.warn("Prisma countOutboundSince failed, fallback to filter:", err);
+    }
+  }
+
+  const all = await getMessages(undefined, userId);
+  return all.filter((m) => m.direction === "outbound" && new Date(m.sentAt).getTime() >= windowStart.getTime()).length;
 }
 
 export async function recordSentMessage(
   draftId: string,
   toEmail: string,
   gmailMessageId?: string,
-  threadId?: string
+  threadId?: string,
+  userId?: string
 ): Promise<Message | null> {
   const draft = await getDraftById(draftId);
   if (!draft) return null;
 
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      let resolvedUserId = userId || (draft as any).userId;
+      if (!resolvedUserId) {
+        const d = await prisma.emailDraft.findUnique({ where: { id: draftId }, select: { userId: true } });
+        resolvedUserId = d?.userId;
+      }
+      const finalUserId = resolvedUserId || "usr-demo-lead";
 
       await prisma.emailDraft.update({
         where: { id: draftId },
@@ -430,7 +465,7 @@ export async function recordSentMessage(
 
       const msg = await prisma.message.create({
         data: {
-          userId,
+          userId: finalUserId,
           draftId,
           companyId: draft.companyId,
           gmailMessageId: gmailMessageId || `gmail-${Date.now()}`,
@@ -486,35 +521,41 @@ export async function recordSentMessage(
   return message;
 }
 
-export async function getMessages(companyId?: string): Promise<Message[]> {
+export async function getMessages(companyId?: string, userId?: string): Promise<Message[]> {
   if (isDatabaseConfigured()) {
     try {
+      const where: any = {};
+      if (companyId) where.companyId = companyId;
+      if (userId) where.userId = userId;
+
       const records = await prisma.message.findMany({
-        where: companyId ? { companyId } : undefined,
+        where: Object.keys(where).length > 0 ? where : undefined,
         orderBy: { sentAt: "desc" },
       });
-      if (records.length > 0) {
-        return records.map((m) => ({
-          id: m.id,
-          draftId: m.draftId || undefined,
-          companyId: m.companyId || "",
-          gmailMessageId: m.gmailMessageId || undefined,
-          gmailThreadId: m.gmailThreadId || undefined,
-          direction: m.direction === "INBOUND" ? "inbound" : "outbound",
-          fromEmail: m.fromEmail || "",
-          toEmail: m.toEmail || "",
-          subject: m.subject || "",
-          body: m.body,
-          sentAt: m.sentAt.toISOString(),
-        }));
-      }
+      return records.map((m) => ({
+        id: m.id,
+        draftId: m.draftId || undefined,
+        companyId: m.companyId || "",
+        gmailMessageId: m.gmailMessageId || undefined,
+        gmailThreadId: m.gmailThreadId || undefined,
+        direction: m.direction === "INBOUND" ? "inbound" : "outbound",
+        fromEmail: m.fromEmail || "",
+        toEmail: m.toEmail || "",
+        subject: m.subject || "",
+        body: m.body,
+        sentAt: m.sentAt.toISOString(),
+      }));
     } catch (err) {
       console.warn("Prisma getMessages failed, falling back to memory store:", err);
     }
   }
 
-  if (companyId) {
-    return messagesStoreRef.value.filter((m) => m.companyId === companyId);
+  if (process.env.NODE_ENV === "test") {
+    if (companyId) {
+      return messagesStoreRef.value.filter((m) => m.companyId === companyId);
+    }
+    return [...messagesStoreRef.value];
   }
-  return [...messagesStoreRef.value];
+
+  return [];
 }

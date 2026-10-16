@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getDrafts } from "@/lib/data/repositories/outreach";
+import { getDrafts, getTodayMidnight } from "@/lib/data/repositories/outreach";
 import { getSponsors } from "@/lib/data/repositories/sponsors";
 import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
 import { getMessages, countOutboundSince } from "@/lib/data/repositories/outreach";
@@ -45,8 +45,9 @@ export async function GET(req: Request) {
       getUserProfile(),
     ]);
 
-    const windowStart = new Date(Date.now() - SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS * 60 * 60 * 1000);
-    const sentInWindow = await countOutboundSince(windowStart);
+    // Everyday at 12:00 AM (midnight), the daily send quota cleanly resets
+    const todayMidnight = getTodayMidnight();
+    const sentInWindow = await countOutboundSince(todayMidnight, userId);
     const dailyLimit = profile.dailySendLimit || SYSTEM_LIMITS.DEFAULT_DAILY_SEND_CAP;
 
     const verificationService = getVerificationService();

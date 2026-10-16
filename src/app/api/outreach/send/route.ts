@@ -6,6 +6,7 @@ import {
   claimDraftForSending,
   releaseDraftClaim,
   countOutboundSince,
+  getTodayMidnight,
 } from "@/lib/data/repositories/outreach";
 import { getSponsorById, addContact } from "@/lib/data/repositories/sponsors";
 import { isSuppressed, getUserProfile } from "@/lib/data/repositories/settings";
@@ -103,11 +104,12 @@ export async function POST(req: Request) {
       }
     }
 
-    const windowStart = new Date(Date.now() - SYSTEM_LIMITS.SEND_CAP_WINDOW_HOURS * 60 * 60 * 1000);
+    // Everyday at 12:00 AM (midnight), the daily send quota cleanly resets
+    const todayMidnight = getTodayMidnight();
     const [suppressed, companyMessages, sentInWindow, profile] = await Promise.all([
       isSuppressed(recipient.recipient),
-      getMessages(company.id),
-      countOutboundSince(windowStart),
+      getMessages(company.id, userId),
+      countOutboundSince(todayMidnight, userId),
       getUserProfile(),
     ]);
 
@@ -149,7 +151,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      const msg = await recordSentMessage(draft.id, recipient.recipient, sendResult.messageId, sendResult.threadId);
+      const msg = await recordSentMessage(draft.id, recipient.recipient, sendResult.messageId, sendResult.threadId, userId);
       if (!msg) throw new Error("draft disappeared while recording");
       return NextResponse.json({
         success: true,

@@ -45,16 +45,16 @@ function OutreachContent() {
   const [selectedDraftIds, setSelectedDraftIds] = useState<string[]>([]);
   const [approvingBulk, setApprovingBulk] = useState(false);
   const [isMassOutreachOpen, setIsMassOutreachOpen] = useState(false);
-  const [dailyStats, setDailyStats] = useState({ sent: 12, limit: 30 });
+  const [dailyStats, setDailyStats] = useState({ sent: 0, limit: 30 });
 
-  // Fetch real-time daily send quota and sent counts
+  // Fetch real-time daily send quota and sent counts (resets at 12:00 AM midnight)
   useEffect(() => {
     fetch("/api/outreach/eligibility")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
           setDailyStats({
-            sent: data.sentInWindow ?? 12,
+            sent: data.sentInWindow ?? 0,
             limit: data.dailyCap ?? 30,
           });
         }
@@ -376,6 +376,8 @@ function OutreachContent() {
           onConfirmSend={handleConfirmSend}
           loading={sending}
           isPatternGuess={!activeCompany.contacts?.some((c) => c.email && c.status === "verified")}
+          remainingDailyCap={Math.max(0, dailyStats.limit - dailyStats.sent)}
+          dailyCapLimit={dailyStats.limit}
         />
       )}
 

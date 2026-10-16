@@ -132,13 +132,17 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
         body: JSON.stringify({ companyId: company.id, tone, regenerate: true }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.draft) {
         setSubject(data.draft.subject);
         setBody(data.draft.body);
-        toast(`Draft regenerated with ${tone} tone!`, "success");
+        onSave(data.draft.subject, data.draft.body);
+        onContactUpdated?.();
+        toast(`Draft regenerated with ${tone} tone & re-evaluated with AI!`, "success");
+      } else {
+        toast(data.error || "Regeneration failed. Check company permissions.", "error");
       }
-    } catch {
-      toast("Regeneration failed", "error");
+    } catch (err: any) {
+      toast(err?.message || "Regeneration failed", "error");
     } finally {
       setRegenerating(false);
     }

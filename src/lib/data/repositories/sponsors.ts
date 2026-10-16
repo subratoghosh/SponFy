@@ -70,10 +70,11 @@ export async function getSponsors(campaignId?: string, userId?: string): Promise
   if (isDatabaseConfigured()) {
     try {
       const where: any = {};
+      if (userId) {
+        where.userId = userId;
+      }
       if (campaignId) {
         where.campaignId = campaignId;
-      } else if (userId) {
-        where.userId = userId;
       }
 
       const companies = await prisma.company.findMany({
@@ -411,11 +412,15 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
   return newCompany;
 }
 
-export async function addContact(companyId: string, contact: Omit<Contact, "id" | "companyId" | "createdAt">): Promise<Contact | null> {
+export async function addContact(companyId: string, contact: Omit<Contact, "id" | "companyId" | "createdAt">, userId?: string): Promise<Contact | null> {
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      let resolvedUserId = userId;
+      if (!resolvedUserId) {
+        const comp = await prisma.company.findUnique({ where: { id: companyId }, select: { userId: true } });
+        resolvedUserId = comp?.userId;
+      }
+      const finalUserId = resolvedUserId || "usr-demo-lead";
       const dbStatus: ContactStatus =
         contact.status === "verified"
           ? "VERIFIED"
@@ -425,7 +430,7 @@ export async function addContact(companyId: string, contact: Omit<Contact, "id" 
 
       const created = await prisma.contact.create({
         data: {
-          userId,
+          userId: finalUserId,
           companyId,
           name: contact.name,
           role: contact.role,
