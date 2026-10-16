@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { parseCountFromPrompt, updateCountInPrompt } from "@/lib/discovery/count-parser";
+
 interface DiscoverPromptBoxProps {
   onSearch: (prompt: string, count: number) => void;
   loading: boolean;
@@ -24,23 +26,9 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
 
   const countOptions = [5, 10, 15, 20, 25];
 
-  const parseCountFromText = (text: string): number | null => {
-    const leadMatch = text.match(/\b(?:find|get|show|top|search|discover|list)\s+(\d{1,2})\b/i);
-    if (leadMatch) {
-      const val = parseInt(leadMatch[1], 10);
-      if (val >= 1 && val <= 30) return val;
-    }
-    const nounMatch = text.match(/\b(\d{1,2})\s+(?:[\w,&\s-]{0,40})\s*(?:companies|sponsors|brands|leads|startups)\b/i);
-    if (nounMatch) {
-      const val = parseInt(nounMatch[1], 10);
-      if (val >= 1 && val <= 30) return val;
-    }
-    return null;
-  };
-
   const handlePromptChange = (newVal: string) => {
     setPrompt(newVal);
-    const detected = parseCountFromText(newVal);
+    const detected = parseCountFromPrompt(newVal);
     if (detected) {
       setCount(detected);
     }
@@ -48,13 +36,7 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
 
   const handleSelectCount = (val: number) => {
     setCount(val);
-    // Replace any leading count in prompt if present
-    setPrompt((prev) => {
-      if (/\b(?:find|get|show|top)?\s*(\d{1,2})\b/i.test(prev)) {
-        return prev.replace(/\b(?:find|get|show|top)?\s*(\d{1,2})\b/i, (m, oldNum) => m.replace(oldNum, String(val)));
-      }
-      return prev;
-    });
+    setPrompt((prev) => updateCountInPrompt(prev, val));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -72,7 +54,7 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
         </div>
 
         {/* Count Selector Pills */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
           <span className="text-[11px] font-bold text-text-muted mr-1">Target Count:</span>
           {countOptions.map((opt) => (
             <button
@@ -88,6 +70,15 @@ export const DiscoverPromptBox: React.FC<DiscoverPromptBoxProps> = ({
               {opt}
             </button>
           ))}
+          {!countOptions.includes(count) && count > 0 && (
+            <button
+              type="button"
+              className="px-2.5 py-1 text-xs font-bold rounded-lg transition-all bg-[#2D6A4F] text-white shadow-xs cursor-default"
+              title={`Custom target: ${count}`}
+            >
+              {count}
+            </button>
+          )}
         </div>
       </div>
 

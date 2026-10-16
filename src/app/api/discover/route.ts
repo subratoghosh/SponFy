@@ -9,6 +9,7 @@ import { FALLBACK_SPONSOR_CATALOG, DiscoveryCandidate } from "@/lib/discovery/ca
 import { DEMO_CAMPAIGN } from "@/lib/data/seed-data";
 import { Campaign } from "@/types";
 import { getRedisClient } from "@/lib/security/redis";
+import { parseCountFromPrompt } from "@/lib/discovery/count-parser";
 
 export const runtime = "nodejs";
 
@@ -237,20 +238,12 @@ export async function POST(req: Request) {
     const existingNames = new Set(existing.map((c) => normalizeName(c.name)));
     const existingDomains = new Set(existing.map((c) => normalizeDomain(c.website)).filter(Boolean));
 
-    // Parse requested count from prompt or request body (e.g. "Find 20 cloud, developer tools..." -> 20)
-    let extractedCount: number | null = null;
-    const leadMatch = prompt.match(/\b(?:find|get|show|top|search|discover|list)\s+(\d{1,2})\b/i);
-    if (leadMatch) {
-      extractedCount = parseInt(leadMatch[1], 10);
-    } else {
-      const nounMatch = prompt.match(/\b(\d{1,2})\s+(?:[\w,&\s-]{0,40})\s*(?:companies|sponsors|brands|leads|startups)\b/i);
-      if (nounMatch) {
-        extractedCount = parseInt(nounMatch[1], 10);
-      }
-    }
-    const finalTargetCount = extractedCount && extractedCount >= 1 && extractedCount <= 30
-      ? extractedCount
-      : Math.min(Math.max(Number(targetCount) || 5, 1), 30);
+    // Parse requested count from prompt or request body (e.g. "give me 10", "Find 20 cloud...")
+    const extractedCount = parseCountFromPrompt(prompt);
+    const finalTargetCount =
+      extractedCount && extractedCount >= 1 && extractedCount <= 30
+        ? extractedCount
+        : Math.min(Math.max(Number(targetCount) || 5, 1), 30);
 
     // Check distributed Redis cache for identical prompt and campaign to save external API costs
     const redis = getRedisClient();
