@@ -70,8 +70,8 @@ export function resolveRecipient(input: {
   let contact: { id: string; email: string } | undefined;
   if (contactId) {
     contact = contacts.find((c) => c.id === contactId);
-    if (!contact && contacts.length > 0) {
-      contact = contacts.find((c) => c.email && c.email.trim() !== "");
+    if (!contact) {
+      return fail(422, "no_recipient", "The contact attached to this draft no longer exists. Re-attach a contact and try again.");
     }
   } else {
     // Drafts created before a contact existed fall back to the first contact with an email, or first contact
@@ -80,15 +80,11 @@ export function resolveRecipient(input: {
 
   let email = (contact?.email || "").trim();
 
-  // If no contact email stored, fall back to requestedTo or domain-derived direct outreach address
+  // If no contact email stored, fall back to domain-derived direct outreach address
   if (!email || !EMAIL_RE.test(email)) {
-    if (requestedTo && EMAIL_RE.test(requestedTo.trim())) {
-      email = requestedTo.trim();
-    } else {
-      const domain = companyDomain || (companyWebsite ? companyWebsite.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
-      if (domain) {
-        email = `partnerships@${domain}`;
-      }
+    const domain = companyDomain || (companyWebsite ? companyWebsite.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "") : "");
+    if (domain) {
+      email = `partnerships@${domain}`;
     }
   }
 
@@ -97,10 +93,6 @@ export function resolveRecipient(input: {
   }
 
   if (requestedTo && requestedTo.trim().toLowerCase() !== email.toLowerCase()) {
-    // If user provided a valid direct address on screen, accept it
-    if (EMAIL_RE.test(requestedTo.trim())) {
-      return { ok: true, recipient: requestedTo.trim() };
-    }
     return fail(409, "recipient_mismatch", "The recipient shown does not match the contact on file. Refresh and try again.");
   }
 
