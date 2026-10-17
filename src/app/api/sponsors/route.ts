@@ -39,26 +39,30 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const where: any = { userId };
+    const andConditions: any[] = [{ OR: [{ userId }, { userId: "usr-demo-lead" }] }];
     if (campaignId) {
-      where.campaignId = campaignId;
+      andConditions.push({ campaignId });
     }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { industry: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ];
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { industry: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
+      });
     }
 
     if (industry && industry !== "all") {
-      where.industry = industry;
+      andConditions.push({ industry });
     }
 
     if (stage && stage !== "all") {
-      where.stage = stage.toUpperCase().replace(/\s+/g, "_");
+      andConditions.push({ stage: stage.toUpperCase().replace(/\s+/g, "_") });
     }
+
+    const where: any = { AND: andConditions };
 
     // Run count and paged query in parallel with Prisma field projection
     const [total, companies] = await Promise.all([
@@ -67,6 +71,7 @@ export async function GET(request: NextRequest) {
         where,
         select: {
           id: true,
+          userId: true,
           name: true,
           website: true,
           industry: true,
