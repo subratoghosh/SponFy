@@ -8,8 +8,8 @@ import { formatMeetingTimeRange, formatMeetingDate } from "@/lib/meetings/calend
 export const runtime = "nodejs";
 
 const CreateMeetingSchema = z.object({
-  companyId: z.string().min(1, "Company ID is required"),
-  companyName: z.string().min(1, "Company Name is required"),
+  companyId: z.string().optional().or(z.literal("")),
+  companyName: z.string().min(1, "Company or Sponsor Name is required"),
   campaignId: z.string().optional(),
   contactName: z.string().optional(),
   contactEmail: z.string().email("Invalid contact email").optional().or(z.literal("")),
@@ -83,7 +83,6 @@ export async function POST(req: Request) {
     }
 
     const {
-      companyId,
       companyName,
       campaignId,
       contactName,
@@ -97,18 +96,26 @@ export async function POST(req: Request) {
       notes,
     } = parsed.data;
 
-    // 3. Verify company belongs to the authenticated user (anti-IDOR)
-    const ownedCompany = await verifyCompanyOwnership(companyId, userId);
-    if (!ownedCompany) {
-      return NextResponse.json(
-        { error: "Company not found or access denied", code: "FORBIDDEN" },
-        { status: 403 }
-      );
+    const resolvedCompanyId = parsed.data.companyId?.trim() || `comp-adhoc-${Date.now()}`;
+
+    // 3. Verify company belongs to the authenticated user if referencing an existing company
+    if (
+      parsed.data.companyId &&
+      !parsed.data.companyId.startsWith("comp-adhoc-") &&
+      !parsed.data.companyId.startsWith("custom-")
+    ) {
+      const ownedCompany = await verifyCompanyOwnership(parsed.data.companyId, userId);
+      if (!ownedCompany) {
+        return NextResponse.json(
+          { error: "Company not found or access denied", code: "FORBIDDEN" },
+          { status: 403 }
+        );
+      }
     }
 
-    // 4. Reject startsAt in the past
+    // 4. Reject startsAt in the past (with 1-min grace period)
     const startTimeMs = new Date(startsAt).getTime();
-    if (startTimeMs <= Date.now()) {
+    if (startTimeMs <= Date.now() - 60000) {
       return NextResponse.json(
         {
           error: "Meeting start time must be in the future. Please select an upcoming date and time.",
@@ -144,7 +151,7 @@ export async function POST(req: Request) {
     // 6. Create meeting
     const meeting = await createMeeting({
       userId,
-      companyId,
+      companyId: resolvedCompanyId,
       companyName,
       campaignId,
       contactName,
@@ -161,10 +168,10 @@ export async function POST(req: Request) {
 
     // 7. Update sponsor pipeline stage to "Negotiation" if currently "Replied" or "Interested"
     try {
-      const currentSponsor = await getSponsorById(companyId);
+      const currentSponsor = await getSponsorById(resolvedCompanyId);
       const stageLower = (currentSponsor?.stage || "").toLowerCase();
       if (stageLower === "replied" || stageLower === "interested") {
-        await updateSponsorStage(companyId, "Negotiation");
+        await updateSponsorStage(resolvedCompanyId, "Negotiation");
       }
     } catch (stageErr) {
       console.warn("Failed to advance sponsor stage to Negotiation on meeting creation:", stageErr);

@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 export default function SchedulePage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"calendar" | "upcoming">("upcoming");
+  const [viewMode, setViewMode] = useState<"calendar" | "upcoming">("calendar");
 
   // Selected date modal state
   const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
@@ -34,13 +34,12 @@ export default function SchedulePage() {
 
   // Reschedule / Create modal state
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
+  const [selectedScheduleDate, setSelectedScheduleDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Default to Month Calendar on tablet/desktop, Upcoming on phones
+  // Default to Month Calendar
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
-      setViewMode("calendar");
-    }
+    setViewMode("calendar");
   }, []);
 
   const loadMeetings = useCallback(async () => {
@@ -69,8 +68,15 @@ export default function SchedulePage() {
     setIsDayModalOpen(true);
   };
 
+  const handleAddNewMeeting = (date?: Date) => {
+    setSelectedScheduleDate(date || new Date());
+    setEditingMeeting(null);
+    setIsModalOpen(true);
+  };
+
   const handleReschedule = (meeting: Meeting) => {
     setEditingMeeting(meeting);
+    setSelectedScheduleDate(new Date(meeting.startsAt));
     setIsModalOpen(true);
   };
 
@@ -171,6 +177,16 @@ export default function SchedulePage() {
             </button>
           </div>
 
+          <Button
+            variant="green"
+            size="sm"
+            onClick={() => handleAddNewMeeting(new Date())}
+            className="text-xs font-bold h-9 gap-1.5 shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Meeting</span>
+          </Button>
+
           <Link href="/app/replies">
             <Button variant="outline" size="sm" className="text-xs font-bold h-9 gap-1.5 border-green-dark/15">
               <span>View Inbound Replies</span>
@@ -183,14 +199,43 @@ export default function SchedulePage() {
       {/* Summary KPI Row */}
       <ScheduleSummaryRow meetings={meetings} />
 
+      {/* Helpful Quick Tip when calendar has no syncs */}
+      {!loading && activeMeetings.length === 0 && viewMode === "calendar" && (
+        <div className="p-3.5 bg-butter-bg border border-green-dark/12 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-green-dark shadow-2xs animate-fade-in">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-green-mid shrink-0" />
+            <span>
+              <strong>Schedule Interactive Calendar:</strong> Click any date on the big calendar below to arrange a sponsor discussion and select meeting times.
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAddNewMeeting(new Date())}
+            className="text-xs font-bold h-7 px-3 border-green-dark/20 text-green-dark shrink-0 cursor-pointer"
+          >
+            Schedule Now
+          </Button>
+        </div>
+      )}
+
       {/* Content Area */}
       {loading ? (
         <div className="p-12 text-center bg-white rounded-3xl border border-green-dark/10">
           <RefreshCw className="w-6 h-6 animate-spin text-green-mid mx-auto mb-2" />
           <p className="text-xs font-bold text-green-dark">Loading your schedule...</p>
         </div>
+      ) : viewMode === "calendar" ? (
+        /* Always show big calendar in calendar mode */
+        <div className="animate-fade-in">
+          <ScheduleCalendar
+            meetings={meetings}
+            onSelectDay={handleSelectDay}
+            onAddNewMeeting={handleAddNewMeeting}
+          />
+        </div>
       ) : activeMeetings.length === 0 ? (
-        /* Empty State */
+        /* Empty State for Upcoming List */
         <div className="bg-white rounded-3xl p-8 sm:p-12 border border-green-dark/12 shadow-sm text-center max-w-xl mx-auto space-y-4 my-8 animate-fade-in">
           <div className="w-16 h-16 rounded-2xl bg-butter-bg text-green-dark flex items-center justify-center mx-auto border border-green-dark/10 shadow-xs">
             <CalendarDays className="w-8 h-8 text-green-mid" />
@@ -198,38 +243,40 @@ export default function SchedulePage() {
 
           <div className="space-y-1.5">
             <h3 className="font-heading font-black text-xl text-green-dark">
-              No meetings yet
+              No upcoming meetings
             </h3>
             <p className="text-xs sm:text-sm text-text-dim leading-relaxed max-w-md mx-auto">
-              When a sponsor replies with interest, arrange a meeting from Replies.
+              You can switch to the Month Calendar to pick any date and schedule a sponsor sync.
             </p>
           </div>
 
-          <div className="pt-2 flex justify-center">
-            <Link href="/app/replies">
-              <Button variant="green" className="text-xs font-bold gap-2">
-                <span>Go to Replies</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
+          <div className="pt-2 flex justify-center gap-2">
+            <Button
+              variant="green"
+              onClick={() => handleAddNewMeeting(new Date())}
+              className="text-xs font-bold gap-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Schedule Sync</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setViewMode("calendar")}
+              className="text-xs font-bold gap-2 cursor-pointer border-green-dark/20"
+            >
+              <span>View Big Calendar</span>
+            </Button>
           </div>
         </div>
       ) : (
-        /* Active View: Month Calendar or Upcoming List */
+        /* Upcoming List */
         <div className="animate-fade-in">
-          {viewMode === "calendar" ? (
-            <ScheduleCalendar
-              meetings={meetings}
-              onSelectDay={handleSelectDay}
-            />
-          ) : (
-            <UpcomingListView
-              meetings={activeMeetings}
-              onReschedule={handleReschedule}
-              onMarkCompleted={handleMarkCompleted}
-              onCancel={handleCancelMeeting}
-            />
-          )}
+          <UpcomingListView
+            meetings={activeMeetings}
+            onReschedule={handleReschedule}
+            onMarkCompleted={handleMarkCompleted}
+            onCancel={handleCancelMeeting}
+          />
         </div>
       )}
 
@@ -242,28 +289,37 @@ export default function SchedulePage() {
         onReschedule={handleReschedule}
         onMarkCompleted={handleMarkCompleted}
         onCancel={handleCancelMeeting}
+        onScheduleNew={() => {
+          setIsDayModalOpen(false);
+          handleAddNewMeeting(selectedDayDate || new Date());
+        }}
       />
 
-      {/* Reschedule Modal */}
-      {editingMeeting && (
-        <ScheduleMeetingModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingMeeting(null);
-          }}
-          initialMeeting={editingMeeting}
-          companyName={editingMeeting.companyName}
-          companyId={editingMeeting.companyId}
-          onSuccess={(updated) => {
-            setMeetings((prev) =>
-              prev.map((m) => (m.id === updated.id ? updated : m))
-            );
-            setIsModalOpen(false);
-            setEditingMeeting(null);
-          }}
-        />
-      )}
+      {/* Create / Reschedule Meeting Modal */}
+      <ScheduleMeetingModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingMeeting(null);
+          setSelectedScheduleDate(null);
+        }}
+        initialMeeting={editingMeeting}
+        initialDate={selectedScheduleDate || (editingMeeting ? new Date(editingMeeting.startsAt) : null)}
+        companyName={editingMeeting ? editingMeeting.companyName : ""}
+        companyId={editingMeeting ? editingMeeting.companyId : ""}
+        onSuccess={(saved) => {
+          setMeetings((prev) => {
+            const exists = prev.some((m) => m.id === saved.id);
+            if (exists) {
+              return prev.map((m) => (m.id === saved.id ? saved : m));
+            }
+            return [saved, ...prev];
+          });
+          setIsModalOpen(false);
+          setEditingMeeting(null);
+          setSelectedScheduleDate(null);
+        }}
+      />
     </div>
   );
 }

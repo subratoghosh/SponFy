@@ -38,6 +38,8 @@ interface ScheduleMeetingModalProps {
   contactEmail?: string;
   replyMessageId?: string;
   initialMeeting?: Meeting | null;
+  initialDate?: Date | string | null;
+  initialTime?: string | null;
   onSuccess?: (meeting: Meeting) => void;
   onDraftConfirmationReply?: (meeting: Meeting) => void;
 }
@@ -52,6 +54,8 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
   contactEmail,
   replyMessageId,
   initialMeeting,
+  initialDate,
+  initialTime,
   onSuccess,
   onDraftConfirmationReply,
 }) => {
@@ -59,6 +63,7 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Form states
+  const [targetCompanyName, setTargetCompanyName] = useState(companyName);
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -81,6 +86,9 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
       setScheduledMeeting(null);
       setErrors({});
 
+      const effectiveCompany = initialMeeting?.companyName || (companyName !== "Sponsor" ? companyName : "");
+      setTargetCompanyName(effectiveCompany);
+
       if (initialMeeting) {
         setTitle(initialMeeting.title);
         const startDate = new Date(initialMeeting.startsAt);
@@ -94,19 +102,37 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
         setLocation(initialMeeting.location);
         setNotes(initialMeeting.notes || "");
       } else {
-        setTitle(`SponFy x ${companyName} sponsorship discussion`);
-        // Default to tomorrow at 16:00
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        setDate(tomorrow.toISOString().split("T")[0]);
-        setTime("16:00");
+        const displayComp = effectiveCompany || "Sponsor";
+        setTitle(`SponFy x ${displayComp} sponsorship discussion`);
+        
+        // Resolve initial date if passed from calendar click
+        let resolvedDateStr = "";
+        if (initialDate instanceof Date) {
+          const y = initialDate.getFullYear();
+          const m = String(initialDate.getMonth() + 1).padStart(2, "0");
+          const d = String(initialDate.getDate()).padStart(2, "0");
+          resolvedDateStr = `${y}-${m}-${d}`;
+        } else if (typeof initialDate === "string" && initialDate) {
+          resolvedDateStr = initialDate.includes("T") ? initialDate.split("T")[0] : initialDate;
+        }
+
+        if (resolvedDateStr) {
+          setDate(resolvedDateStr);
+        } else {
+          // Default to tomorrow
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          setDate(tomorrow.toISOString().split("T")[0]);
+        }
+
+        setTime(initialTime || "16:00");
         setDuration(30);
         setMode("video");
         setLocation("https://meet.google.com/new");
-        setNotes(`Sync to discuss deliverables, partnership tiers, and timeline for ${companyName}.`);
+        setNotes(`Sync to discuss deliverables, partnership tiers, and timeline for ${displayComp}.`);
       }
     }
-  }, [isOpen, initialMeeting, companyName]);
+  }, [isOpen, initialMeeting, companyName, initialDate, initialTime]);
 
   // Trap focus and close on Escape
   useEffect(() => {
@@ -130,6 +156,10 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
   const validate = () => {
     const errs: Record<string, string> = {};
 
+    if (!targetCompanyName.trim() && !companyName) {
+      errs.companyName = "Sponsor or company name is required";
+    }
+
     if (!title.trim()) {
       errs.title = "Meeting title is required";
     }
@@ -147,7 +177,14 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
       const meetingStart = new Date(date);
       meetingStart.setHours(hours, minutes, 0, 0);
 
-      if (meetingStart.getTime() <= Date.now() && !isEditing) {
+      // Only reject past times if scheduling for today
+      const today = new Date();
+      const isDateToday =
+        meetingStart.getFullYear() === today.getFullYear() &&
+        meetingStart.getMonth() === today.getMonth() &&
+        meetingStart.getDate() === today.getDate();
+
+      if (isDateToday && meetingStart.getTime() <= Date.now() - 60000 && !isEditing) {
         errs.time = "Meeting start time must be in the future";
       }
     }
@@ -169,6 +206,8 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
 
     setIsSubmitting(true);
     setErrors({});
+
+    const effectiveCompany = targetCompanyName.trim() || companyName || "Sponsor";
 
     try {
       const [hours, minutes] = time.split(":").map(Number);
@@ -205,8 +244,8 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            companyId,
-            companyName,
+            companyId: companyId || "",
+            companyName: effectiveCompany,
             campaignId,
             contactName,
             contactEmail,
@@ -227,7 +266,7 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
           return;
         }
 
-        toast(`Meeting arranged with ${companyName}!`, "success");
+        toast(`Meeting arranged with ${effectiveCompany}!`, "success");
         if (onSuccess) onSuccess(data.data);
         setScheduledMeeting(data.data);
       }
@@ -375,20 +414,43 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
                 </div>
               )}
 
-              {/* Title */}
-              <div>
-                <label className="block text-xs font-bold text-green-dark mb-1">
-                  Meeting Title
-                </label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. SponFy x Postman sponsorship discussion"
-                  className="bg-white text-xs"
-                />
-                {errors.title && (
-                  <p className="text-[11px] text-red-600 mt-1">{errors.title}</p>
-                )}
+              {/* Sponsor & Title Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-green-dark mb-1">
+                    Sponsor / Company Name
+                  </label>
+                  <Input
+                    value={targetCompanyName}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setTargetCompanyName(val);
+                      if (!isEditing && (!title || title.startsWith("SponFy x"))) {
+                        setTitle(`SponFy x ${val.trim() || "Sponsor"} sponsorship discussion`);
+                      }
+                    }}
+                    placeholder="e.g. Google Cloud, Razorpay"
+                    className="bg-white text-xs"
+                  />
+                  {errors.companyName && (
+                    <p className="text-[11px] text-red-600 mt-1">{errors.companyName}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-green-dark mb-1">
+                    Meeting Title
+                  </label>
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. SponFy x Postman sponsorship discussion"
+                    className="bg-white text-xs"
+                  />
+                  {errors.title && (
+                    <p className="text-[11px] text-red-600 mt-1">{errors.title}</p>
+                  )}
+                </div>
               </div>
 
               {/* Date & Time Row */}
@@ -424,6 +486,28 @@ export const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
                     onChange={(e) => setTime(e.target.value)}
                     className="bg-white text-xs"
                   />
+                  {/* Quick-Pick Times */}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {["09:30", "11:00", "14:00", "16:00", "17:30"].map((t) => {
+                      const [h, m] = t.split(":");
+                      const hNum = parseInt(h, 10);
+                      const display = `${hNum > 12 ? hNum - 12 : hNum}:${m} ${hNum >= 12 ? "PM" : "AM"}`;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setTime(t)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                            time === t
+                              ? "bg-green-dark text-butter-cream border-green-dark shadow-2xs"
+                              : "bg-butter-warm/40 text-green-dark border-green-dark/15 hover:bg-butter-warm"
+                          }`}
+                        >
+                          {display}
+                        </button>
+                      );
+                    })}
+                  </div>
                   {errors.time && (
                     <p className="text-[11px] text-red-600 mt-1">{errors.time}</p>
                   )}
