@@ -14,9 +14,21 @@ export async function GET(request: NextRequest) {
 
   try {
     const userId = session?.user?.id;
-    const where: any = {};
+    let where: any = {};
     if (userId && !isDemo) {
-      where.userId = userId;
+      where = {
+        OR: [
+          { userId },
+          {
+            members: {
+              some: {
+                userId,
+                status: "ACTIVE",
+              },
+            },
+          },
+        ],
+      };
     }
 
     const records = await prisma.campaign.findMany({

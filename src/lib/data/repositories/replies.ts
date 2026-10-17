@@ -78,7 +78,7 @@ export async function getReplyAnalyses(companyId?: string): Promise<ReplyAnalysi
   return [...replyAnalysesStoreRef.value];
 }
 
-export async function getInboundThreads(): Promise<{ message: Message; analysis?: ReplyAnalysis }[]> {
+export async function getInboundThreads(userId?: string): Promise<{ message: Message; analysis?: ReplyAnalysis }[]> {
   if (typeof window !== "undefined") {
     try {
       const res = await fetch("/api/replies");
@@ -96,8 +96,42 @@ export async function getInboundThreads(): Promise<{ message: Message; analysis?
 
   if (isDatabaseConfigured()) {
     try {
+      const where: any = { direction: "INBOUND" };
+      if (userId) {
+        const userCampaigns = await prisma.campaign.findMany({
+          where: {
+            OR: [
+              { userId },
+              {
+                members: {
+                  some: {
+                    userId,
+                    status: "ACTIVE",
+                  },
+                },
+              },
+            ],
+          },
+          select: { id: true },
+        });
+        const accessibleIds = userCampaigns.map((c) => c.id);
+        where.AND = [
+          { direction: "INBOUND" },
+          {
+            OR: [
+              { userId },
+              {
+                company: {
+                  campaignId: { in: accessibleIds },
+                },
+              },
+            ],
+          },
+        ];
+      }
+
       const messages = await prisma.message.findMany({
-        where: { direction: "INBOUND" },
+        where,
         include: {
           analysis: true,
         },
@@ -163,12 +197,18 @@ export async function recordInboundReply(
 ): Promise<{ message: Message; analysis: ReplyAnalysis }> {
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      let resolvedUserId = "usr-demo-lead";
+      const company = await prisma.company.findUnique({
+        where: { id: companyId },
+        select: { userId: true },
+      });
+      if (company?.userId) {
+        resolvedUserId = company.userId;
+      }
 
       const newMsg = await prisma.message.create({
         data: {
-          userId,
+          userId: resolvedUserId,
           companyId,
           gmailMessageId: message.gmailMessageId,
           gmailThreadId: message.gmailThreadId,
@@ -184,7 +224,7 @@ export async function recordInboundReply(
       const dbIntent: Intent = INTENT_TO_DB[analysis.intent] || "INTERESTED";
       const newAnalysis = await prisma.replyAnalysis.create({
         data: {
-          userId,
+          userId: resolvedUserId,
           messageId: newMsg.id,
           intent: dbIntent,
           sentiment: String(analysis.sentiment || "positive"),

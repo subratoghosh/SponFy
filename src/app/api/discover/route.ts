@@ -164,15 +164,28 @@ export async function POST(req: Request) {
       campaign = await getCampaignById(campaignId);
     }
 
+    if (campaign && isDatabaseConfigured() && session?.user?.id) {
+      const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+      const access = await getCampaignAccess(session.user.id, campaign.id);
+      if (!access.allowed) {
+        return NextResponse.json({ error: "Forbidden: Access denied to this campaign" }, { status: 403 });
+      }
+    }
+
     if (!campaign && isDatabaseConfigured()) {
       try {
-        const user = session?.user?.id
-          ? await prisma.user.findUnique({ where: { id: session.user.id } })
-          : await prisma.user.findFirst();
-        const userId = user?.id || "usr-demo-lead";
+        if (!session?.user?.id) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const userId = session.user.id;
 
         const existingCampaign = await prisma.campaign.findFirst({
-          where: { userId },
+          where: {
+            OR: [
+              { userId },
+              { members: { some: { userId, status: "ACTIVE" } } },
+            ],
+          },
           orderBy: { createdAt: "desc" },
         });
 

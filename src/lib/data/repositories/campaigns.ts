@@ -26,7 +26,17 @@ export async function getCampaigns(userId?: string): Promise<Campaign[]> {
     try {
       const where: any = {};
       if (userId) {
-        where.userId = userId;
+        where.OR = [
+          { userId },
+          {
+            members: {
+              some: {
+                userId,
+                status: "ACTIVE",
+              },
+            },
+          },
+        ];
       }
       const records = await prisma.campaign.findMany({
         where: Object.keys(where).length > 0 ? where : undefined,
@@ -114,11 +124,7 @@ export async function createCampaign(data: Omit<Campaign, "id" | "createdAt">, u
 
   if (isDatabaseConfigured()) {
     try {
-      let resolvedUserId = userId;
-      if (!resolvedUserId) {
-        const user = await prisma.user.findFirst();
-        resolvedUserId = user?.id || "usr-demo-lead";
-      }
+      const resolvedUserId = userId || "usr-demo-lead";
 
       const r = await prisma.campaign.create({
         data: {

@@ -75,8 +75,11 @@ export async function requireAdmin(): Promise<AuthResult> {
   return authRes;
 }
 
+import { getCampaignAccess } from "@/lib/security/campaign-access";
+
 /**
- * Verifies that the given company exists and belongs to the authenticated user.
+ * Verifies that the given company exists and belongs to the authenticated user,
+ * or that the user is an active member of the company's campaign.
  * Prevents Insecure Direct Object References (IDOR).
  */
 export async function verifyCompanyOwnership(
@@ -88,12 +91,24 @@ export async function verifyCompanyOwnership(
   if (isDatabaseConfigured()) {
     try {
       const company = await (prisma as any).company.findFirst({
-        where: {
-          id: companyId,
-          userId,
-        },
+        where: { id: companyId },
       });
-      return company;
+      if (!company) return null;
+
+      // 1. Direct ownership for personal campaigns
+      if (company.userId === userId) {
+        return company;
+      }
+
+      // 2. Active member of organisation/campaign
+      if (company.campaignId) {
+        const { allowed } = await getCampaignAccess(userId, company.campaignId);
+        if (allowed) {
+          return company;
+        }
+      }
+
+      return null;
     } catch (err) {
       console.error("[AuthGuard] verifyCompanyOwnership error:", err);
       return null;
@@ -105,7 +120,8 @@ export async function verifyCompanyOwnership(
 }
 
 /**
- * Verifies that the given outreach draft exists and belongs to the authenticated user.
+ * Verifies that the given outreach draft exists and belongs to the authenticated user,
+ * or that the user is an active member of the draft's campaign.
  */
 export async function verifyDraftOwnership(
   draftId: string,
@@ -115,16 +131,29 @@ export async function verifyDraftOwnership(
 
   if (isDatabaseConfigured()) {
     try {
-      const draft = await (prisma as any).outreachDraft.findFirst({
-        where: {
-          id: draftId,
-          userId,
-        },
+      const draftDelegate = (prisma as any).emailDraft || (prisma as any).outreachDraft;
+      const draft = await draftDelegate.findFirst({
+        where: { id: draftId },
         include: {
           company: true,
         },
       });
-      return draft;
+      if (!draft) return null;
+
+      // 1. Direct author ownership
+      if (draft.userId === userId) {
+        return draft;
+      }
+
+      // 2. Active member of organisation/campaign
+      if (draft.company?.campaignId) {
+        const { allowed } = await getCampaignAccess(userId, draft.company.campaignId);
+        if (allowed) {
+          return draft;
+        }
+      }
+
+      return null;
     } catch (err) {
       console.error("[AuthGuard] verifyDraftOwnership error:", err);
       return null;

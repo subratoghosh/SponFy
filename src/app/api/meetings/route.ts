@@ -146,7 +146,7 @@ export async function POST(req: Request) {
       userId,
       companyId,
       companyName,
-      campaignId,
+      campaignId: campaignId || (ownedCompany as any).campaignId,
       contactName,
       contactEmail: contactEmail || undefined,
       replyMessageId,

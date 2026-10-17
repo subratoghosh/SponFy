@@ -39,9 +39,42 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const where: any = { userId };
+    const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+
+    let where: any = {};
     if (campaignId) {
+      const access = await getCampaignAccess(userId, campaignId);
+      if (!access.allowed) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          pagination: { total: 0, page: 1, limit, totalPages: 0, hasMore: false },
+        });
+      }
       where.campaignId = campaignId;
+    } else {
+      const userCampaigns = await prisma.campaign.findMany({
+        where: {
+          OR: [
+            { userId },
+            {
+              members: {
+                some: {
+                  userId,
+                  status: "ACTIVE",
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+      const accessibleCampaignIds = userCampaigns.map((c) => c.id);
+
+      where.OR = [
+        { userId },
+        { campaignId: { in: accessibleCampaignIds } },
+      ];
     }
 
     if (search) {
