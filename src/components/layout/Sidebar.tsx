@@ -17,6 +17,7 @@ import {
   Settings,
   ShieldCheck,
   LogOut,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SponfyLogo } from "@/components/ui/SponfyLogo";
@@ -65,6 +66,9 @@ export const Sidebar: React.FC = () => {
   const isAdmin =
     (user as any)?.role === "ADMIN" ||
     user?.email === "admin@sponfy.dev";
+
+  const isOrganiser =
+    (user as any)?.role === "ORGANISER" || isAdmin;
 
   const renderNavLink = (item: {
     label: string;
@@ -162,6 +166,7 @@ export const Sidebar: React.FC = () => {
           {/* Main Navigation List */}
           <nav className="p-3 space-y-1.5">
             {MAIN_NAV_ITEMS.map(renderNavLink)}
+            {isOrganiser && renderNavLink({ label: "Team", href: "/app/team", icon: Users })}
 
             {/* Admin Console Navigation Item (Visible for Administrators) */}
             {isAdmin && (
