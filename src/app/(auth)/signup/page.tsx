@@ -128,7 +128,7 @@ export default function SignupPage() {
               </div>
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Zero cold email hallucinations — 100% cited facts</span>
+                <span>Grounded email pitches backed by verified public facts</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

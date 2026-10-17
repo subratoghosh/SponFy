@@ -32,7 +32,7 @@ export default function WorkflowPage() {
                   <Zap className="w-6 h-6" />
                 </div>
                 <h3 className="heading-font text-xl font-bold text-green-dark mb-3">
-                  Zero Cold Email Blank Pages
+                  Never Start From a Blank Page
                 </h3>
                 <p className="text-text-dim text-sm leading-relaxed mb-6">
                   SponFy cross-references your campaign prospectus with real company CSR initiatives, student hiring goals, and developer relations programs to draft hyper-relevant pitches.

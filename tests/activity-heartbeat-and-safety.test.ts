@@ -62,7 +62,7 @@ describe("Activity Heartbeat and Outreach Recipient Resolution", () => {
       }
     });
 
-    it("rejects when no contacts exist to prevent synthetic email bounces (zero-bounce policy)", () => {
+    it("rejects when no contacts exist to prevent synthetic email bounces (bounce prevention safeguards)", () => {
       const res = resolveRecipient({
         contacts: [],
         companyDomain: "innovatecorp.io",
@@ -74,7 +74,7 @@ describe("Activity Heartbeat and Outreach Recipient Resolution", () => {
       }
     });
 
-    it("rejects when no contacts exist even with website URL (zero-bounce policy)", () => {
+    it("rejects when no contacts exist even with website URL (bounce prevention safeguards)", () => {
       const res = resolveRecipient({
         contacts: [],
         companyWebsite: "https://www.futuretech.dev/about",

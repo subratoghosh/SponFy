@@ -62,7 +62,7 @@ export const ApprovalPreview: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-green-900 p-1 rounded hover:bg-white/80 transition-colors">
                   <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                  <span>Suppression check passed (Zero previous unsubscribes)</span>
+                  <span>Suppression check passed (No previous opt-outs found)</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-green-900 p-1 rounded hover:bg-white/80 transition-colors">
                   <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />

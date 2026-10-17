@@ -55,7 +55,7 @@ export const CTASection: React.FC = () => {
 
         <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-text-onDarkSub font-medium">
           <span className="flex items-center gap-1.5 hover:text-butter-cream hover:scale-105 transition-all cursor-default">
-            <ShieldCheck className="w-4 h-4 text-butter-cream" /> 100% Human Approval Gate
+            <ShieldCheck className="w-4 h-4 text-butter-cream" /> Mandatory Human Approval Gate
           </span>
           <span className="flex items-center gap-1.5 hover:text-butter-cream hover:scale-105 transition-all cursor-default">
             <ShieldCheck className="w-4 h-4 text-butter-cream" /> Verified Public Sources

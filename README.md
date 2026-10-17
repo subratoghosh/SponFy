@@ -31,7 +31,7 @@ graph TD
         ServerlessApp["Next.js Application Engine<br/>(Server Components · React 19)"]
         RateLimiter["Distributed Rate Limiting Gateway<br/>(Sliding Window Algorithm)"]
         SendGuardEngine["Send-Guard Security Engine<br/>(Approval Gate · 12 AM Reset · Spacing)"]
-        ZeroBounceShield["Zero-Bounce Deliverability Shield<br/>(DNS · MX · SPF · DMARC · AI Validator)"]
+        ZeroBounceShield["Deliverability & Safety Shield<br/>(DNS · MX · SPF · DMARC · AI Validator)"]
         HealthEndpoint["/api/health<br/>(Readiness & Liveness Probe)"]
         AuthModule["Auth.js v5 (NextAuth)<br/>(OAuth 2.0 · Anti-CSRF · Secure Cookies)"]
     end
@@ -118,7 +118,7 @@ SponFy combines native Vercel enterprise infrastructure with custom-engineered b
 *   **Hybrid Distributed Rate Limiter**: Implemented using `@upstash/ratelimit` over global Redis with a local in-memory sliding-window fallback, ensuring rate protection remains active even if external Redis limits are reached.
 *   **Non-Bypassable Send-Guard Engine**: A pure-function server-side safety engine enforcing human approvals, suppression checks, duplicate contact locks, spacing rules, and rolling daily send limits.
 *   **Automated 12:00 AM Quota Reset**: Dynamically calculates workspace send volumes against rolling calendar midnight timestamps, cleanly resetting outreach quotas every day at 12:00 AM local organizer time.
-*   **Zero-Bounce Multi-Layer Deliverability Shield**: Runs RFC 5322 syntax validation, disposable domain filtering, direct DNS Mail Exchanger (MX) record lookups, SPF/DMARC inspection, and Gemini AI authentic inbox validation before any outbound transmission.
+*   **Multi-Layer Deliverability Shield**: Runs RFC 5322 syntax validation, disposable domain filtering, direct DNS Mail Exchanger (MX) record lookups, SPF/DMARC inspection, and Gemini AI authentic inbox validation before any outbound transmission.
 *   **Multi-Model AI Orchestration Pipeline**: Uses Groq (Llama 3.3 70B) for instant candidate relevance verification and draft email quality grading (<800ms response time), while reserving Gemini for deep multi-source research dossiers.
 *   **AES-256-GCM Token Encryption Vault**: Stores all third-party Gmail OAuth refresh tokens, access credentials, and webhook secrets using authenticated AES-256-GCM encryption with randomized initialization vectors.
 *   **Tenant Data Scoping & Role-Based Authorization**: Every database query across campaigns, sponsors, contacts, and outreach drafts enforces strict user-level tenancy and admin access controls.
@@ -165,7 +165,7 @@ To eliminate accidental spam or unreviewed AI hallucinations, SponFy implements 
 *   **Step 5: Minimum Spacing Protection**: A mandatory 3-day minimum spacing window is enforced between touches to the same company. This prevents multiple student teammates from pitching the same sponsor simultaneously.
 *   **Step 6: Rolling Daily Send Cap**: Limits total outbound emails sent per workspace within the rolling 24-hour window, returning `429 Too Many Requests` when limits are reached.
 
-### 4. Zero-Bounce Deliverability Shield
+### 4. Multi-Layer Deliverability Shield
 
 Cold email bounces permanently damage domain reputation. SponFy prevents bounces before transmission:
 *   **RFC 5322 Regex Validation**: Verifies email formatting, length, and octet constraints.

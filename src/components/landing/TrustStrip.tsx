@@ -16,7 +16,7 @@ export const TrustStrip: React.FC = () => {
     {
       icon: MessageSquareReply,
       title: "Replies, not vanity opens",
-      description: "Zero pixel-tracker guesswork. We measure authentic thread replies and committed funds.",
+      description: "No pixel-tracker guesswork. We measure authentic thread replies and committed funds.",
     },
   ];
 
