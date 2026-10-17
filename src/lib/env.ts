@@ -28,6 +28,7 @@ const serverEnvSchema = z.object({
   TOKEN_ENCRYPTION_KEY: z.string().default("sponfy-32-byte-hex-secret-aes-key-2026-safe-fallback"),
   CRON_SECRET: z.string().default("sponfy-cron-secret-token"),
   ADMIN_EMAILS: z.string().optional(),
+  SPONFY_LANGGRAPH_DISCOVERY_ENABLED: z.string().optional(),
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -53,4 +54,11 @@ export function isDemoMode(): boolean {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") return true;
   if (!process.env.DATABASE_URL) return true;
   return false;
+}
+
+export function isLangGraphDiscoveryEnabled(): boolean {
+  return (
+    process.env.SPONFY_LANGGRAPH_DISCOVERY_ENABLED === "true" ||
+    process.env.SPONFY_LANGGRAPH_DISCOVERY_ENABLED === "1"
+  );
 }
