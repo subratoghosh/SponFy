@@ -8,7 +8,7 @@ import {
   Building2,
   Send,
   Inbox,
-  FolderKanban,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -26,7 +26,7 @@ import {
 
 const MOBILE_TABS = [
   { label: "Overview", href: "/app", icon: LayoutDashboard },
-  { label: "Campaigns", href: "/app/campaigns", icon: FolderKanban },
+  { label: "Discover", href: "/app/discover", icon: Compass },
   { label: "Sponsors", href: "/app/sponsors", icon: Building2 },
   { label: "Outreach", href: "/app/outreach", icon: Send },
   { label: "Replies", href: "/app/replies", icon: Inbox },
