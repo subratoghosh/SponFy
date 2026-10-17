@@ -15,6 +15,8 @@ interface ReplyComposerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSend: (replyContent: { subject: string; body: string }) => void;
+  initialSubject?: string;
+  initialBody?: string;
 }
 
 export function ReplyComposerModal({
@@ -24,14 +26,26 @@ export function ReplyComposerModal({
   isOpen,
   onClose,
   onSend,
+  initialSubject,
+  initialBody,
 }: ReplyComposerModalProps) {
   const defaultSubject = message?.subject?.startsWith('Re:') ? message.subject : `Re: ${message?.subject || ''}`;
-  const [subject, setSubject] = useState(defaultSubject);
-  const [body, setBody] = useState(
-    `Hi,\n\nThank you for getting back to us regarding ${company?.name || 'your'} sponsorship partnership.\n\nWe have attached our comprehensive Tier Deck and partnership guidelines. We'd love to schedule a brief 15-minute sync with your team this Thursday at 4 PM IST.\n\nLooking forward to partnering together!\n\nBest regards,\nSponsorship Lead`
-  );
+  const defaultBody = `Hi,\n\nThank you for getting back to us regarding ${company?.name || 'your'} sponsorship partnership.\n\nWe have attached our comprehensive Tier Deck and partnership guidelines. We'd love to schedule a brief 15-minute sync with your team this Thursday at 4 PM IST.\n\nLooking forward to partnering together!\n\nBest regards,\nSponsorship Lead`;
+
+  const [subject, setSubject] = useState(initialSubject || defaultSubject);
+  const [body, setBody] = useState(initialBody || defaultBody);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      if (initialSubject) setSubject(initialSubject);
+      else setSubject(defaultSubject);
+
+      if (initialBody) setBody(initialBody);
+      else setBody(defaultBody);
+    }
+  }, [isOpen, initialSubject, initialBody, defaultSubject, defaultBody]);
 
   if (!message) return null;
 
