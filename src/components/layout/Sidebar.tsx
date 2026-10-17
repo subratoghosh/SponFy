@@ -11,6 +11,7 @@ import {
   Building2,
   Send,
   Inbox,
+  CalendarDays,
   Clock,
   BarChart3,
   Settings,
@@ -27,6 +28,7 @@ const MAIN_NAV_ITEMS = [
   { label: "Sponsors", href: "/app/sponsors", icon: Building2 },
   { label: "Outreach", href: "/app/outreach", icon: Send },
   { label: "Replies", href: "/app/replies", icon: Inbox },
+  { label: "Schedule", href: "/app/schedule", icon: CalendarDays },
   { label: "Follow-ups", href: "/app/followups", icon: Clock },
 ];
 
