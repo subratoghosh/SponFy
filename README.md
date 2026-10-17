@@ -1,325 +1,407 @@
 # SponFy — AI Sponsorship Operating System & Intelligence Platform
 
-SponFy is an enterprise-grade sponsorship operating system built for college hackathons, technical conferences, academic summits, and student developer organizations. Powered by multi-model artificial intelligence, live web research extraction, and human-in-the-loop safety gates, SponFy streamlines the entire sponsorship lifecycle—from automated discovery and explainable fit scoring to deliverability-guaranteed outreach, inbound reply intelligence, and pipeline revenue tracking.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.0_App_Router-black?logo=next.js)](https://nextjs.org/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Orchestration-orange)](https://github.com/langchain-ai/langgraphjs)
+[![Tests](https://img.shields.io/badge/Tests-174_Passed-success?logo=vitest)](https://vitest.dev/)
+[![Security](https://img.shields.io/badge/Security-AES--256--GCM-darkgreen)](https://csrc.nist.gov/publications/detail/sp/800-38d/final)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+SponFy is an enterprise-grade sponsorship operating system built for college hackathons, technical conferences, academic summits, and student developer organizations. Powered by multi-model artificial intelligence, live web research extraction, and human-in-the-loop safety gates, SponFy streamlines the entire sponsorship lifecycle—from automated discovery and explainable fit scoring to deliverability-guaranteed outreach, inbound reply intelligence, meeting scheduling, and pipeline revenue tracking.
 
 ---
 
-## Brand Architecture & Visual System
+## Visual Table of Contents
 
-SponFy is constructed around a custom Butter and Forest Green design language:
-*   **Palette Definition**: Deep forest green (`#0C382E`), warm butter canvas (`#FAF4E6`), muted sage secondary tones (`#244D3F`), and butter cream highlights (`#FFF0B3`).
-*   **Typography Hierarchy**: Classical Fraunces serif for display titles, Inter and Plus Jakarta Sans for dense tabular interfaces, and Outfit for numerical badges.
-*   **Micro-Physics & Motion**: Dynamic element physics powered by Framer Motion, featuring smooth card tilts, floating ambient gradients, and responsive hover transitions.
-*   **Accessible Visual Clarity**: High contrast ratios compliant with WCAG AAA standards across all forms, pipeline boards, and research dossiers.
+| Section | Visual Type | Focus Area |
+| :--- | :--- | :--- |
+| **[1. End-to-End System Architecture](#1-end-to-end-system-architecture)** | System Flow Diagram | Global Edge, Serverless Compute, AI Engine, Storage |
+| **[2. LangGraph & Multi-Model AI Pipeline](#2-langgraph--multi-model-ai-orchestration-pipeline)** | Orchestration Flowchart | Parallel web search, Llama 3.3 scoring, Gemini extraction |
+| **[3. Six-Step Send-Guard Security Engine](#3-six-step-send-guard-security-engine)** | Gate Decision Flowchart | Non-bypassable human approvals, spacing, and quotas |
+| **[4. Multi-Layer Deliverability Shield](#4-multi-layer-deliverability-shield)** | Verification Pipeline | DNS MX, SPF/DMARC, disposable filters, and AI check |
+| **[5. 7-Factor Fit Scoring Breakdown](#5-transparent-7-factor-fit-scoring-algorithm)** | Mermaid Pie Chart & Matrix | 0–100 explainable sponsor evaluation breakdown |
+| **[6. Inbound Reply & Intent Intelligence](#6-real-time-reply-sync--intent-classification-engine)** | NLP Decision Machine | Automated intent classification and question extraction |
+| **[7. 4-Touch Follow-Up Cadence & Circuit Breakers](#7-automated-4-touch-follow-up-engine--circuit-breakers)** | Lifecycle Timeline Flow | Scheduled cadence and real-time auto-halting triggers |
+| **[8. Meeting Scheduler & Morning Reminders](#8-meeting-calendar-scheduler--overview-reminders)** | Interaction Flowchart | Big calendar multi-slot scheduling and login popups |
+| **[9. AES-256-GCM Cryptographic Vault](#9-cryptographic-storage--token-security-vault)** | Sequence Diagram | OAuth token encryption, IV handling, and tamper defense |
+| **[10. Platform vs. Custom Architecture Matrix](#10-platform-infrastructure-vs-custom-engineered-components)** | Structured Comparison | Vercel Edge capabilities vs. bespoke SponFy modules |
+| **[11. CI/CD DevOps & Test Pipeline](#11-continuous-integration--devops-pipeline)** | Build Pipeline Flow | GitHub Actions, TypeScript verification, and 174 tests |
+| **[12. Quickstart & Environment Setup](#12-local-development-quickstart)** | Code Configuration | Step-by-step local bootstrap and environment schema |
 
 ---
 
-## System Architecture Diagram
+## 1. End-to-End System Architecture
 
 ```mermaid
 graph TD
-    Client["Client / Browser / PWA<br/>(Desktop, Tablet, Mobile)"]
+    User["Organizer Client Browser / PWA<br/>(Desktop · Tablet · Mobile)"]
 
-    subgraph Vercel Global Edge Network [Platform-Provided Edge Infrastructure]
-        CDN["Vercel Anycast Global CDN<br/>(100+ Global Edge Locations)"]
-        EdgeLB["Edge Load Balancer<br/>(Automatic Traffic Distribution)"]
-        DDoSShield["L3/L4 DDoS Mitigation<br/>(Vercel Network Layer)"]
-        EdgeMiddleware["Next.js Edge Middleware<br/>(Session Verification · Path Routing)"]
+    subgraph VercelEdge ["Vercel Global Edge Network"]
+        CDN["Vercel Anycast CDN<br/>(100+ Edge Locations)"]
+        EdgeLB["Edge Load Balancer<br/>(Auto Traffic Shaping)"]
+        DDoSShield["L3/L4 DDoS Mitigation"]
+        EdgeMiddleware["Next.js Edge Middleware<br/>(Session Verification & Routing)"]
     end
 
-    subgraph Application & Compute Layer [Next.js 15 App Router Serverless Functions]
-        ServerlessApp["Next.js Application Engine<br/>(Server Components · React 19)"]
-        RateLimiter["Distributed Rate Limiting Gateway<br/>(Sliding Window Algorithm)"]
-        SendGuardEngine["Send-Guard Security Engine<br/>(Approval Gate · 12 AM Reset · Spacing)"]
-        ZeroBounceShield["Deliverability & Safety Shield<br/>(DNS · MX · SPF · DMARC · AI Validator)"]
-        HealthEndpoint["/api/health<br/>(Readiness & Liveness Probe)"]
-        AuthModule["Auth.js v5 (NextAuth)<br/>(OAuth 2.0 · Anti-CSRF · Secure Cookies)"]
+    subgraph AppLayer ["Next.js 15 Application & Compute Engine"]
+        AppRouter["App Router Server Components<br/>(React 19 Core)"]
+        LangGraphCoord["LangGraph Discovery Orchestrator<br/>(Stateful Graph Execution)"]
+        SendGuardEngine["Send-Guard Security Engine<br/>(Human Approval · Spacing · Quotas)"]
+        DeliverabilityShield["Deliverability & Safety Shield<br/>(MX · SPF · DMARC · AI Validator)"]
+        HealthEndpoint["/api/health Probe<br/>(Liveness & Pooler Check)"]
+        AuthModule["Auth.js v5<br/>(OAuth 2.0 · Anti-CSRF)"]
     end
 
-    subgraph Distributed Cache & Rate Limiting Tier
+    subgraph DistributedCache ["Distributed Cache & Rate Limiting"]
         UpstashRedis["Upstash Serverless Redis<br/>(Global REST Cluster)"]
-        MemoryLimiterFallback["In-Memory Cache Fallback<br/>(Zero-Downtime Graceful Degradation)"]
+        MemoryLimiterFallback["In-Memory Cache Fallback<br/>(Graceful Zero-Downtime)"]
     end
 
-    subgraph External AI & Research Pipeline
+    subgraph IntelligenceServices ["AI Models & Extraction APIs"]
         GroqEngine["Groq Cloud API<br/>(Llama 3.3 70B · Fast Quality Scoring)"]
         GeminiEngine["Google Gemini Flash<br/>(Dossier Extraction · Contact Synthesis)"]
         TavilySearch["Tavily Search API<br/>(Live Corporate Web Discovery)"]
         FirecrawlScraper["Firecrawl Web Scraper<br/>(Deep Corporate Website Extraction)"]
     end
 
-    subgraph Communication & External APIs
+    subgraph ExternalChannels ["Outbound Channels & Deliverability"]
         GmailAPI["Google Gmail REST API<br/>(Mailbox Sending · Inbound Thread Sync)"]
         HunterAPI["Hunter.io API<br/>(Contact Email Discovery)"]
         ZeroBounceAPI["ZeroBounce API<br/>(Secondary Email Verification)"]
     end
 
-    subgraph Data & Storage Layer
-        PgBouncerPooler["Neon PgBouncer Connection Pooler<br/>(Transaction Mode Multiplexer)"]
+    subgraph StorageLayer ["Persistence & Cryptographic Tier"]
+        PgBouncerPooler["Neon PgBouncer Connection Pooler<br/>(Transaction Multiplexer)"]
         NeonPostgres[("Neon Serverless PostgreSQL<br/>(Primary Relational Store)")]
-        PrismaORM["Prisma Client ORM<br/>(Parameterized Query Engine)"]
-        CryptoVault["AES-256-GCM Encryption Vault<br/>(OAuth Token Store)"]
+        CryptoVault["AES-256-GCM Encryption Vault<br/>(Encrypted OAuth Credentials)"]
     end
 
-    %% Client and Edge connections
-    Client -->|HTTPS / HTTP/2| CDN
+    %% Edge Connections
+    User -->|HTTPS / HTTP/2| CDN
     CDN --> EdgeLB
     EdgeLB --> DDoSShield
     DDoSShield --> EdgeMiddleware
-    EdgeMiddleware -->|Authenticated Request| ServerlessApp
-    EdgeMiddleware -->|Static Assets / Cache Hit| Client
+    EdgeMiddleware -->|Authenticated Request| AppRouter
+    EdgeMiddleware -->|Static Assets / Cache Hit| User
 
-    %% App to Security and Services
-    ServerlessApp --> RateLimiter
-    RateLimiter -->|Distributed Check| UpstashRedis
+    %% App Compute Connections
+    AppRouter --> LangGraphCoord
+    AppRouter --> SendGuardEngine
+    AppRouter --> AuthModule
+    AppRouter --> HealthEndpoint
+
+    %% Rate Limiting
+    SendGuardEngine --> UpstashRedis
     UpstashRedis -.->|Fallback on Disconnect| MemoryLimiterFallback
-    RateLimiter --> SendGuardEngine
-    SendGuardEngine --> ZeroBounceShield
-    ServerlessApp --> HealthEndpoint
-    ServerlessApp --> AuthModule
 
-    %% External Research & Intelligence
-    ServerlessApp --> GroqEngine
-    ServerlessApp --> GeminiEngine
-    ServerlessApp --> TavilySearch
-    ServerlessApp --> FirecrawlScraper
+    %% Intelligence Layer
+    LangGraphCoord --> GroqEngine
+    LangGraphCoord --> GeminiEngine
+    LangGraphCoord --> TavilySearch
+    LangGraphCoord --> FirecrawlScraper
 
-    %% Communication layer
-    SendGuardEngine -->|Authorized Direct Send| GmailAPI
-    ZeroBounceShield --> HunterAPI
-    ZeroBounceShield --> ZeroBounceAPI
-    GmailAPI -->|Encrypted Credential Retrieval| CryptoVault
+    %% Dispatch & Security
+    SendGuardEngine --> DeliverabilityShield
+    DeliverabilityShield --> HunterAPI
+    DeliverabilityShield --> ZeroBounceAPI
+    SendGuardEngine -->|Authorized Send| GmailAPI
+    GmailAPI -->|Decrypt Tokens| CryptoVault
 
-    %% Data Layer
-    ServerlessApp --> PrismaORM
-    PrismaORM --> PgBouncerPooler
+    %% Database
+    AppRouter --> PgBouncerPooler
     PgBouncerPooler --> NeonPostgres
     HealthEndpoint -->|SELECT 1 Test| PgBouncerPooler
 ```
 
 ---
 
-## System Design Components: Platform-Provided vs. Custom-Engineered
+## 2. LangGraph & Multi-Model AI Orchestration Pipeline
 
-SponFy combines native Vercel enterprise infrastructure with custom-engineered backend systems to achieve sub-second response times, complete multi-tenant isolation, and 99.99% operational uptime.
+SponFy integrates **LangGraph** as an orchestration layer over live discovery and dossier synthesis, executing parallel web research, fast LLM relevance filtering, and deep factual synthesis.
 
-### 1. Platform-Provided Infrastructure (Vercel Global Network)
-
-*   **Anycast Global CDN**: Automatically routes user requests across 100+ edge nodes worldwide, terminating TLS connections at the edge closest to the visitor for minimal latency.
-*   **Edge Load Balancing**: Distributes incoming HTTP requests dynamically across scalable serverless execution workers, eliminating single-instance server bottlenecks.
-*   **Automatic Serverless Scaling**: Auto-scales application execution from zero to hundreds of concurrent serverless container instances on demand, handling sudden traffic spikes during hackathon application windows.
-*   **Layer 3 & Layer 4 DDoS Mitigation**: Absorbs malicious volumetric attacks and packet floods at the edge before traffic reaches application runtime containers.
-*   **Edge Middleware Layer**: Executes routing logic and session authentication checks at the network edge with near-zero cold-start latency.
-*   **Automated Zero-Downtime Deployments**: Manages atomic blue/green deployments with instant rollback capabilities linked directly to GitHub commits.
-
-### 2. Custom-Engineered System Components (Built Into SponFy)
-
-*   **Neon Serverless PostgreSQL with PgBouncer Pooling**: Configured with a dedicated pooled connection string (`DATABASE_URL`) for serverless query multiplexing and a direct non-pooled connection string (`DIRECT_URL`) for safe Prisma schema migrations.
-*   **Hybrid Distributed Rate Limiter**: Implemented using `@upstash/ratelimit` over global Redis with a local in-memory sliding-window fallback, ensuring rate protection remains active even if external Redis limits are reached.
-*   **Non-Bypassable Send-Guard Engine**: A pure-function server-side safety engine enforcing human approvals, suppression checks, duplicate contact locks, spacing rules, and rolling daily send limits.
-*   **Automated 12:00 AM Quota Reset**: Dynamically calculates workspace send volumes against rolling calendar midnight timestamps, cleanly resetting outreach quotas every day at 12:00 AM local organizer time.
-*   **Multi-Layer Deliverability Shield**: Runs RFC 5322 syntax validation, disposable domain filtering, direct DNS Mail Exchanger (MX) record lookups, SPF/DMARC inspection, and Gemini AI authentic inbox validation before any outbound transmission.
-*   **Multi-Model AI Orchestration Pipeline**: Uses Groq (Llama 3.3 70B) for instant candidate relevance verification and draft email quality grading (<800ms response time), while reserving Gemini for deep multi-source research dossiers.
-*   **AES-256-GCM Token Encryption Vault**: Stores all third-party Gmail OAuth refresh tokens, access credentials, and webhook secrets using authenticated AES-256-GCM encryption with randomized initialization vectors.
-*   **Tenant Data Scoping & Role-Based Authorization**: Every database query across campaigns, sponsors, contacts, and outreach drafts enforces strict user-level tenancy and admin access controls.
-
----
-
-## Comprehensive Security Architecture & Defense Controls
-
-Security in SponFy is treated as a core architectural constraint rather than an afterthought. Every layer implements defense-in-depth principles:
-
-### 1. HTTP Security Headers & Network Defense (in `next.config.ts`)
-
-*   **Content-Security-Policy (CSP)**: Hardened with explicit, strict origin allowlists:
-    *   `default-src 'self'`: Restricts all unspecified loading targets to the local origin.
-    *   `script-src 'self' 'unsafe-eval' 'unsafe-inline'`: Permits Next.js client hydration and dynamic module chunks while preventing unauthorized external scripts.
-    *   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`: Restricts styling to local CSS bundles and Google Fonts stylesheets.
-    *   `font-src 'self' https://fonts.gstatic.com data:`: Loads typography strictly from verified Google Fonts CDN origins.
-    *   `img-src 'self' data: blob: https:`: Allows user avatars, sponsor logos, and verified external brand icons over secure HTTPS.
-    *   `connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://vitals.vercel-insights.com wss://*.neon.tech https://*.neon.tech https://*.upstash.io`: Restricts API communication exclusively to Google OAuth, Vercel Insights, Neon PostgreSQL WebSockets, and Upstash Redis.
-    *   `frame-src 'self' https://accounts.google.com`: Restricts iframe mounting to local views and Google OAuth authentication frames.
-    *   `object-src 'none'`: Completely disables plugin execution (Flash, Java, Silverlight) to block object-based vectors.
-    *   `base-uri 'self'`: Prevents `<base>` tag injection attacks.
-    *   `frame-ancestors 'none'`: Enforces clickjacking protection directly in the CSP header.
-*   **Strict-Transport-Security (HSTS)**: Configured with `max-age=63072000; includeSubDomains; preload` (2 years), forcing all modern browsers to interact exclusively over encrypted HTTPS connections.
-*   **X-Frame-Options: DENY**: Forbids browsers from embedding any SponFy route in `<frame>`, `<iframe>`, `<embed>`, or `<object>` elements.
-*   **X-Content-Type-Options: nosniff**: Prevents browsers from MIME-sniffing a response away from the declared content type.
-*   **Referrer-Policy: strict-origin-when-cross-origin**: Strips sensitive path information from the HTTP Referer header when navigating cross-origin.
-*   **Permissions-Policy**: Restricts access to sensitive browser hardware APIs with `camera=(), microphone=(), geolocation=()`.
-
-### 2. Cryptographic Storage & Token Security
-
-*   **AES-256-GCM Encryption**: Third-party OAuth tokens (e.g. Gmail API refresh tokens) are never stored in plaintext. They are encrypted using AES-256 in Galois/Counter Mode (GCM).
-*   **12-Byte Initialization Vector**: Every encrypted record generates a cryptographically random, non-repeating 12-byte IV.
-*   **16-Byte Authentication Tag**: Tamper-detection is guaranteed; any ciphertext modification causes immediate decryption failure before data is processed.
-*   **Key Isolation**: The encryption key (`TOKEN_ENCRYPTION_KEY`) is stored strictly in server-side environment variables and is never exposed to the client bundle.
-
-### 3. Non-Bypassable Human-in-the-Loop Send Gate
-
-To eliminate accidental spam or unreviewed AI hallucinations, SponFy implements a six-step server-side guard sequence in `src/lib/outreach/send-guard.ts`:
-*   **Step 1: Human Approval Requirement**: Outbound messages must be explicitly marked as `APPROVED` by a human organizer. Drafts with status `draft`, `sending`, or `sent` are rejected with `403 Forbidden` or `409 Conflict`.
-*   **Step 2: Recipient Address Lock**: The recipient address is always resolved from the stored verified company contact, never from client-submitted payload overrides. Any mismatch between client display and server record triggers an immediate `409 Conflict`.
-*   **Step 3: Suppression List Enforcement**: Addresses matching the workspace Do-Not-Contact list or global bounce lists are blocked with `403 Forbidden`.
-*   **Step 4: Lifetime Touch Cap**: Companies receive at most 1 initial outreach email + 2 polite follow-ups (3 touches total). Subsequent attempts are halted to preserve domain sender reputation.
-*   **Step 5: Minimum Spacing Protection**: A mandatory 3-day minimum spacing window is enforced between touches to the same company. This prevents multiple student teammates from pitching the same sponsor simultaneously.
-*   **Step 6: Rolling Daily Send Cap**: Limits total outbound emails sent per workspace within the rolling 24-hour window, returning `429 Too Many Requests` when limits are reached.
-
-### 4. Multi-Layer Deliverability Shield
-
-Cold email bounces permanently damage domain reputation. SponFy prevents bounces before transmission:
-*   **RFC 5322 Regex Validation**: Verifies email formatting, length, and octet constraints.
-*   **Disposable Domain Blocker**: Maintains a real-time blacklist of known burner and temporary mail services (Mailinator, GuerrillaMail, 10MinuteMail, etc.).
-*   **Live DNS MX Record Lookup**: Queries authoritative nameservers to confirm that the recipient domain has active Mail Exchanger (MX) records configured. If no MX records exist, the send is blocked.
-*   **SPF & DMARC Verification**: Checks DNS TXT records for SPF (`v=spf1`) and DMARC (`v=dmarc1`) policies to assess domain authentication posture.
-*   **AI Double-Check for Authentic Inboxes**: Queries Gemini/Groq to distinguish authentic corporate email addresses from pattern-guessed placeholders (e.g., detecting if a generic `partnerships@` address was synthesized without a corresponding public department).
-
-### 5. Session Defense, CSRF & Multi-Tenant Isolation
-
-*   **Auth.js v5 (NextAuth)**: Session state is signed and encrypted using JWT tokens signed by `AUTH_SECRET`.
-*   **Secure Cookie Attributes**: Session cookies enforce `httpOnly: true`, `sameSite: "lax"`, and the `__Secure-` prefix in production environments.
-*   **Double-Submit Anti-CSRF Protection**: Stateful CSRF tokens protect all state-changing endpoints (`POST`, `PUT`, `DELETE`).
-*   **Tenant Data Scoping**: All Prisma queries filter records by `userId` or workspace association. A user logged into Campaign A cannot view, edit, or execute drafts created by another user.
-*   **Server-Side Admin Verification**: Admin privileges are verified against a cryptographically hashed, server-side list of `ADMIN_EMAILS` rather than client-manipulable JWT claims.
-
-### 6. Safe Error Handling & Diagnostic Boundaries
-
-*   **Zero Stack Trace Leaks**: Production error boundaries (`error.tsx` and `global-error.tsx`) render user-friendly, branded recovery interfaces without leaking internal error messages or file paths.
-*   **Diagnostic Incident Digests**: Unhandled server errors log an internal unique incident digest hash (`error.digest`), allowing engineers to correlate logs without exposing database connection details to clients.
-*   **Sanitized Health Endpoint**: The `/api/health` probe runs internal `SELECT 1` queries to verify database connectivity, returning high-level operational status (`healthy` / `degraded`) while stripping all connection strings, credentials, and hostnames.
-
----
-
-## Core Application Modules & Capabilities
-
-### 1. Cited AI Web Research & Discovery (`/app/discover`)
-
-*   **Targeted Track Queries**: Organizers enter hackathon themes (e.g. "DevTools offering developer grants", "Fintech APIs sponsoring student prizes in India").
-*   **Live Multi-Source Extraction**: Orchestrates Tavily search queries and Firecrawl scrapers to crawl corporate sponsorship pages, previous student community sponsorships, and developer grant programs.
-*   **Citations on Every Fact**: Every discovered sponsor dossier includes direct reference URLs, verified contact points, and confirmed sponsorship history—eliminating hallucinated companies.
-
-### 2. Transparent 7-Factor Fit Scoring (`/app/sponsors/[id]`)
-
-SponFy evaluates prospective sponsors using a 0–100 algorithm calculated across seven dimensions:
-*   **Developer Relations Activity (20%)**: Active developer advocates, GitHub community initiatives, and community program engagement.
-*   **Budget Signals & Corporate Scale (20%)**: Recent funding rounds, dedicated university grant budgets, and active hiring campaigns.
-*   **Target Track Alignment (20%)**: Semantic match between the sponsor's technical product and the hackathon's focus areas.
-*   **Student Community History (15%)**: Documented history of supporting college hackathons, university clubs, or open-source fellowships.
-*   **Geographic Relevance (10%)**: Regional presence, local offices, or target developer hiring in the event's geographic region.
-*   **Decision-Maker Reachability (10%)**: Presence of verified, active technical contacts or university relations personnel.
-*   **Outreach Freshness (5%)**: Timeline since the sponsor's last community partnership announcement.
-
-### 3. Human Approval Outreach Queue (`/app/outreach`)
-
-*   **Contextual Email Pitch Generation**: AI models draft tailored outreach messages referencing the sponsor's specific developer tools, past sponsored events, and concrete hackathon metrics.
-*   **Real-Time Email Quality Scoring**: Evaluates email drafts across five parameters (Personalization, Relevance, Clarity, Call-to-Action, and Professionalism), displaying an interactive 0–100 score with actionable feedback.
-*   **Attention Requirement Flags**: Flags drafts containing unresolved bracketed placeholders (e.g. `[Insert Metric]`) or unverified claims, blocking transmission until reviewed.
-*   **One-Click Approval & Direct Send**: Approving a pitch dispatches the message directly from the organizer's connected Gmail inbox via the Gmail API, maintaining existing email threads and professional deliverability.
-
-### 4. Real-Time Gmail Thread Sync & Intent Classification (`/app/replies`)
-
-*   **Bidirectional Gmail Sync**: Background sync jobs monitor the organizer's inbox for incoming sponsor replies.
-*   **Intent Classification Engine**: Classifies incoming messages into discrete actionable categories:
-    *   `Interested`: The sponsor expresses enthusiasm for the partnership.
-    *   `Call Requested`: The sponsor requests a meeting or call link.
-    *   `More Info Needed`: The sponsor requests a sponsorship prospectus or attendee breakdown.
-    *   `Declined`: The sponsor is unable to support this iteration.
-*   **Automated Question Extraction**: Parses questions asked by the sponsor (e.g., "What are your tier prices?" or "Can we provide a custom prize category?") and prepares one-click draft responses.
-
-### 5. Automated 4-Touch Follow-up Engine (`/app/followups`)
-
-*   **Polite Multi-Touch Cadences**: Automates a structured 4-touch follow-up workflow:
-    *   *Day 0*: Initial personalized pitch.
-    *   *Day 3*: Contextual follow-up highlighting hackathon attendee demographics.
-    *   *Day 7*: Milestone update (e.g., announcing speaker confirmations or registration milestones).
-    *   *Day 12*: Polite closing / break-up email leaving the door open for future events.
-*   **Automatic Cadence Halting**: Instantly halts all future scheduled touches if an incoming reply is detected, if the company moves to a negotiation stage, or if an opt-out is received.
-
-### 6. Sponsorship Analytics & Revenue Intelligence (`/app/analytics`)
-
-*   **Committed vs. Pipeline Revenue**: Tracks actual confirmed sponsor cash and cloud credit commitments against total pipeline value.
-*   **Stage Velocity Tracking**: Monitors average days spent across each pipeline stage (Discovered, Contacted, In Discussion, Committed, Lost).
-*   **Zero Vanity Metrics**: Focuses on actionable operational metrics (reply rate, meeting conversion rate, and average sponsorship package size) rather than vanity email opens.
-
----
-
-## Progressive Web App (PWA) Capabilities
-
-SponFy is configured as an installable Progressive Web App:
-*   **Web App Manifest (`src/app/manifest.ts`)**: Configures application branding, high-resolution adaptive icons (`192x192` and `512x512`), theme color (`#0C382E`), and standalone display mode.
-*   **Service Worker Architecture (`public/sw.js`)**: Pre-caches primary application shells, styling bundles, and brand assets for instant offline boot times.
-*   **Resilient Offline Fallback Screen**: When network connectivity is lost, the application seamlessly presents an offline diagnostic screen that monitors network recovery and restores application state automatically upon reconnection.
-
----
-
-## Continuous Integration & DevOps
-
-### 1. GitHub Actions Workflow (`.github/workflows/ci.yml`)
-
-Every pull request and push to `main` executes an automated CI validation pipeline:
-*   **Clean Dependency Installation**: Executes `npm ci` strictly against `package-lock.json`.
-*   **Prisma Client Generation**: Compiles the type-safe Prisma database client.
-*   **ESLint Inspection**: Runs `npm run lint` to enforce project code standards.
-*   **TypeScript Strict Verification**: Runs `npm run typecheck` (`tsc --noEmit`) to verify strict type safety across all components and server functions.
-*   **Automated Vitest Test Suite**: Runs 130+ unit, integration, and security regression tests (`npm test`).
-*   **Next.js Production Build**: Compiles all 69 static and dynamic application routes (`npm run build`).
-
-### 2. Multi-Stage Production Containerization (`Dockerfile`)
-
-For teams deploying to private container environments (AWS ECS, Google Cloud Run, or Kubernetes):
-*   **Stage 1 (`deps`)**: Installs production dependencies on `node:22-alpine`.
-*   **Stage 2 (`builder`)**: Compiles the Next.js standalone server bundle.
-*   **Stage 3 (`runner`)**: Configures an unprivileged system user (`nextjs:nodejs`), mounts static assets, and exposes port `3000` with zero secrets baked into the image.
-
----
-
-## Production Deployment Matrix
-
-Refer to [docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) for the exhaustive 11-step production deployment manual.
-
-### Required Environment Variables
-
-```env
-# Canonical Site URL (Used for metadataBase, sitemap, robots, OpenGraph)
-SITE_URL="https://sponfy.vercel.app"
-NEXT_PUBLIC_APP_URL="https://sponfy.vercel.app"
-NEXT_PUBLIC_DEMO_MODE="false"
-
-# Neon Serverless PostgreSQL Database Connection
-DATABASE_URL="postgresql://user:password@ep-sample-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
-DIRECT_URL="postgresql://user:password@ep-sample.us-east-2.aws.neon.tech/neondb?sslmode=require"
-
-# Auth.js Authentication Secrets
-AUTH_SECRET="generate-a-32-character-random-secret-via-openssl"
-TOKEN_ENCRYPTION_KEY="64-character-hex-string-for-aes-256-gcm-encryption"
-CRON_SECRET="generate-a-random-secret-token-for-background-crons"
-
-# Admin Access Control (Server-Verified Admin Email Addresses)
-ADMIN_EMAILS="admin@sponfy.dev,organizer@sponfy.dev"
-
-# Google Cloud OAuth 2.0 & Gmail API
-GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-GOOGLE_REDIRECT_URI="https://sponfy.vercel.app/api/integrations/gmail/callback"
-
-# Distributed Rate Limiting (Upstash Redis)
-UPSTASH_REDIS_REST_URL="https://your-upstash-instance.upstash.io"
-UPSTASH_REDIS_REST_TOKEN="your-upstash-redis-rest-token"
-
-# AI & Web Discovery Providers
-GROQ_API_KEY="gsk_your_groq_api_key_here"
-GROQ_MODEL="llama-3.3-70b-versatile"
-GEMINI_API_KEY="your_gemini_api_key_here"
-TAVILY_API_KEY="your_tavily_api_key_here"
+```mermaid
+flowchart TD
+    StartInput["Organizer Enters Campaign Parameters<br/>(Hackathon Theme, Track Focus, Tech Stack)"] --> StateInit["Initialize Discovery State Graph<br/>(Track Queries, Candidate Map, Audit Logs)"]
+    
+    StateInit --> ParallelSearch{"Parallel Web Research Fan-Out"}
+    
+    ParallelSearch -->|API Call| TavilyNode["Tavily Search Node<br/>(Live Developer Grant Queries)"]
+    ParallelSearch -->|Crawl Job| FirecrawlNode["Firecrawl Scraper Node<br/>(Corporate DevRel & Sponsorship Pages)"]
+    
+    TavilyNode --> AggregateResults["Aggregate Raw Company Mentions & Links"]
+    FirecrawlNode --> AggregateResults
+    
+    AggregateResults --> RelevanceFilter["Groq Llama 3.3 70B Fast Evaluator<br/>(Relevance Scoring · Latency &lt; 800ms)"]
+    
+    RelevanceFilter --> DecisionGate{"Candidate Fit Score &ge; 60?"}
+    
+    DecisionGate -->|No| DiscardCandidate["Filtered Out<br/>(Low Alignment / No Developer Budget)"]
+    DecisionGate -->|Yes| GeminiSynthesizer["Gemini Flash Dossier Synthesis<br/>(Extract Contacts, Budgets, Fact Citations)"]
+    
+    GeminiSynthesizer --> QualityGuard["Quality Gate Verification<br/>(Check Reference URLs & Deduplicate)"]
+    QualityGuard --> PersistDossier[("Persist Dossier & Verified Contacts<br/>Neon PostgreSQL")]
+    PersistDossier --> DisplayQueue["Display in Candidate Queue<br/>(/app/discover)"]
 ```
 
 ---
 
-## Local Development Quickstart
+## 3. Six-Step Send-Guard Security Engine
+
+To eliminate unauthorized spam and accidental transmissions, **all outbound emails** must pass through a strict, pure-function validation chain executed entirely on the server.
+
+```mermaid
+flowchart TD
+    OutboundTrigger["Outbound Send Request Received<br/>(User clicks 'Send Approved Pitch')"] --> Step1{"Step 1: Human Approval Check<br/>Status == 'APPROVED'?"}
+    
+    Step1 -->|No: draft / sending / sent| Err403["Reject 403 Forbidden<br/>(Unapproved draft cannot be dispatched)"]
+    Step1 -->|Yes| Step2{"Step 2: Recipient Address Lock<br/>Matches Stored Verified Contact?"}
+    
+    Step2 -->|Mismatch Detected| Err409["Reject 409 Conflict<br/>(Client payload address tampering blocked)"]
+    Step2 -->|Verified Match| Step3{"Step 3: Suppression List Check<br/>In Workspace Do-Not-Contact / Bounce List?"}
+    
+    Step3 -->|Suppressed / Bounced| ErrSuppressed["Reject 403 Forbidden<br/>(Suppressed address safety lock)"]
+    Step3 -->|Clean Address| Step4{"Step 4: Lifetime Touch Cap<br/>Total touches to company &lt; 3?"}
+    
+    Step4 -->|Exceeded Cap &ge; 3| ErrCap["Reject 429 Too Many Requests<br/>(Domain reputation touch limit reached)"]
+    Step4 -->|Within Cap| Step5{"Step 5: Minimum Spacing Protection<br/>&ge; 3 Days since last touch?"}
+    
+    Step5 -->|Too Soon &lt; 3 Days| ErrSpacing["Reject 429 Spacing Conflict<br/>(Wait minimum 3 days between touches)"]
+    Step5 -->|Spacing Respected| Step6{"Step 6: Rolling Daily Cap<br/>Within rolling 24-hr workspace limit?"}
+    
+    Step6 -->|Daily Limit Reached| ErrQuota["Reject 429 Quota Exceeded<br/>(Resets at 12:00 AM local organizer time)"]
+    Step6 -->|Under Daily Cap| DeliverabilityCheck["Proceed to Deliverability Shield"]
+    
+    DeliverabilityCheck --> DecryptToken["Decrypt OAuth Token via AES-256-GCM"]
+    DecryptToken --> DispatchGmail["Dispatch via Gmail REST API<br/>(Status &rarr; 'sent')"]
+```
+
+---
+
+## 4. Multi-Layer Deliverability Shield
+
+Bounces permanently harm domain reputation. SponFy prevents bad sends before they leave the application:
+
+```mermaid
+flowchart LR
+    CandidateEmail["Recipient Email Address"] --> L1["Layer 1: RFC 5322<br/>Syntax & Octet Validation"]
+    L1 --> L2["Layer 2: Burner Filter<br/>Disposable Domain Blacklist"]
+    L2 --> L3["Layer 3: DNS MX Records<br/>Direct Nameserver Lookup"]
+    L3 --> L4["Layer 4: Policy Audit<br/>SPF & DMARC Verification"]
+    L4 --> L5["Layer 5: AI Authenticity<br/>Inbox Pattern & Role Detector"]
+    L5 --> VerifiedStatus["✅ Verified Authentic Mailbox<br/>Eligible for Human Approval Queue"]
+
+    L1 -.->|Invalid Syntax| Blocked["❌ Blocked with Reason"]
+    L2 -.->|Disposable Domain| Blocked
+    L3 -.->|No MX Records| Blocked
+    L4 -.->|Failed Policy| Blocked
+    L5 -.->|Synthesized Placeholder| Blocked
+```
+
+---
+
+## 5. Transparent 7-Factor Fit Scoring Algorithm
+
+Prospective sponsors are scored on an explainable **0–100** scale across seven dimensions before entering the outreach pipeline:
+
+```mermaid
+pie title 7-Factor Fit Scoring Weight Distribution
+    "Developer Relations Activity" : 20
+    "Budget Signals & Corporate Scale" : 20
+    "Target Track Alignment" : 20
+    "Student Community History" : 15
+    "Geographic Relevance" : 10
+    "Decision-Maker Reachability" : 10
+    "Outreach Freshness" : 5
+```
+
+### Scoring Criteria Matrix
+
+| Dimension | Weight | Signals Analyzed | Target Threshold |
+| :--- | :---: | :--- | :--- |
+| **Developer Relations Activity** | **20%** | Active developer advocates, GitHub initiatives, OSS programs | Recent active hackathon involvement |
+| **Budget Signals & Scale** | **20%** | Recent funding rounds, dedicated university grants, hiring | Verified student grant budgets |
+| **Target Track Alignment** | **20%** | Semantic match between API/product and hackathon tracks | High relevance to student projects |
+| **Student Community History** | **15%** | Track record of sponsoring college clubs, summits, or fellows | Prior university sponsorship evidence |
+| **Geographic Relevance** | **10%** | Regional developer hubs, regional hiring campaigns | Event country or global remote policy |
+| **Decision-Maker Reachability** | **10%** | Verified DevRel, University Relations, or Tech Recruiting emails | Named contact with public role |
+| **Outreach Freshness** | **5%** | Recency of last public sponsorship announcement | Partnership announced in past 6 months |
+
+---
+
+## 6. Real-Time Reply Sync & Intent Classification Engine
+
+SponFy actively listens for incoming replies across connected Gmail threads and passes incoming text through an NLP intent classification pipeline:
+
+```mermaid
+flowchart TD
+    InboundMsg["Inbound Email Reply Received<br/>(Background Gmail Thread Poller)"] --> ThreadMatch["Match Message to Active Campaign & Sponsor"]
+    
+    ThreadMatch --> AutoHaltCadence["Auto-Halt Active Follow-Up Cadence<br/>(Prevent redundant automated touches)"]
+    
+    AutoHaltCadence --> NLPClassifier["AI Intent Classification Engine<br/>(Groq Llama 3.3 70B)"]
+    
+    NLPClassifier --> CategorySplit{"Classified Intent Category"}
+    
+    CategorySplit -->|Interested| Cat1["Priority Alert: Interested<br/>- Move to 'In Discussion'<br/>- Suggest Meeting Pitch"]
+    CategorySplit -->|Call Requested| Cat2["High-Priority: Meeting Requested<br/>- Trigger Calendar Scheduling Link<br/>- Notify Organizer Immediately"]
+    CategorySplit -->|More Info Needed| Cat3["Info Request: Prospectus / Pricing<br/>- Auto-Extract Specific Questions<br/>- Pre-draft Tier Answers"]
+    CategorySplit -->|Declined| Cat4["Polite Decline: Not This Year<br/>- Move to 'Lost / Future Pipeline'<br/>- Log feedback & maintain positive rapport"]
+    
+    Cat1 --> ReplyQueue["Display in Replies Action Center<br/>(/app/replies)"]
+    Cat2 --> ReplyQueue
+    Cat3 --> ReplyQueue
+    Cat4 --> ReplyQueue
+```
+
+---
+
+## 7. Automated 4-Touch Follow-Up Engine & Circuit Breakers
+
+A structured 4-touch cadence ensures maximum reply rates while strictly protecting sender reputation. Any inbound activity triggers an immediate circuit breaker.
+
+```mermaid
+flowchart TD
+    Day0["Day 0: Initial Pitch<br/>Personalized value proposition + event metrics"] --> Wait3Days["Wait 3 Days (Enforce Spacing)"]
+    
+    Wait3Days --> CheckReply1{"Reply Received?"}
+    CheckReply1 -->|Yes| Halt1["⚡ Circuit Breaker Triggered<br/>Halt All Future Follow-ups"]
+    CheckReply1 -->|No| Day3["Day 3: Touch 2 (Contextual Demographic Follow-up)<br/>Share attendee hacker skill breakdown"]
+    
+    Day3 --> Wait4Days["Wait 4 Days (Enforce Spacing)"]
+    
+    Wait4Days --> CheckReply2{"Reply Received?"}
+    CheckReply2 -->|Yes| Halt2["⚡ Circuit Breaker Triggered<br/>Halt All Future Follow-ups"]
+    CheckReply2 -->|No| Day7["Day 7: Touch 3 (Milestone Update)<br/>Announce keynoter, tier lock-in, or track deadline"]
+    
+    Day7 --> Wait5Days["Wait 5 Days (Enforce Spacing)"]
+    
+    Wait5Days --> CheckReply3{"Reply Received?"}
+    CheckReply3 -->|Yes| Halt3["⚡ Circuit Breaker Triggered<br/>Halt All Future Follow-ups"]
+    CheckReply3 -->|No| Day12["Day 12: Touch 4 (Polite Closing / Break-up)<br/>Leave door open for future iterations"]
+    
+    Day12 --> MarkConcluded["Cadence Gracefully Concluded<br/>(Lifetime Touch Cap Reached: 4 touches)"]
+```
+
+---
+
+## 8. Meeting Calendar Scheduler & Overview Reminders
+
+Organizers can manage all sponsor meetings through an interactive, full-screen calendar with morning reminder notifications on login.
+
+```mermaid
+flowchart TD
+    SchedulePage["Navigate to Schedule Page<br/>(/app/schedule)"] --> BigCalendarView["Full-Screen Interactive Calendar<br/>(Monthly View with Date Cell Grid)"]
+    
+    BigCalendarView --> ClickDate["Click Date Cell<br/>(e.g., October 24, 2026)"]
+    ClickDate --> ModalPrompt["Open Meeting Creation Modal<br/>- Meeting Title<br/>- Sponsor / Company Name<br/>- Start & End Time<br/>- Notes & Meeting Link"]
+    
+    ModalPrompt --> SaveMeeting["Save Schedule<br/>(Multi-meeting capacity per day)"]
+    SaveMeeting --> PersistStore["Sync with Local & Remote Store<br/>(Persistent Workspace Records)"]
+    
+    PersistStore --> DailyReminderCheck{"User Logs In / Opens App<br/>Is there a meeting TODAY?"}
+    
+    DailyReminderCheck -->|No Meetings Today| NormalDash["Display Standard Dashboard Overview<br/>(/app)"]
+    DailyReminderCheck -->|Meeting Scheduled for Today| ReminderPopup["Trigger First-Login Morning Reminder<br/>- Modal popup displaying today's sponsor meetings<br/>- Direct link to meeting URL & company dossier"]
+```
+
+---
+
+## 9. Cryptographic Storage & Token Security Vault
+
+All OAuth refresh tokens and sensitive API keys are encrypted at rest using **AES-256-GCM** with authenticated tamper verification.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Organizer
+    participant App as SponFy Serverless Engine
+    participant Vault as AES-256-GCM Crypto Module
+    participant DB as Neon PostgreSQL (Database)
+    participant Gmail as Google Gmail API
+
+    Note over Organizer,Gmail: Storing Gmail OAuth Refresh Token
+    Organizer->>App: Complete Google OAuth Flow
+    App->>Vault: encrypt(token, TOKEN_ENCRYPTION_KEY)
+    Vault->>Vault: Generate random 12-byte IV
+    Vault->>Vault: Encrypt with AES-256-GCM
+    Vault->>Vault: Generate 16-byte Auth Tag
+    Vault-->>App: Return "iv:ciphertext:tag"
+    App->>DB: Store encrypted string in Account table
+
+    Note over Organizer,Gmail: Dispatching an Approved Email
+    Organizer->>App: Click 'Send Approved Pitch'
+    App->>DB: Fetch encrypted token string
+    App->>Vault: decrypt(encryptedString, TOKEN_ENCRYPTION_KEY)
+    Vault->>Vault: Check 16-byte Auth Tag for tampering
+    alt Tampering Detected (Ciphertext modified)
+        Vault-->>App: Decryption Failure / Tamper Exception
+        App-->>Organizer: 500 Cryptographic Tamper Alert (Halt)
+    else Integrity Verified
+        Vault-->>App: Plaintext OAuth Refresh Token
+        App->>Gmail: Request access token & dispatch email
+        Gmail-->>App: Email Dispatched Successfully (HTTP 200)
+        App-->>Organizer: Send Confirmed (Status updated to 'sent')
+    end
+```
+
+---
+
+## 10. Platform Infrastructure vs. Custom-Engineered Components
+
+SponFy achieves high availability by cleanly dividing concerns between Vercel's global platform infrastructure and custom-engineered business logic.
+
+```mermaid
+graph LR
+    subgraph PlatformInfrastructure ["Platform-Provided (Vercel Global)"]
+        P1["Anycast Global CDN<br/>(100+ Edge Locations)"]
+        P2["Edge Load Balancing<br/>(Auto Request Routing)"]
+        P3["Serverless Auto-Scaling<br/>(0 to Hundreds of Instances)"]
+        P4["L3/L4 DDoS Mitigation<br/>(Volumetric Attack Defense)"]
+        P5["Edge Middleware<br/>(Sub-10ms Session Check)"]
+    end
+
+    subgraph CustomEngineered ["Custom-Engineered (SponFy Core)"]
+        C1["Send-Guard Security Engine<br/>(Pure-function safety gate)"]
+        C2["Deliverability Shield<br/>(MX / SPF / DMARC verification)"]
+        C3["LangGraph Discovery Engine<br/>(Stateful multi-model AI graph)"]
+        C4["AES-256-GCM Crypto Vault<br/>(Tamper-evident token security)"]
+        C5["Midnight Quota Engine<br/>(Rolling 12:00 AM reset calculator)"]
+        C6["7-Factor Fit Scoring<br/>(0–100 explainable sponsor rating)"]
+    end
+
+    PlatformInfrastructure -->|Low Latency Routing & Protection| CustomEngineered
+```
+
+---
+
+## 11. Continuous Integration & DevOps Pipeline
+
+Every pull request and commit to `main` undergoes an automated multi-stage verification pipeline to ensure zero regressions:
+
+```mermaid
+flowchart LR
+    PushCommit["git push origin main / PR"] --> CIJob["GitHub Actions CI Pipeline"]
+    
+    subgraph Stages ["Automated Verification Stages"]
+        S1["1. npm ci<br/>(Deterministic lockfile)"] --> S2["2. prisma generate<br/>(Type-safe ORM client)"]
+        S2 --> S3["3. npm run lint<br/>(ESLint code quality)"]
+        S3 --> S4["4. npm run typecheck<br/>(tsc --noEmit strict check)"]
+        S4 --> S5["5. npm test<br/>(Vitest: 174 tests across 20 suites)"]
+        S5 --> S6["6. npm run build<br/>(Next.js production build)"]
+    end
+
+    CIJob --> Stages
+    Stages --> DeploySuccess["✅ Vercel Atomic Deployment<br/>(Instant Rollback Capable)"]
+    Stages -.->|Any Stage Fails| AlertFail["❌ Build Blocked & Alerted"]
+```
+
+---
+
+## 12. Local Development Quickstart
 
 ### 1. Clone Repository & Install Dependencies
 ```bash
-git clone https://github.com/your-username/SponFy.git
+git clone https://github.com/subratoghosh/SponFy.git
 cd SponFy
 npm ci
 ```
@@ -337,7 +419,7 @@ npx prisma db push
 
 ### 4. Execute Verification Suite
 ```bash
-npm test              # Run 130+ Vitest unit & regression tests
+npm test              # Run all 174 Vitest unit, regression & security tests
 npm run typecheck     # Verify TypeScript types (tsc --noEmit)
 npm run lint          # Run ESLint validation
 ```
@@ -350,12 +432,23 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Verification & Operational Health Check
+## Environment Configuration Reference
 
-SponFy includes built-in operational probes for monitoring:
-*   **Liveness / Readiness Probe**: `GET /api/health` returns HTTP 200 with JSON diagnostics confirming database pooler responsiveness without leaking connection details.
-*   **Search Engine Directives**: `GET /robots.txt` and `GET /sitemap.xml` dynamically serve valid crawler policies.
-*   **Security Header Inspection**: `curl -I http://localhost:3000` verifies active HSTS, CSP, X-Frame-Options, and Referrer-Policy headers.
+| Variable | Description | Required in Production |
+| :--- | :--- | :---: |
+| `SITE_URL` | Canonical origin (e.g. `https://sponfy.vercel.app`) | Yes |
+| `DATABASE_URL` | Neon PostgreSQL pooled connection string (`?sslmode=require`) | Yes |
+| `DIRECT_URL` | Neon PostgreSQL direct unpooled connection string (for migrations) | Yes |
+| `AUTH_SECRET` | 32+ character random secret for signing NextAuth JWT sessions | Yes |
+| `TOKEN_ENCRYPTION_KEY` | 64-character hex string for AES-256-GCM token encryption | Yes |
+| `ADMIN_EMAILS` | Comma-separated admin emails verified on server side | Yes |
+| `GOOGLE_CLIENT_ID` | Google Cloud OAuth Client ID for Gmail API & Sign In | Yes |
+| `GOOGLE_CLIENT_SECRET` | Google Cloud OAuth Client Secret | Yes |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint for distributed rate limiting | Recommended |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST authentication token | Recommended |
+| `GROQ_API_KEY` | Groq API key for Llama 3.3 70B fast scoring | Yes |
+| `GEMINI_API_KEY` | Google Gemini API key for deep dossier synthesis | Yes |
+| `TAVILY_API_KEY` | Tavily Search API key for real-time web discovery | Yes |
 
 ---
 
