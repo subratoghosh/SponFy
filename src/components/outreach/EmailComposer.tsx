@@ -21,6 +21,7 @@ import {
   Edit3,
   Check,
   X,
+  User,
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "next-auth/react";
@@ -208,6 +209,15 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
             {draft.status === "approved" && "2. Approved & Ready to Send"}
             {draft.status === "sent" && "3. Sent & Monitored"}
           </span>
+          {draft.status === "sent" && (
+            <span
+              title={`Dispatched by ${draft.sentByName || draft.sentByUsername || "Team Member"}`}
+              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200"
+            >
+              <User className="w-3 h-3 text-blue-600" />
+              <span>Sent by @{draft.sentByUsername || draft.sentByName || "executive"}</span>
+            </span>
+          )}
         </div>
 
         {/* Tone Switcher */}

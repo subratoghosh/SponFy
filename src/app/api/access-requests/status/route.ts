@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoAccessRequestsRef } from "@/app/api/access-requests/route";
+import { demoAccessRequestsRef } from "@/lib/security/campaign-access";
 
 export async function GET() {
   const authRes = await requireAuth();
@@ -54,7 +54,8 @@ export async function GET() {
           ? {
               id: latestRequest.id,
               status: latestRequest.status,
-              campaignName: latestRequest.campaign?.name || "Campaign",
+              requestedRole: latestRequest.requestedRole,
+              campaignName: latestRequest.campaign?.name || latestRequest.organisation?.name || "Organisation Workspace",
               organisationName: latestRequest.organisation?.name || "Organisation",
               city: latestRequest.organisation?.city || latestRequest.campaign?.location || "",
               decisionNote: latestRequest.decisionNote || null,

@@ -16,6 +16,8 @@ import {
 } from "@/components/dashboard/OrganiserDashboardView";
 import { auth } from "@/lib/auth";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { Users, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default async function OverviewPage(props: {
   searchParams?: Promise<{ campaignId?: string }>;
@@ -365,6 +367,66 @@ export default async function OverviewPage(props: {
           c.id !== "camp-demo-1" &&
           c.id !== "camp-sponfy-2026"
       );
+
+  const isExecutive = userRole === "EXECUTIVE" || accountMode === "EXECUTIVE";
+  if (isExecutive && userCampaigns.length === 0 && !isDemoUser) {
+    let executiveOrgName = "your organisation";
+    if (isDatabaseConfigured() && userId) {
+      try {
+        const orgMem = await (prisma as any).organisationMember.findFirst({
+          where: { userId, status: "ACTIVE" },
+          include: { organisation: { select: { name: true } } },
+        });
+        if (orgMem?.organisation?.name) {
+          executiveOrgName = orgMem.organisation.name;
+        }
+      } catch (e) {
+        console.warn("Failed to load org details for executive:", e);
+      }
+    }
+
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center text-green-dark">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-green-dark/15 p-8 sm:p-10 shadow-lg space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center mx-auto shadow-xs">
+            <Users className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-[11px] font-bold uppercase tracking-wider border border-blue-200">
+              Approved Executive
+            </div>
+            <h2 className="heading-font font-black text-2xl text-green-dark">
+              Welcome to {executiveOrgName}
+            </h2>
+            <p className="text-xs sm:text-sm text-text-dim leading-relaxed">
+              You are an approved Executive for <strong>{executiveOrgName}</strong>. Waiting for an organiser to assign campaigns to you.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-butter-bg/60 border border-green-dark/10 text-left space-y-2 text-xs text-text-dim">
+            <span className="font-bold text-green-dark block text-[11px] uppercase tracking-wider">
+              What happens next?
+            </span>
+            <ul className="list-disc pl-5 space-y-1 text-[11px]">
+              <li>Your organiser will assign you to one or more campaigns</li>
+              <li>You will receive your dedicated sponsor outreach queue</li>
+              <li>You can draft, personalize, and send pitches using your connected inbox</li>
+            </ul>
+          </div>
+
+          <div className="pt-2">
+            <a href="/app" className="inline-flex items-center justify-center">
+              <Button variant="green" className="text-xs font-bold px-6">
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                Refresh Workspace
+              </Button>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const activeCampaign = userCampaigns[0] || null;
   const campaignName = activeCampaign?.name || "Your Workspace";

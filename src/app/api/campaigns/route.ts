@@ -79,6 +79,19 @@ export async function POST(request: NextRequest) {
   }
 
   const userId = session.user.id;
+  const userRole = session.user.role;
+  const accountMode = (session.user as any).accountMode;
+
+  if (userRole === "EXECUTIVE" || accountMode === "EXECUTIVE") {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Executives cannot create campaigns. You can only work on campaigns assigned to you by an organiser.",
+      },
+      { status: 403 }
+    );
+  }
+
   let body: any;
   try {
     body = await request.json();

@@ -4,30 +4,13 @@ import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { memoryStore } from "@/lib/data/memory-store";
 import { createNotification } from "@/lib/data/repositories/notifications";
+import { demoAccessRequestsRef } from "@/lib/security/campaign-access";
 import { AccessRequest } from "@/types";
 
-export const demoAccessRequestsRef = memoryStore<AccessRequest[]>(
-  "accessRequests",
-  () => [
-    {
-      id: "req-demo-1",
-      requesterId: "usr-demo-lead",
-      campaignId: "cmp_demo_org_1",
-      organisationId: "org-demo-1",
-      requestedRole: "ORGANISER",
-      message: "I am leading corporate outreach for the 2026 fest.",
-      details: {
-        roleInTeam: "Sponsorship Convenor",
-        whyJoin: "Connect corporate brands and coordinate deals with the core team.",
-      },
-      status: "PENDING",
-      createdAt: new Date().toISOString(),
-    },
-  ]
-);
-
 const createAccessRequestSchema = z.object({
-  campaignId: z.string().trim().min(1, "Campaign is required"),
+  organisationId: z.string().trim().optional(),
+  campaignId: z.string().trim().optional(),
+  requestedRole: z.enum(["ORGANISER", "EXECUTIVE"]).default("ORGANISER"),
   roleInTeam: z.string().trim().min(2, "Your role in the team is required").max(100),
   whyJoin: z.string().trim().min(5, "Please state why you want to join").max(500),
   message: z.string().trim().max(500).optional().nullable(),
@@ -56,39 +39,62 @@ export async function POST(req: Request) {
       );
     }
 
-    const { campaignId, roleInTeam, whyJoin, message } = result.data;
+    let { organisationId, campaignId, requestedRole, roleInTeam, whyJoin, message } = result.data;
+
+    if (!organisationId && !campaignId) {
+      return NextResponse.json(
+        { error: "Organisation or campaign is required to submit a join request." },
+        { status: 400 }
+      );
+    }
 
     if (isDatabaseConfigured()) {
-      // 1. Fetch campaign and verify it belongs to an organisation
-      const campaign = await (prisma as any).campaign.findUnique({
-        where: { id: campaignId },
-        select: {
-          id: true,
-          name: true,
-          userId: true,
-          organisationId: true,
-          organisation: { select: { id: true, name: true } },
-        },
-      });
+      let org: any = null;
+      let campaign: any = null;
 
-      if (!campaign || !campaign.organisationId) {
+      if (campaignId) {
+        campaign = await (prisma as any).campaign.findUnique({
+          where: { id: campaignId },
+          select: {
+            id: true,
+            name: true,
+            userId: true,
+            organisationId: true,
+            organisation: { select: { id: true, name: true, createdById: true } },
+          },
+        });
+        if (campaign?.organisationId) {
+          organisationId = campaign.organisationId;
+          org = campaign.organisation;
+        }
+      }
+
+      if (organisationId && !org) {
+        org = await (prisma as any).organisation.findUnique({
+          where: { id: organisationId },
+          select: { id: true, name: true, createdById: true },
+        });
+      }
+
+      if (!org) {
         return NextResponse.json(
-          { error: "This campaign is personal or does not belong to an organisation." },
+          { error: "Organisation not found or not registered." },
+          { status: 404 }
+        );
+      }
+
+      // 1. Creator cannot submit join request to their own organisation (no self-approval)
+      if (org.createdById === userId) {
+        return NextResponse.json(
+          { error: "You are the creator of this organisation and already an active Organiser." },
           { status: 400 }
         );
       }
 
-      // 2. Prevent joining if user is already an ACTIVE member or the creator
-      if (campaign.userId === userId) {
-        return NextResponse.json(
-          { error: "You are the creator and owner of this campaign." },
-          { status: 400 }
-        );
-      }
-
-      const existingActiveMember = await (prisma as any).campaignMember.findFirst({
+      // 2. Prevent joining if user is already an ACTIVE member of this organisation
+      const existingActiveMember = await (prisma as any).organisationMember.findFirst({
         where: {
-          campaignId,
+          organisationId: org.id,
           userId,
           status: "ACTIVE",
         },
@@ -96,7 +102,7 @@ export async function POST(req: Request) {
 
       if (existingActiveMember) {
         return NextResponse.json(
-          { error: "You are already an active member of this campaign." },
+          { error: "You are already an active member of this organisation." },
           { status: 400 }
         );
       }
@@ -104,7 +110,7 @@ export async function POST(req: Request) {
       // 3. Block duplicate pending requests
       const existingPending = await (prisma as any).accessRequest.findFirst({
         where: {
-          campaignId,
+          organisationId: org.id,
           requesterId: userId,
           status: "PENDING",
         },
@@ -112,7 +118,7 @@ export async function POST(req: Request) {
 
       if (existingPending) {
         return NextResponse.json(
-          { error: "You already have a pending access request for this campaign." },
+          { error: "You already have a pending access request for this organisation." },
           { status: 400 }
         );
       }
@@ -121,25 +127,29 @@ export async function POST(req: Request) {
       const accessRequest = await (prisma as any).accessRequest.create({
         data: {
           requesterId: userId,
-          campaignId,
-          organisationId: campaign.organisationId,
-          requestedRole: "ORGANISER",
+          organisationId: org.id,
+          campaignId: campaignId || null,
+          requestedRole: requestedRole || "ORGANISER",
           message: message || null,
           details: { roleInTeam, whyJoin },
           status: "PENDING",
         },
       });
 
-      // 5. Update user onboardingStatus to PENDING_APPROVAL
+      // 5. Update user onboardingStatus to PENDING_APPROVAL and role
       await (prisma as any).user.update({
         where: { id: userId },
-        data: { onboardingStatus: "PENDING_APPROVAL" },
+        data: {
+          onboardingStatus: "PENDING_APPROVAL",
+          accountMode: requestedRole || "ORGANISER",
+          role: requestedRole || "ORGANISER",
+        },
       });
 
-      // 6. Notify all ACTIVE organisers of that campaign and campaign creator
-      const organisers = await (prisma as any).campaignMember.findMany({
+      // 6. Notify all ACTIVE organisers of that organisation
+      const activeOrganisers = await (prisma as any).organisationMember.findMany({
         where: {
-          campaignId,
+          organisationId: org.id,
           role: "ORGANISER",
           status: "ACTIVE",
         },
@@ -147,8 +157,8 @@ export async function POST(req: Request) {
       });
 
       const recipientIds = new Set<string>();
-      if (campaign.userId) recipientIds.add(campaign.userId);
-      organisers.forEach((o: any) => recipientIds.add(o.userId));
+      if (org.createdById) recipientIds.add(org.createdById);
+      activeOrganisers.forEach((o: any) => recipientIds.add(o.userId));
       recipientIds.delete(userId); // don't notify self
 
       const requesterName = user.name || "A team member";
@@ -157,8 +167,8 @@ export async function POST(req: Request) {
           createNotification({
             userId: organiserId,
             type: "access_request",
-            title: "New Team Access Request",
-            body: `${requesterName} requested to join "${campaign.name}" as Organiser.`,
+            title: "New Organization Access Request",
+            body: `${requesterName} requested to join "${org.name}" as ${requestedRole || "Organiser"}.`,
             href: "/app/team",
           })
         )

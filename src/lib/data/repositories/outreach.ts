@@ -61,9 +61,15 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
       const records = await prisma.emailDraft.findMany({
         where: Object.keys(where).length > 0 ? where : undefined,
         orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: { name: true, email: true },
+          },
+        },
       });
-      return records.map((r) => ({
+      return records.map((r: any) => ({
         id: r.id,
+        userId: r.userId,
         companyId: r.companyId,
         contactId: r.contactId || undefined,
         subject: r.subject,
@@ -72,6 +78,10 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
         status: DB_TO_DRAFT_STATUS[r.status] || "draft",
         approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
         createdAt: r.createdAt.toISOString(),
+        sentByName: r.user?.name || undefined,
+        sentByUsername: r.user?.name
+          ? r.user.name.split(" ")[0].toLowerCase()
+          : (r.user?.email ? r.user.email.split("@")[0].toLowerCase() : undefined),
       }));
     } catch (err) {
       console.warn("Prisma getDrafts failed:", err);
@@ -523,7 +533,14 @@ export async function recordSentMessage(
   }
 
   const sentIdx = draftsStoreRef.value.findIndex((d) => d.id === draftId);
-  if (sentIdx !== -1) draftsStoreRef.value[sentIdx] = { ...draftsStoreRef.value[sentIdx], status: "sent" };
+  if (sentIdx !== -1) {
+    draftsStoreRef.value[sentIdx] = {
+      ...draftsStoreRef.value[sentIdx],
+      status: "sent",
+      sentByName: draftsStoreRef.value[sentIdx].sentByName || "Team Executive",
+      sentByUsername: draftsStoreRef.value[sentIdx].sentByUsername || "executive",
+    };
+  }
 
   const message: Message = {
     id: `msg-${Date.now()}`,

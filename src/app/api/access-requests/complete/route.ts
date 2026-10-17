@@ -28,18 +28,30 @@ export async function POST() {
         },
       });
 
-      if (!approvedReq && !activeMember) {
+      const activeOrgMember = await (prisma as any).organisationMember.findFirst({
+        where: {
+          userId,
+          status: "ACTIVE",
+        },
+      });
+
+      if (!approvedReq && !activeMember && !activeOrgMember) {
         return NextResponse.json(
-          { error: "No approved access request found for your account." },
+          { error: "No approved access request or active membership found for your account." },
           { status: 400 }
         );
       }
 
+      const assignedRole =
+        approvedReq?.requestedRole === "EXECUTIVE" || activeOrgMember?.role === "EXECUTIVE"
+          ? "EXECUTIVE"
+          : "ORGANISER";
+
       await (prisma as any).user.update({
         where: { id: userId },
         data: {
-          role: "ORGANISER",
-          accountMode: "ORGANISER",
+          role: assignedRole,
+          accountMode: assignedRole,
           onboardingStatus: "COMPLETE",
           onboarded: true,
         },
