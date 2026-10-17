@@ -108,3 +108,83 @@ export function downloadIcsFile(meeting: Meeting): void {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Formats time range in local user timezone: e.g. "4:00 PM – 4:30 PM (IST)"
+ */
+export function formatMeetingTimeRange(startsAt: string, durationMins: number): string {
+  const start = new Date(startsAt);
+  const end = new Date(start.getTime() + durationMins * 60 * 1000);
+
+  const timeFormatter = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  const tzFormatter = new Intl.DateTimeFormat(undefined, {
+    timeZoneName: "short",
+  });
+
+  const tzPart = tzFormatter.formatToParts(start).find((p) => p.type === "timeZoneName")?.value || "";
+
+  return `${timeFormatter.format(start)} – ${timeFormatter.format(end)}${tzPart ? ` (${tzPart})` : ""}`;
+}
+
+/**
+ * Formats date in user local timezone: e.g. "Thu, Oct 22, 2026"
+ */
+export function formatMeetingDate(startsAt: string): string {
+  const date = new Date(startsAt);
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+/**
+ * Formats a short date: e.g. "Oct 22"
+ */
+export function formatMeetingDateShort(startsAt: string): string {
+  const date = new Date(startsAt);
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+/**
+ * Gets user's local timezone name: e.g. "Asia/Kolkata (IST)"
+ */
+export function getUserTimezone(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = new Date();
+    const tzAbbr =
+      new Intl.DateTimeFormat(undefined, { timeZoneName: "short" })
+        .formatToParts(now)
+        .find((p) => p.type === "timeZoneName")?.value || "";
+    return tzAbbr ? `${tz} (${tzAbbr})` : tz;
+  } catch {
+    return "Local Time";
+  }
+}
+
+/**
+ * Human-friendly countdown or relative indicator for next meeting
+ */
+export function getCountdownText(startsAt: string): string {
+  const diffMs = new Date(startsAt).getTime() - Date.now();
+  if (diffMs <= 0) return "Started / Past";
+
+  const diffMins = Math.floor(diffMs / (60 * 1000));
+  const diffHours = Math.floor(diffMs / (3600 * 1000));
+  const diffDays = Math.floor(diffMs / (24 * 3600 * 1000));
+
+  if (diffMins < 60) return `in ${diffMins}m`;
+  if (diffHours < 24) return `in ${diffHours}h`;
+  if (diffDays === 1) return "Tomorrow";
+  return `in ${diffDays} days`;
+}
