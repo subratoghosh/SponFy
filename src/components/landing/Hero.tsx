@@ -61,7 +61,7 @@ export const Hero: React.FC = () => {
   return (
     <section
       id="hero"
-      className="relative h-[100vh] min-h-[100vh] flex flex-col justify-center items-center pt-24 pb-8 sm:pt-28 sm:pb-12 bg-green-hero text-text-onDark overflow-hidden rounded-b-[28px] sm:rounded-b-[36px] shadow-2xl px-4 sm:px-8"
+      className="relative min-h-[100svh] lg:h-[100vh] flex flex-col justify-start lg:justify-center items-center pt-28 pb-12 sm:pt-32 sm:pb-14 lg:pt-28 lg:pb-12 bg-green-hero text-text-onDark overflow-hidden rounded-b-[28px] sm:rounded-b-[36px] shadow-2xl px-4 sm:px-8"
     >
       {/* Background Organic Butter Blobs from origin/main */}
       <div className="absolute top-[-10%] left-[-10%] w-[320px] sm:w-[500px] h-[320px] sm:h-[500px] rounded-full bg-butter-cream/10 blur-3xl pointer-events-none blob-float" />
@@ -71,14 +71,14 @@ export const Hero: React.FC = () => {
       <HeroVectorMotifs />
 
       {/* Main Container: 2-column layout (Text on the left, Sleek Interactive Card on the right) */}
-      <div className="relative max-w-[1280px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center z-10 flex-1 my-auto">
+      <div className="relative max-w-[1280px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center z-10 lg:flex-1 lg:my-auto">
 
         {/* LEFT COLUMN: Left-Aligned Editorial Typography + Paper Plane + 2 Buttons */}
         <div className="lg:col-span-7 flex flex-col items-start text-left pr-0 lg:pr-6">
 
           {/* Headline in exact slab-serif font style from video reference */}
-          <div className="relative mb-6 sm:mb-8 w-full">
-            <h1 className="font-slab text-5xl sm:text-7xl lg:text-[88px] leading-[1.04] font-light text-butter-cream tracking-tight">
+          <div className="relative mb-5 sm:mb-8 w-full">
+            <h1 className="font-slab text-[2.75rem] sm:text-7xl lg:text-[88px] leading-[1.04] font-light text-butter-cream tracking-tight">
               <span>Outreach</span>
               <br />
               <span className="relative inline-block text-butter-cream font-light">
@@ -130,7 +130,7 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* Subtext */}
-          <p className="text-base sm:text-lg text-text-onDarkSub/90 max-w-xl font-normal leading-relaxed mb-8">
+          <p className="text-base sm:text-lg text-text-onDarkSub/90 max-w-xl font-normal leading-relaxed mb-6 sm:mb-8">
             Find, research and win sponsors for campaigns, conferences, and student events — with AI that asks before it sends.
           </p>
 
@@ -160,7 +160,7 @@ export const Hero: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: Sleek Glass 3D Live Pipeline Radar Card */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center relative w-full pt-8 lg:pt-0">
+        <div className="lg:col-span-5 flex flex-col items-center justify-center relative w-full pt-2 lg:pt-0">
 
           {/* Subtle Ambient Backing Glow */}
           <div className="absolute inset-0 bg-gradient-to-l from-butter-cream/15 via-butter-gold/10 to-transparent blur-[100px] pointer-events-none rounded-3xl" />
@@ -202,8 +202,8 @@ export const Hero: React.FC = () => {
             <div className="space-y-3">
               {/* Feature 1: Reduced Spam Protection */}
               <div className="p-3 bg-butter-bg/60 hover:bg-butter-bg rounded-xl border border-green-dark/8 transition-colors space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
                     </div>
@@ -228,8 +228,8 @@ export const Hero: React.FC = () => {
 
               {/* Feature 2: Precision Relevance Scoring */}
               <div className="p-3 bg-butter-bg/60 hover:bg-butter-bg rounded-xl border border-green-dark/8 transition-colors space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 font-bold text-xs flex items-center justify-center shrink-0">
                       <Target className="w-4 h-4 text-amber-700" />
                     </div>
@@ -253,8 +253,8 @@ export const Hero: React.FC = () => {
 
               {/* Feature 3: Human Approval Gate */}
               <div className="p-3 bg-butter-bg/60 hover:bg-butter-bg rounded-xl border border-green-dark/8 transition-colors space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
                       <UserCheck className="w-4 h-4 text-blue-600" />
                     </div>

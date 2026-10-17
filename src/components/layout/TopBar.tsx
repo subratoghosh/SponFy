@@ -23,9 +23,10 @@ import { cn } from "@/lib/utils";
 import { MAIN_NAV_ITEMS } from "@/lib/config/nav";
 import { useInstallPrompt } from "@/lib/hooks/useInstallPrompt";
 
-const MOBILE_DROPDOWN_LABELS = ["Discover", "Follow-ups", "Analytics", "Settings"] as const;
+const MOBILE_DROPDOWN_LABELS = ["Campaigns", "Follow-ups", "Analytics", "Settings"] as const;
 
 const NAV_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  FolderKanban,
   Compass,
   Clock,
   BarChart3,
