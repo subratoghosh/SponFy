@@ -2,6 +2,7 @@ import { getSponsors } from "./sponsors";
 import { getDrafts } from "./outreach";
 import { getReplyAnalyses } from "./replies";
 import { getCampaigns, getCampaignById } from "./campaigns";
+import { getMeetings } from "./meetings";
 import { PIPELINE_STAGES } from "@/lib/config/pipeline";
 
 export async function getAnalyticsData(campaignId?: string, userId?: string) {
@@ -20,11 +21,12 @@ export async function getAnalyticsData(campaignId?: string, userId?: string) {
     }
   }
 
-  const [sponsors, drafts, replies, campaigns] = await Promise.all([
+  const [sponsors, drafts, replies, campaigns, meetings] = await Promise.all([
     getSponsors(campaignId, userId),
     getDrafts(),
     getReplyAnalyses(),
     campaignId ? getCampaignById(campaignId).then((c) => (c ? [c] : [])) : getCampaigns(),
+    userId ? getMeetings(userId, campaignId) : Promise.resolve([]),
   ]);
 
   const activeCampaign = campaigns[0] || null;
@@ -157,7 +159,10 @@ export async function getAnalyticsData(campaignId?: string, userId?: string) {
       repliesCount,
       overallReplyRate,
       positiveReplyRate,
-      meetingCount: replies.filter((r) => r.meetingRequested).length,
+      meetingCount: (() => {
+        const booked = meetings.filter((m) => m.status === "scheduled" || m.status === "completed");
+        return booked.length > 0 ? booked.length : replies.filter((r) => r.meetingRequested).length;
+      })(),
       negotiationsCount: sponsors.filter((s) => s.stage === "Negotiation").length,
       committedCount: committed,
       committedAmount,
