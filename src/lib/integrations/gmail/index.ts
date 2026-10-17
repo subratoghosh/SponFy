@@ -75,6 +75,17 @@ export class RealGmailClient implements IGmailClient {
     let email = "";
     try {
       const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+      // Fetch user profile to get authentic sender email address for SPF/DMARC alignment
+      let fromAddress = "";
+      try {
+        const profile = await gmail.users.getProfile({ userId: "me" });
+        if (profile.data.emailAddress) {
+          fromAddress = profile.data.emailAddress;
+        }
+      } catch (pErr) {
+        console.warn("Could not retrieve user emailAddress for From header:", pErr);
+      }
       const profile = await gmail.users.getProfile({ userId: "me" });
       email = profile.data.emailAddress || "";
     } catch {
