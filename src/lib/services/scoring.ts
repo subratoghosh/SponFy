@@ -312,7 +312,7 @@ export function computeFitScore(
       factor: "Sponsorship Capacity",
       points: 0,
       maxPoints: maxCap,
-      reason: "Zero historical event sponsorship disclosures found",
+      reason: "No recorded event sponsorship disclosures found",
       positive: false,
     });
   }

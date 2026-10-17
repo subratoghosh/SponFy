@@ -220,7 +220,7 @@ export const Hero: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-text-dim pt-1 border-t border-green-dark/5">
                   <span className="flex items-center gap-1 text-green-dark font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Spam Trap Avoidance: 100% Clean
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Spam Trap Avoidance: Proactive Safeguards
                   </span>
 
                 </div>
@@ -271,7 +271,7 @@ export const Hero: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-text-dim pt-1 border-t border-green-dark/5">
                   <span className="flex items-center gap-1 text-green-dark font-medium">
-                    <UserCheck className="w-3.5 h-3.5 text-blue-600" /> Always In Control: Zero Unapproved Sends
+                    <UserCheck className="w-3.5 h-3.5 text-blue-600" /> Always In Control: Manual Approval Required
                   </span>
                 </div>
               </div>

@@ -413,7 +413,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   <span className="text-[10px] font-bold text-text-muted uppercase block">Deliverability Status</span>
                   <span className="font-sans font-semibold text-emerald-700 text-xs flex items-center gap-1.5 mt-0.5 truncate">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    Zero-Bounce AI Verified on Pipeline Add
+                    Deliverability Pre-flight Verified on Pipeline Add
                   </span>
                 </div>
               </div>
@@ -467,7 +467,7 @@ export const CandidateList: React.FC<CandidateListProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-text-dim">3. Do-Not-Contact / Suppression:</span>
                     <span className="font-bold text-emerald-800 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Clear (Zero Blacklists)
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Clear (No Blacklists Detected)
                     </span>
                   </div>
                 </div>

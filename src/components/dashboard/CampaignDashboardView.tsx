@@ -18,6 +18,7 @@ import { SenderHealthCard } from "./SenderHealthCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { StartFirstCampaignModal } from "@/components/campaigns/StartFirstCampaignModal";
+import { TodayMeetingReminderModal } from "./TodayMeetingReminderModal";
 import { Campaign } from "@/types";
 
 interface Props {
@@ -185,6 +186,9 @@ export function CampaignDashboardView({
         onClose={() => setStartModalOpen(false)}
         onCreated={handleCampaignCreated}
       />
+
+      {/* 4. Today's Meeting Reminder Modal / Popup */}
+      <TodayMeetingReminderModal />
     </div>
   );
 }

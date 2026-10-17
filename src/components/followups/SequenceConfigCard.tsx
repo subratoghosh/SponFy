@@ -84,7 +84,7 @@ export function SequenceConfigCard() {
         <div className="mt-4 p-3 bg-[#FAF4E6] rounded-xl border border-[#0C382E]/10 flex items-center gap-2 text-xs text-[#0C382E]">
           <ShieldCheck className="w-4 h-4 text-[#0C382E] shrink-0" />
           <span>
-            <strong>Safety Guaranteed:</strong> Follow-ups are only drafted for you. Nothing is sent until you approve it, and the server re-checks the daily limit, the gap between emails and the do-not-contact list when you send. If a sponsor replies, their sequence stops.
+            <strong>Safety Controls:</strong> Follow-ups are only drafted for you. Nothing is sent until you approve it, and the server re-checks the daily limit, the gap between emails and the do-not-contact list when you send. If a sponsor replies, their sequence stops.
           </span>
         </div>
       </CardContent>

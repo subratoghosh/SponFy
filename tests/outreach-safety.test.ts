@@ -68,6 +68,12 @@ describe("send guard: recipient", () => {
     expect(resolveRecipient({ contactId: "c2", contacts, requestedTo: "DevRel@Acme.dev" }).ok).toBe(true);
   });
 
+  it("resolves to an alternate verified contact on file when the user selects a custom recipient", () => {
+    const r = resolveRecipient({ contactId: "c1", contacts, requestedTo: "devrel@acme.dev" });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.recipient).toBe("devrel@acme.dev");
+  });
+
   it("refuses when there is no valid contact instead of inventing one", () => {
     const r = resolveRecipient({ contacts: [] });
     expect(r.ok).toBe(false);

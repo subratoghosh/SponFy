@@ -40,7 +40,7 @@ const FEATURE_MODULES = [
     icon: Brain,
     tag: "Human Approval Gate",
     description:
-      "Classifies incoming brand replies by intent and objections while guaranteeing zero emails leave without explicit organizer approval.",
+      "Classifies incoming brand replies by intent and objections while ensuring no emails leave without explicit organizer approval.",
   },
 ];
 

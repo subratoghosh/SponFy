@@ -64,7 +64,7 @@ const WORKFLOW_STEPS: WorkflowNode[] = [
     step: "05",
     title: "Approve & Send",
     shortDesc: "Human Approval & Safe Sending",
-    details: "Enforces 4 strict safety gates. Zero emails leave without your explicit click via your connected Gmail account.",
+    details: "Enforces 4 strict safety gates. No emails leave without your explicit click via your connected Gmail account.",
     icon: Send,
     previewType: "approve",
   },

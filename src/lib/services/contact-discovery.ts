@@ -17,7 +17,7 @@ export interface ContactDiscoveryResult {
  * Discover real, verifiable public partnership contacts for a company
  * strictly through real-time web intelligence and domain crawling.
  *
- * GUARANTEE: Never invents or fabricates synthetic "partnerships@domain" patterns.
+ * Safeguard: Avoids synthetic "partnerships@domain" patterns and requires verified public sources.
  */
 export async function discoverRealCompanyContact(
   companyId: string,
@@ -208,6 +208,6 @@ Respond ONLY with this JSON structure:
 
   return {
     found: false,
-    reason: `No verified public contact email published by ${companyName}. Add a verified contact to maintain zero-bounce compliance.`,
+    reason: `No verified public contact email published by ${companyName}. Add a contact manually to reduce email bounce risk.`,
   };
 }

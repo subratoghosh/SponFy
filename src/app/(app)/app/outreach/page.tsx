@@ -126,13 +126,13 @@ function OutreachContent() {
     }
   };
 
-  const handleSave = async (subject: string, body: string) => {
+  const handleSave = async (subject: string, body: string, customToEmail?: string) => {
     if (!activeDraft) return;
     try {
       const res = await fetch("/api/outreach/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: activeDraft.id, subject, body }),
+        body: JSON.stringify({ id: activeDraft.id, subject, body, toEmail: customToEmail }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Save failed");
@@ -190,15 +190,19 @@ function OutreachContent() {
     }
   };
 
-  const getRecipientEmail = (comp?: Company) => {
+  const getRecipientEmail = (comp?: Company | null, draft?: EmailDraft | null) => {
     if (!comp) return "";
+    if (draft?.contactId) {
+      const match = comp.contacts?.find((c) => c.id === draft.contactId);
+      if (match?.email) return match.email;
+    }
     const primaryContact = comp.contacts?.find((c) => c.email && c.email.trim() !== "") || comp.contacts?.[0];
     return primaryContact?.email || "";
   };
 
-  const handleConfirmSend = async (targetEmail?: string) => {
+  const handleConfirmSend = async (targetEmail?: string, isCustomEmail?: boolean) => {
     if (!activeDraft || !activeCompany) return;
-    const recipientEmail = targetEmail || getRecipientEmail(activeCompany);
+    const recipientEmail = targetEmail || getRecipientEmail(activeCompany, activeDraft);
     if (!recipientEmail) {
       toast("Please add or discover a verified contact email for this company first.", "error");
       return;
@@ -212,6 +216,7 @@ function OutreachContent() {
         body: JSON.stringify({
           draftId: activeDraft.id,
           toEmail: recipientEmail,
+          isCustomEmail: Boolean(isCustomEmail),
         }),
       });
       const data = await res.json();
@@ -414,7 +419,7 @@ function OutreachContent() {
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
           draft={activeDraft}
-          toEmail={getRecipientEmail(activeCompany)}
+          toEmail={getRecipientEmail(activeCompany, activeDraft)}
           companyName={activeCompany.name}
           onConfirmSend={handleConfirmSend}
           loading={sending}

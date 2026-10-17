@@ -188,7 +188,7 @@ export async function verifyEmailStrictly(
     }
   }
 
-  // If no MX records and domain doesn't exist, it is 100% Guaranteed to Bounce
+  // If no MX records and domain doesn't exist, high likelihood of hard bounce
   if (!hasMx) {
     return {
       email: cleanEmail,

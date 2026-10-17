@@ -17,14 +17,14 @@ import { Button } from "@/components/ui/button";
 
 export const metadata = {
   title: "Why Us | SponFy - Deliverability & Outreach Intelligence",
-  description: "Learn how SponFy eliminates cold email bounce risks, protects your sender reputation with 2-tier verification, and crafts high-converting pitches.",
+  description: "Learn how SponFy helps reduce cold email bounce risks, protects your sender reputation with multi-tier verification checks, and crafts targeted, high-converting pitches.",
 };
 
 export default function WhyUsPage() {
   const securityFeatures = [
     {
       icon: ShieldCheck,
-      title: "2-Tier Verification & Zero Bounce Guarantee",
+      title: "Multi-Tier Verification & Reduced Bounce Protection",
       subtitle: "Multi-layer MX, SMTP, and mailbox existence auditing",
       description:
         "Every corporate sponsor contact passes through deep mailbox handshakes before dispatch. Catch-all domains, invalid mailboxes, and disposable inboxes are quarantined immediately to safeguard your domain from hard bounces.",
@@ -37,7 +37,7 @@ export default function WhyUsPage() {
     {
       icon: Inbox,
       title: "Spam Penalty & Inbox Placement Defense",
-      subtitle: "Never land in the sponsor's spam or promotional folder",
+      subtitle: "Significantly lower spam penalty risk and optimize inbox placement",
       description:
         "Corporate firewalls and email gateways (Google Workspace & Microsoft 365) trigger filters when aggressive cold sequences or spam keywords are used. Our algorithms remove triggering phrases and enforce natural send spacing.",
       bullets: [
@@ -67,7 +67,7 @@ export default function WhyUsPage() {
       bullets: [
         "0-100 real-time quality grading per draft",
         "Actionable improvement suggestions prior to human approval",
-        "Guarantees that only elite pitches leave your organizer inbox",
+        "Ensures only reviewed, high-quality pitches leave your organizer inbox",
       ],
     },
   ];
@@ -110,7 +110,7 @@ export default function WhyUsPage() {
         </div>
 
         <h1 className="font-heading font-black text-4xl sm:text-6xl text-green-dark tracking-tight leading-tight">
-          Engineered for 0% Spam Penalty & Maximum Sponsor Responses.
+          Engineered for Reduced Spam Risk & Higher Sponsor Responses.
         </h1>
 
         <p className="text-base sm:text-lg text-text-dim max-w-2xl mx-auto leading-relaxed">
@@ -139,7 +139,7 @@ export default function WhyUsPage() {
               Built-in Protection at Every Step
             </h2>
             <p className="text-sm sm:text-base text-text-dim">
-              How our proprietary safety gates and AI synthesis guarantee high conversion without risking your organizer inbox.
+              How our proactive safety gates and AI synthesis help improve response rates while protecting your organizer domain reputation.
             </p>
           </div>
 

@@ -2,18 +2,20 @@
 
 import React, { useState } from "react";
 import { Meeting } from "@/types";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface ScheduleCalendarProps {
   meetings: Meeting[];
   onSelectDay: (date: Date, dayMeetings: Meeting[]) => void;
+  onAddNewMeeting: (date: Date) => void;
 }
 
 export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   meetings,
   onSelectDay,
+  onAddNewMeeting,
 }) => {
   const [currentDate, setCurrentDate] = useState(() => new Date());
 
@@ -125,6 +127,16 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
 
         <div className="flex items-center gap-1.5">
           <Button
+            variant="green"
+            size="sm"
+            onClick={() => onAddNewMeeting(new Date())}
+            className="text-xs font-bold h-8 gap-1.5 shadow-2xs mr-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Meeting</span>
+          </Button>
+
+          <Button
             variant="outline"
             size="sm"
             onClick={handleToday}
@@ -177,17 +189,23 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
           const ariaLabel = `${cellDateFormatted}${
             hasMeetings
               ? `, ${cell.meetings.length} meeting${cell.meetings.length > 1 ? "s" : ""}`
-              : ", no meetings"
+              : ", click to schedule meeting"
           }`;
 
           return (
             <button
               key={idx}
               type="button"
-              onClick={() => onSelectDay(cell.date, cell.meetings)}
+              onClick={() => {
+                if (hasMeetings) {
+                  onSelectDay(cell.date, cell.meetings);
+                } else {
+                  onAddNewMeeting(cell.date);
+                }
+              }}
               aria-label={ariaLabel}
               className={cn(
-                "min-h-[75px] sm:min-h-[105px] md:min-h-[115px] p-1.5 sm:p-2 text-left flex flex-col justify-between transition-all group relative cursor-pointer",
+                "min-h-[90px] sm:min-h-[120px] md:min-h-[135px] lg:min-h-[150px] p-2 text-left flex flex-col justify-between transition-all group relative cursor-pointer",
                 cell.isCurrentMonth ? "bg-white" : "bg-[#FAF8F2]/60 opacity-60",
                 cell.isToday && "ring-2 ring-inset ring-green-mid bg-butter-bg/30",
                 "hover:bg-butter-warm/40 focus:outline-hidden focus:ring-2 focus:ring-green-dark"
@@ -208,32 +226,48 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   {cell.dayNum}
                 </span>
 
-                {/* Mobile Dot Indicator */}
-                {hasMeetings && (
-                  <div className="md:hidden flex items-center gap-0.5">
-                    {cell.meetings.slice(0, 3).map((m, mIdx) => (
-                      <span
-                        key={mIdx}
-                        className={cn(
-                          "w-1.5 h-1.5 rounded-full",
-                          m.status === "completed"
-                            ? "bg-sky-500"
-                            : m.status === "cancelled"
-                            ? "bg-stone-400"
-                            : "bg-emerald-600"
-                        )}
-                      />
-                    ))}
-                    {cell.meetings.length > 3 && (
-                      <span className="text-[9px] font-bold text-green-dark">+</span>
-                    )}
-                  </div>
-                )}
+                <div className="flex items-center gap-1">
+                  {/* Quick Add Button on Hover/Focus */}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddNewMeeting(cell.date);
+                    }}
+                    title={`Schedule meeting on ${cellDateFormatted}`}
+                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md hover:bg-green-dark hover:text-butter-cream text-green-dark/70 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </span>
+
+                  {/* Mobile Dot Indicator */}
+                  {hasMeetings && (
+                    <div className="md:hidden flex items-center gap-0.5">
+                      {cell.meetings.slice(0, 3).map((m, mIdx) => (
+                        <span
+                          key={mIdx}
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            m.status === "completed"
+                              ? "bg-sky-500"
+                              : m.status === "cancelled"
+                              ? "bg-stone-400"
+                              : "bg-emerald-600"
+                          )}
+                        />
+                      ))}
+                      {cell.meetings.length > 3 && (
+                        <span className="text-[9px] font-bold text-green-dark">+</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Desktop Meeting Chips */}
-              <div className="hidden md:flex flex-col gap-1 w-full mt-1 overflow-hidden">
-                {cell.meetings.slice(0, 2).map((m) => {
+              {/* Desktop Meeting Chips (Supports multiple meetings per day) */}
+              <div className="hidden md:flex flex-col gap-1 w-full mt-1.5 overflow-hidden">
+                {cell.meetings.slice(0, 3).map((m) => {
                   const startTime = new Intl.DateTimeFormat(undefined, {
                     hour: "numeric",
                     minute: "2-digit",
@@ -244,31 +278,37 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                     <div
                       key={m.id}
                       className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded-md font-semibold truncate border shadow-2xs",
+                        "text-[10px] px-1.5 py-0.5 rounded-md font-semibold truncate border shadow-2xs flex items-center gap-1",
                         m.status === "completed"
                           ? "bg-sky-50 text-sky-800 border-sky-200"
                           : m.status === "cancelled"
                           ? "bg-stone-100 text-stone-600 border-stone-200 line-through"
-                          : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
                       )}
-                      title={`${m.companyName} at ${startTime}`}
+                      title={`${m.companyName} at ${startTime} - ${m.title}`}
                     >
-                      <span className="font-bold mr-1">{startTime}</span>
-                      <span>{m.companyName}</span>
+                      <Clock className="w-2.5 h-2.5 shrink-0 text-green-mid" />
+                      <span className="font-bold shrink-0">{startTime}</span>
+                      <span className="truncate">{m.companyName}</span>
                     </div>
                   );
                 })}
 
-                {cell.meetings.length > 2 && (
+                {cell.meetings.length > 3 && (
                   <span className="text-[10px] font-bold text-green-mid px-1">
-                    +{cell.meetings.length - 2} more
+                    +{cell.meetings.length - 3} more syncs
                   </span>
                 )}
               </div>
 
               {/* Bottom Subtle Status */}
-              <div className="hidden sm:block text-[9px] text-text-muted mt-auto pt-1">
+              <div className="hidden sm:flex items-center justify-between text-[9px] text-text-muted mt-auto pt-1 w-full">
                 {cell.isToday && <span className="font-bold text-green-dark">Today</span>}
+                {!cell.isToday && cell.isCurrentMonth && !hasMeetings && (
+                  <span className="text-text-muted/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Click to add
+                  </span>
+                )}
               </div>
             </button>
           );

@@ -265,6 +265,7 @@ export async function updateDraft(
         data: {
           subject: updates.subject,
           body: updates.body,
+          contactId: updates.contactId !== undefined ? updates.contactId : undefined,
           quality: updates.quality ? (updates.quality as any) : undefined,
           status: dbStatus,
           approvedAt: clearApproval

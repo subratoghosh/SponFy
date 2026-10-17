@@ -44,7 +44,7 @@ export default function IntelligencePage() {
               </p>
               <div className="text-xs font-semibold text-green-mid flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-accent" />
-                Guarantees zero rogue emails from your official domain
+                Protects against unapproved or rogue emails from your official domain
               </div>
             </div>
 

@@ -74,7 +74,7 @@ export async function GET(req: Request) {
         continue;
       }
 
-      // Zero-Bounce Pre-flight Deliverability Shield
+      // Pre-flight Deliverability Shield
       const verif = await verifyEmailStrictly(recipient.recipient, { companyName: company.name });
       if (!verif.isDeliverable || verif.status === "NO_MX" || verif.status === "INVALID" || verif.status === "BOUNCED" || verif.status === "DISPOSABLE") {
         excluded.push({ draftId: draft.id, companyName, reason: `Deliverability Shield: ${verif.reason}` });
@@ -215,7 +215,7 @@ export async function POST(req: Request) {
         continue;
       }
 
-      // Zero-Bounce Pre-flight Deliverability Shield
+      // Pre-flight Deliverability Shield
       const verif = await verifyEmailStrictly(recipient.recipient, { companyName: company.name });
       if (!verif.isDeliverable || verif.status === "NO_MX" || verif.status === "INVALID" || verif.status === "BOUNCED" || verif.status === "DISPOSABLE") {
         failed.push({ draftId: draft.id, companyName: company.name, reason: `Deliverability Shield: ${verif.reason}` });
