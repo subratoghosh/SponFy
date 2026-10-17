@@ -1,17 +1,27 @@
 'use client';
 
 import React from 'react';
-import { Brain, HelpCircle, CheckCircle, ArrowRight, Zap } from 'lucide-react';
-import { ReplyAnalysis } from '@/types';
+import Link from 'next/link';
+import { Brain, HelpCircle, CheckCircle, ArrowRight, Zap, Calendar } from 'lucide-react';
+import { ReplyAnalysis, Meeting } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { formatMeetingDateShort } from '@/lib/meetings/calendar-helpers';
 
 interface ReplyAnalysisPanelProps {
   analysis?: ReplyAnalysis;
   onExecuteRecommendation?: () => void;
   onClose?: () => void;
+  meeting?: Meeting | null;
+  onArrangeMeeting?: () => void;
 }
 
-export function ReplyAnalysisPanel({ analysis, onExecuteRecommendation, onClose }: ReplyAnalysisPanelProps) {
+export function ReplyAnalysisPanel({
+  analysis,
+  onExecuteRecommendation,
+  onClose,
+  meeting,
+  onArrangeMeeting,
+}: ReplyAnalysisPanelProps) {
   if (!analysis) {
     return (
       <div className="w-80 md:w-88 border-l border-[#0C382E]/10 bg-[#FFFFFF] p-6 flex flex-col items-center justify-center text-center shrink-0">
@@ -130,11 +140,38 @@ export function ReplyAnalysisPanel({ analysis, onExecuteRecommendation, onClose 
             </p>
           </div>
 
+          {/* Meeting Scheduled Badge vs Arrange Meeting Button */}
+          {meeting ? (
+            <div className="mb-2.5 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="truncate">Booked: {formatMeetingDateShort(meeting.startsAt)}</span>
+              </div>
+              <Link href="/app/schedule" className="text-[10px] underline text-emerald-900 shrink-0 hover:text-emerald-950 font-bold ml-1">
+                View in Schedule →
+              </Link>
+            </div>
+          ) : (
+            analysis.intent !== 'Not Interested' &&
+            (analysis.intent === 'Interested' || analysis.intent === 'Positive' || analysis.meetingRequested) &&
+            onArrangeMeeting && (
+              <button
+                type="button"
+                onClick={onArrangeMeeting}
+                className="w-full mb-2 py-2.5 px-3 rounded-xl bg-[#FFF0B3] text-[#0C382E] border border-[#0C382E]/20 text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#FEE790] transition-all shadow-2xs active:scale-98 cursor-pointer"
+              >
+                <Calendar className="w-3.5 h-3.5 text-[#0C382E]" />
+                <span>Arrange Meeting</span>
+              </button>
+            )
+          )}
+
           <button
+            type="button"
             onClick={onExecuteRecommendation}
-            className="w-full py-2.5 px-3 rounded-xl bg-[#0C382E] text-[#FFF0B3] text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#0C382E]/90 transition-all shadow-sm active:scale-98"
+            className="w-full py-2.5 px-3 rounded-xl bg-[#0C382E] text-[#FFF0B3] text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#0C382E]/90 transition-all shadow-sm active:scale-98 cursor-pointer"
           >
-            <span>Execute Action</span>
+            <span>Execute Reply Action</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
