@@ -145,6 +145,7 @@ model User {
   auditLogs      AuditLog[]
   userActivities   UserActivityLog[]
   discoveryResults DiscoveryResult[]
+  meetings         Meeting[]
 
   @@map("users")
 }
@@ -621,5 +622,32 @@ model EmailTrackingEvent {
   @@index([createdAt])
   @@map("email_tracking_events")
 }
+
+model Meeting {
+  id             String   @id @default(cuid())
+  userId         String
+  companyId      String
+  companyName    String
+  campaignId     String?
+  contactName    String?
+  contactEmail   String?
+  replyMessageId String?
+  title          String
+  startsAt       DateTime
+  durationMins   Int
+  mode           String   // video | phone | in_person
+  location       String
+  notes          String?
+  status         String   @default("scheduled") // scheduled | completed | cancelled
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startsAt])
+  @@map("meetings")
+}
+
 
 
