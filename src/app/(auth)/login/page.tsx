@@ -52,6 +52,9 @@ function LoginForm() {
         case "OAuthAccountNotLinked":
           setErrorMsg("An account with this email already exists using another sign-in method.");
           break;
+        case "SessionExpired":
+          setErrorMsg("Your session has expired or account was not found. Please sign in again.");
+          break;
         case "AccessDenied":
           setErrorMsg("Access was denied. Please ensure your account has permission.");
           break;
@@ -76,6 +79,7 @@ function LoginForm() {
     }
 
     setLoading(true);
+
     try {
       if (typeof document !== "undefined") {
         document.cookie = "sponfy-demo-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -101,6 +105,7 @@ function LoginForm() {
   const handleOAuthLogin = async (provider: "google" | "github") => {
     setErrorMsg(null);
     setSocialLoading(provider);
+
     try {
       if (typeof document !== "undefined") {
         document.cookie = "sponfy-demo-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
