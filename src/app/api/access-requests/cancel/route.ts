@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoAccessRequestsRef } from "@/app/api/access-requests/route";
+import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
 
 export async function POST() {
   const authRes = await requireAuth();
@@ -37,7 +37,7 @@ export async function POST() {
       return NextResponse.json({
         success: true,
         message: "Access request cancelled successfully.",
-        redirectUrl: "/onboarding/organiser",
+        redirectUrl: "/onboarding",
       });
     }
 
@@ -57,7 +57,7 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       message: "Access request cancelled.",
-      redirectUrl: "/onboarding/organiser",
+      redirectUrl: "/onboarding",
     });
   } catch (error) {
     console.error("[AccessRequest Cancel API] Error cancelling request:", error);

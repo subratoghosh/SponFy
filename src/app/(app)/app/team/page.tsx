@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   Users,
   UserCheck,
   UserX,
   Clock,
-  Shield,
   CheckCircle2,
   XCircle,
   Building2,
@@ -17,6 +17,9 @@ import {
   RefreshCw,
   Trash2,
   Sparkles,
+  Layers,
+  Calendar,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -31,6 +34,8 @@ interface PendingRequest {
   designation: string;
   collegeOrCompany: string;
   department: string;
+  availability?: string | null;
+  whyJoin?: string | null;
   requestedRole: string;
   message?: string | null;
   details?: Record<string, any>;
@@ -56,6 +61,7 @@ interface TeamMember {
 }
 
 export default function TeamManagementPage() {
+  const { data: session } = useSession();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"requests" | "members">("requests");
@@ -127,7 +133,7 @@ export default function TeamManagementPage() {
 
       toast(
         decisionAction === "APPROVE"
-          ? `${selectedRequest.requesterName} has been approved as an organiser!`
+          ? `${selectedRequest.requesterName} has been approved as an ${selectedRequest.requestedRole.toLowerCase()}!`
           : `Request from ${selectedRequest.requesterName} declined.`,
         decisionAction === "APPROVE" ? "success" : "info"
       );
@@ -173,8 +179,25 @@ export default function TeamManagementPage() {
     }
   };
 
+  const userRole = (session?.user as any)?.role;
+  const isOrganiser = userRole === "ORGANISER" || userRole === "ADMIN" || session?.user?.email === "admin@sponfy.dev";
+
+  if (session && !isOrganiser) {
+    return (
+      <div className="bg-white rounded-3xl border border-green-dark/15 p-12 text-center space-y-4 max-w-xl mx-auto my-12 shadow-sm text-green-dark">
+        <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="heading-font font-black text-2xl text-green-dark">Organiser Access Required</h2>
+        <p className="text-xs sm:text-sm text-text-dim leading-relaxed">
+          The Team Management portal is reserved for campaign organisers and administrators. If you need access, ask your campaign organiser to grant you organiser permissions.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 text-green-dark">
+    <div className="space-y-6 text-green-dark selection:bg-butter-cream">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-green-dark/10">
         <div>
@@ -285,31 +308,43 @@ export default function TeamManagementPage() {
                           </span>
                         )}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-text-dim mt-1">
-                        <span className="flex items-center gap-1 font-semibold text-green-dark">
+
+                      {/* Attribute Pills */}
+                      <div className="flex flex-wrap items-center gap-2.5 text-xs text-text-dim mt-1.5">
+                        <span className="inline-flex items-center gap-1 font-semibold text-green-dark bg-butter-cream/40 px-2 py-0.5 rounded-md">
                           <Briefcase className="w-3.5 h-3.5 text-green-mid" />
                           {req.designation}
                         </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <GraduationCap className="w-3.5 h-3.5 text-green-mid" />
-                          {req.collegeOrCompany}
-                        </span>
+
                         {req.department && (
-                          <>
-                            <span>•</span>
-                            <span>{req.department}</span>
-                          </>
+                          <span className="inline-flex items-center gap-1 text-green-dark/90 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                            <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                            {req.department}
+                          </span>
+                        )}
+
+                        {req.availability && (
+                          <span className="inline-flex items-center gap-1 text-blue-900 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 font-medium">
+                            <Clock className="w-3.5 h-3.5 text-blue-600" />
+                            {req.availability}
+                          </span>
+                        )}
+
+                        {req.collegeOrCompany && (
+                          <span className="inline-flex items-center gap-1 text-text-dim">
+                            <GraduationCap className="w-3.5 h-3.5 text-green-mid" />
+                            {req.collegeOrCompany}
+                          </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Messages / Details */}
-                    {((req.details as any)?.whyJoin || req.message) && (
-                      <div className="p-3.5 rounded-2xl bg-butter-bg/60 border border-green-dark/10 text-xs space-y-1">
-                        {(req.details as any)?.whyJoin && (
+                    {/* Messages / Why Join */}
+                    {(req.whyJoin || req.message) && (
+                      <div className="p-3.5 rounded-2xl bg-butter-bg/60 border border-green-dark/10 text-xs space-y-1.5">
+                        {req.whyJoin && (
                           <p className="text-green-dark font-medium leading-relaxed">
-                            <strong className="text-text-muted">Why:</strong> {(req.details as any).whyJoin}
+                            <strong className="text-text-muted">Why:</strong> {req.whyJoin}
                           </p>
                         )}
                         {req.message && (
@@ -321,7 +356,7 @@ export default function TeamManagementPage() {
                     )}
 
                     <div className="text-[11px] text-text-muted flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                      <Calendar className="w-3 h-3" />
                       Submitted {new Date(req.createdAt).toLocaleString()}
                     </div>
                   </div>
@@ -344,7 +379,7 @@ export default function TeamManagementPage() {
                       className="text-xs font-bold shadow-sm"
                     >
                       <UserCheck className="w-3.5 h-3.5 mr-1" />
-                      Approve Organiser
+                      Approve
                     </Button>
                   </div>
                 </div>
@@ -449,8 +484,8 @@ export default function TeamManagementPage() {
         title={decisionAction === "APPROVE" ? "Approve Access Request" : "Decline Access Request"}
         description={
           decisionAction === "APPROVE"
-            ? `Grant ${selectedRequest?.requesterName} organiser privileges for "${selectedRequest?.campaignName}".`
-            : `Decline access request for ${selectedRequest?.requesterName}.`
+            ? `Grant ${selectedRequest?.requesterName} ${selectedRequest?.requestedRole.toLowerCase()} privileges for "${selectedRequest?.campaignName}".`
+            : `Decline access request from ${selectedRequest?.requesterName}.`
         }
       >
         <div className="space-y-4">

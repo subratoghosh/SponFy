@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/security/auth-guard";
 import { requireCampaignAccess } from "@/lib/security/campaign-access";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { createNotification } from "@/lib/data/repositories/notifications";
-import { demoAccessRequestsRef } from "@/app/api/access-requests/route";
+import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
 import { demoCampaignMembersRef } from "@/lib/security/campaign-access";
 
 const decisionSchema = z.object({
@@ -150,7 +150,7 @@ export async function PATCH(
           userId: accessRequest.requesterId,
           type: "request_approved",
           title: "Access Request Approved!",
-          body: `Your request to join "${campaignName}" as ${accessRequest.requestedRole} has been approved. Welcome to the team!`,
+          body: `Your request to join "${campaignName}" as ${accessRequest.requestedRole.toLowerCase()} has been approved. Welcome to the team!`,
           href: "/app",
         });
 
@@ -194,25 +194,51 @@ export async function PATCH(
       return NextResponse.json({ error: "Access request not found." }, { status: 404 });
     }
 
+    // Security check in demo mode too
+    if (reqItem.requesterId === viewerId) {
+      return NextResponse.json(
+        { error: "Forbidden. You cannot approve or reject your own request." },
+        { status: 403 }
+      );
+    }
+
     if (action === "APPROVE") {
       reqItem.status = "APPROVED";
       reqItem.decidedById = viewerId;
       reqItem.decidedAt = new Date().toISOString();
       reqItem.decisionNote = note || null;
 
-      demoCampaignMembersRef.value.push({
-        id: `cm-${Date.now()}`,
-        campaignId: reqItem.campaignId,
-        userId: reqItem.requesterId,
-        role: reqItem.requestedRole,
-        status: "ACTIVE",
+      const existingCm = demoCampaignMembersRef.value.find(
+        (m) => m.campaignId === reqItem.campaignId && m.userId === reqItem.requesterId
+      );
+      if (existingCm) {
+        existingCm.role = reqItem.requestedRole;
+        existingCm.status = "ACTIVE";
+      } else {
+        demoCampaignMembersRef.value.push({
+          id: `cm-${Date.now()}`,
+          campaignId: reqItem.campaignId,
+          userId: reqItem.requesterId,
+          role: reqItem.requestedRole,
+          status: "ACTIVE",
+        });
+      }
+
+      // Update demo user if exists
+      const { demoAuthUsersRef } = await import("@/lib/auth");
+      Object.values(demoAuthUsersRef.value).forEach((u) => {
+        if (u.id === reqItem.requesterId) {
+          u.role = reqItem.requestedRole;
+          u.accountMode = reqItem.requestedRole;
+          u.onboardingStatus = "COMPLETE";
+        }
       });
 
       await createNotification({
         userId: reqItem.requesterId,
         type: "request_approved",
         title: "Access Request Approved!",
-        body: `Your request to join InnovateX 2026 has been approved.`,
+        body: `Your request to join InnovateX 2026 as ${reqItem.requestedRole.toLowerCase()} has been approved.`,
         href: "/app",
       });
     } else {

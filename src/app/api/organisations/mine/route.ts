@@ -1,32 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { memoryStore } from "@/lib/data/memory-store";
-
-export interface DemoOrg {
-  id: string;
-  name: string;
-  slug: string;
-  type: string;
-  description?: string | null;
-  website?: string | null;
-  city?: string | null;
-  createdById: string;
-}
-
-export const demoOrganisationsRef = memoryStore<DemoOrg[]>(
-  "organisations",
-  () => [
-    {
-      id: "org-demo-1",
-      name: "TechFest Committee",
-      slug: "techfest-committee",
-      type: "College Club",
-      city: "Mumbai",
-      createdById: "usr-demo-organiser",
-    },
-  ]
-);
+import { demoOrganisationsRef } from "@/lib/data/repositories/organisations";
 
 export async function GET() {
   const authRes = await requireAuth();

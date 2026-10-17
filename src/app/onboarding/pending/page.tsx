@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import {
   MapPin,
   Calendar,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -23,6 +24,7 @@ import { SponfyBrand } from "@/components/ui/SponfyBrand";
 interface RequestStatusData {
   id: string;
   status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+  requestedRole?: "ORGANISER" | "EXECUTIVE";
   campaignName: string;
   organisationName: string;
   city?: string;
@@ -40,7 +42,7 @@ export default function OnboardingPendingPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const fetchStatus = React.useCallback(async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch("/api/access-requests/status");
       if (!res.ok) return;
@@ -49,13 +51,13 @@ export default function OnboardingPendingPage() {
         setStatusData(data.request);
         setOnboardingStatus(data.onboardingStatus);
 
-        // If user is already COMPLETE, redirect to /app
+        // If user is already COMPLETE, redirect immediately to /app
         if (data.onboardingStatus === "COMPLETE") {
           router.replace("/app");
         }
       }
     } catch {
-      // background polling
+      // background polling silently recovers
     } finally {
       setLoading(false);
     }
@@ -63,7 +65,7 @@ export default function OnboardingPendingPage() {
 
   useEffect(() => {
     fetchStatus();
-    // Poll every 15 seconds as specified
+    // Live polling: refresh status every 15 seconds
     const interval = setInterval(fetchStatus, 15000);
     return () => clearInterval(interval);
   }, [fetchStatus]);
@@ -81,11 +83,24 @@ export default function OnboardingPendingPage() {
         throw new Error(data.error || "Failed to cancel request.");
       }
       toast("Access request cancelled.", "success");
-      window.location.href = data.redirectUrl || "/onboarding/organiser";
+      window.location.href = data.redirectUrl || "/onboarding";
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to cancel request.");
       toast(err.message || "Cancel failed.", "error");
       setActionLoading(false);
+    }
+  };
+
+  const handleChooseAnotherOption = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/access-requests/cancel", {
+        method: "POST",
+      });
+      const data = await res.json();
+      window.location.href = data.redirectUrl || "/onboarding";
+    } catch {
+      window.location.href = "/onboarding";
     }
   };
 
@@ -100,7 +115,7 @@ export default function OnboardingPendingPage() {
       if (!res.ok) {
         throw new Error(data.error || "Failed to finalize workspace activation.");
       }
-      toast("Welcome to the workspace!", "success");
+      toast("Welcome to your workspace!", "success");
       window.location.href = data.redirectUrl || "/app";
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to activate workspace.");
@@ -111,6 +126,21 @@ export default function OnboardingPendingPage() {
 
   const isApproved = statusData?.status === "APPROVED" || onboardingStatus === "COMPLETE";
   const isRejected = statusData?.status === "REJECTED";
+
+  const formattedDate = statusData?.createdAt
+    ? new Date(statusData.createdAt).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "";
+
+  const formattedTime = statusData?.createdAt
+    ? new Date(statusData.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
 
   return (
     <div className="min-h-screen bg-butter-bg flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 text-green-dark selection:bg-butter-cream">
@@ -148,7 +178,7 @@ export default function OnboardingPendingPage() {
                 You're in! Access Approved
               </h1>
               <p className="text-xs sm:text-sm text-text-dim max-w-md mx-auto leading-relaxed">
-                The campaign organisers have approved your request. You now have full organiser permissions on this campaign.
+                The campaign organisers have approved your request. You now have full access to collaborate on this campaign.
               </p>
             </div>
 
@@ -189,11 +219,11 @@ export default function OnboardingPendingPage() {
                 Access Request Not Approved
               </h1>
               <p className="text-xs sm:text-sm text-text-dim max-w-md mx-auto leading-relaxed">
-                The organiser was unable to accept your request to join this campaign team.
+                The campaign organiser was unable to accept your request to join this campaign team.
               </p>
             </div>
 
-            {statusData?.decisionNote && (
+            {statusData?.decisionNote ? (
               <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-left space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800 block">
                   Organiser Note:
@@ -202,15 +232,24 @@ export default function OnboardingPendingPage() {
                   "{statusData.decisionNote}"
                 </p>
               </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200 text-left space-y-1">
+                <p className="text-xs text-rose-900 font-medium">
+                  No additional feedback was provided by the organiser.
+                </p>
+              </div>
             )}
 
             <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/onboarding/organiser" className="w-full">
-                <Button variant="green" className="w-full text-xs font-bold justify-center">
-                  Choose Another Option
-                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                </Button>
-              </Link>
+              <Button
+                variant="green"
+                loading={actionLoading}
+                onClick={handleChooseAnotherOption}
+                className="w-full text-xs font-bold justify-center"
+              >
+                Choose Another Option
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
             </div>
           </div>
         ) : (
@@ -250,8 +289,8 @@ export default function OnboardingPendingPage() {
 
                 <div className="pt-2.5 border-t border-green-dark/10 flex items-center justify-between text-[11px] text-text-dim">
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    Submitted: {new Date(statusData.createdAt).toLocaleDateString()}
+                    <Calendar className="w-3.5 h-3.5 text-green-mid" />
+                    Submitted: {formattedDate} {formattedTime}
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold text-[10px]">
                     Pending Review

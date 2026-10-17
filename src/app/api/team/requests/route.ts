@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoAccessRequestsRef } from "@/app/api/access-requests/route";
+import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
 
 export async function GET() {
   const authRes = await requireAuth();
@@ -72,43 +72,61 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
       });
 
-      const mapped = pendingRequests.map((r: any) => ({
-        id: r.id,
-        requesterId: r.requester.id,
-        requesterName: r.requester.name || "Anonymous Member",
-        requesterEmail: r.requester.email,
-        designation: r.requester.designation || (r.details as any)?.roleInTeam || "Team Member",
-        collegeOrCompany: r.requester.collegeOrCompany || "University / Organization",
-        department: r.requester.department || "General",
-        requestedRole: r.requestedRole,
-        message: r.message,
-        details: r.details,
-        campaignId: r.campaignId,
-        campaignName: r.campaign?.name || "Campaign",
-        organisationName: r.campaign?.organisation?.name || "Organisation",
-        createdAt: r.createdAt.toISOString(),
-      }));
+      const mapped = pendingRequests.map((r: any) => {
+        const details = (r.details as any) || {};
+        const designation = details.designation || details.roleInTeam || r.requester.designation || (r.requestedRole === "EXECUTIVE" ? "Executive" : "Organiser");
+        const department = details.department || r.requester.department || "General";
+        const availability = details.availabilityHours ? `${details.availabilityHours} hrs/week` : null;
+
+        return {
+          id: r.id,
+          requesterId: r.requester.id,
+          requesterName: r.requester.name || "Anonymous Member",
+          requesterEmail: r.requester.email,
+          designation,
+          collegeOrCompany: r.requester.collegeOrCompany || "University / Organization",
+          department,
+          availability,
+          requestedRole: r.requestedRole,
+          whyJoin: details.whyJoin || null,
+          message: r.message,
+          details,
+          campaignId: r.campaignId,
+          campaignName: r.campaign?.name || "Campaign",
+          organisationName: r.campaign?.organisation?.name || "Organisation",
+          createdAt: r.createdAt.toISOString(),
+        };
+      });
 
       return NextResponse.json({ success: true, requests: mapped });
     }
 
     // Demo Mode fallback
-    const mock = demoAccessRequestsRef.value.filter((r) => r.status === "PENDING").map((r) => ({
-      id: r.id,
-      requesterId: r.requesterId,
-      requesterName: "Ayush Dhaked",
-      requesterEmail: "ayush@svnit.ac.in",
-      designation: (r.details as any)?.roleInTeam || "Sponsorship Convenor",
-      collegeOrCompany: "SVNIT Surat",
-      department: "Corporate Relations",
-      requestedRole: r.requestedRole,
-      message: r.message || "Excited to bring title sponsors on board.",
-      details: r.details,
-      campaignId: r.campaignId,
-      campaignName: "InnovateX National Hackathon 2026",
-      organisationName: "TechFest Committee",
-      createdAt: r.createdAt,
-    }));
+    const mock = demoAccessRequestsRef.value.filter((r) => r.status === "PENDING").map((r) => {
+      const details = (r.details as any) || {};
+      const designation = details.designation || details.roleInTeam || "Sponsorship Executive";
+      const department = details.department || "Corporate Relations";
+      const availability = details.availabilityHours ? `${details.availabilityHours} hrs/week` : "15 hrs/week";
+
+      return {
+        id: r.id,
+        requesterId: r.requesterId,
+        requesterName: "Ayush Dhaked",
+        requesterEmail: "ayush@svnit.ac.in",
+        designation,
+        collegeOrCompany: "SVNIT Surat",
+        department,
+        availability,
+        requestedRole: r.requestedRole || "EXECUTIVE",
+        whyJoin: details.whyJoin || "Connect corporate brands and coordinate outreach deals.",
+        message: r.message || "Excited to help achieve the campaign target.",
+        details,
+        campaignId: r.campaignId,
+        campaignName: "InnovateX National Hackathon 2026",
+        organisationName: "TechFest Committee",
+        createdAt: typeof r.createdAt === "string" ? r.createdAt : new Date().toISOString(),
+      };
+    });
 
     return NextResponse.json({ success: true, requests: mock });
   } catch (error) {

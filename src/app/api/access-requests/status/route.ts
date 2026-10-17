@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoAccessRequestsRef } from "@/app/api/access-requests/route";
+import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
 
 export async function GET() {
   const authRes = await requireAuth();
@@ -10,6 +10,7 @@ export async function GET() {
   }
 
   const userId = authRes.context.userId;
+  const userContext = authRes.context.user;
 
   try {
     if (isDatabaseConfigured()) {
@@ -54,6 +55,7 @@ export async function GET() {
           ? {
               id: latestRequest.id,
               status: latestRequest.status,
+              requestedRole: latestRequest.requestedRole,
               campaignName: latestRequest.campaign?.name || "Campaign",
               organisationName: latestRequest.organisation?.name || "Organisation",
               city: latestRequest.organisation?.city || latestRequest.campaign?.location || "",
@@ -65,20 +67,25 @@ export async function GET() {
     }
 
     // Demo Mode
+    const { demoAuthUsersRef } = await import("@/lib/auth");
+    const userEmail = userContext.email?.toLowerCase().trim();
+    const demoUser = userEmail ? demoAuthUsersRef.value[userEmail] : null;
+
     const req = demoAccessRequestsRef.value.find((r) => r.requesterId === userId) || demoAccessRequestsRef.value[0];
     return NextResponse.json({
       success: true,
-      onboardingStatus: "PENDING_APPROVAL",
-      role: "USER",
+      onboardingStatus: demoUser?.onboardingStatus || "PENDING_APPROVAL",
+      role: demoUser?.role || "USER",
       request: req
         ? {
             id: req.id,
             status: req.status,
+            requestedRole: req.requestedRole || "EXECUTIVE",
             campaignName: "InnovateX National Hackathon 2026",
             organisationName: "TechFest Committee",
             city: "Bengaluru",
             decisionNote: req.decisionNote || null,
-            createdAt: req.createdAt,
+            createdAt: typeof req.createdAt === "string" ? req.createdAt : new Date().toISOString(),
           }
         : null,
     });

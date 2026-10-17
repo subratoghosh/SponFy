@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoOrganisationsRef } from "@/app/api/organisations/mine/route";
+import { demoOrganisationsRef } from "@/lib/data/repositories/organisations";
 import { demoCampaignMembersRef } from "@/lib/security/campaign-access";
 
 const orgSubmissionSchema = z.object({

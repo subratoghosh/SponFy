@@ -67,8 +67,8 @@ export async function middleware(request: NextRequest) {
     if (token && token.role !== "ADMIN") {
       const status = (token.onboardingStatus as string) || "COMPLETE";
 
-      // If a COMPLETE user manually opens /onboarding (or /onboarding/pending), redirect to /app
-      if ((pathname === "/onboarding" || pathname === "/onboarding/pending") && status === "COMPLETE") {
+      // If a COMPLETE user manually opens any /onboarding path, redirect to /app
+      if (pathname.startsWith("/onboarding") && status === "COMPLETE") {
         return NextResponse.redirect(new URL("/app", request.url));
       }
 
@@ -79,8 +79,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(dest, request.url));
       }
 
-      // If user has PENDING_APPROVAL and visits /onboarding, send them to /onboarding/pending
-      if (pathname === "/onboarding" && status === "PENDING_APPROVAL") {
+      // If user has PENDING_APPROVAL and visits /onboarding (or any step other than /onboarding/pending), send to /onboarding/pending
+      if (pathname.startsWith("/onboarding") && pathname !== "/onboarding/pending" && status === "PENDING_APPROVAL") {
         return NextResponse.redirect(new URL("/onboarding/pending", request.url));
       }
     }
