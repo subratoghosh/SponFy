@@ -23,6 +23,12 @@ export async function POST(req: Request) {
       );
     }
 
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const isAdmin = adminEmails.includes(cleanEmail);
+
     // 1. If database is connected, persist the user into Neon/PostgreSQL
     if (isDatabaseConfigured()) {
       const existingUser = await prisma.user.findUnique({
@@ -37,18 +43,17 @@ export async function POST(req: Request) {
       }
 
       const hashedPassword = hashPassword(password);
-      const adminEmails = (process.env.ADMIN_EMAILS || "")
-        .split(",")
-        .map((e) => e.trim().toLowerCase());
-      const isAdmin = adminEmails.includes(cleanEmail);
 
-      const newUser = await prisma.user.create({
+      const newUser: any = await (prisma as any).user.create({
         data: {
           name: name?.trim() || cleanEmail.split("@")[0],
           email: cleanEmail,
           password: hashedPassword,
           orgName: festName?.trim() || null,
           role: isAdmin ? "ADMIN" : "USER",
+          accountMode: "INDIVIDUAL",
+          onboardingStatus: isAdmin ? "COMPLETE" : "NOT_STARTED",
+          onboarded: isAdmin,
         },
       });
 
@@ -59,20 +64,28 @@ export async function POST(req: Request) {
           email: newUser.email,
           name: newUser.name,
           role: newUser.role,
+          accountMode: newUser.accountMode,
+          onboardingStatus: newUser.onboardingStatus,
         },
       });
     }
 
     // 2. If database is in local demo mode
+    const { demoAuthUsersRef } = await import("@/lib/auth");
+    const demoUser = {
+      id: isAdmin ? "usr-admin-1" : `demo-${Date.now()}`,
+      email: cleanEmail,
+      name: name?.trim() || "Demo Organizer",
+      role: isAdmin ? "ADMIN" : "USER",
+      accountMode: "INDIVIDUAL",
+      onboardingStatus: isAdmin ? "COMPLETE" : "NOT_STARTED",
+    };
+    demoAuthUsersRef.value[cleanEmail] = demoUser;
+
     return NextResponse.json({
       success: true,
       message: "Demo registration successful.",
-      user: {
-        id: `demo-${Date.now()}`,
-        email: cleanEmail,
-        name: name || "Demo Organizer",
-        role: "USER",
-      },
+      user: demoUser,
     });
   } catch (error: any) {
     console.error("User registration error:", error);

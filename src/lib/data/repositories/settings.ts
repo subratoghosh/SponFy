@@ -103,17 +103,16 @@ export async function getSuppressions(): Promise<SuppressionEntry[]> {
   return [...suppressionsStoreRef.value];
 }
 
-export async function addSuppression(email: string, reason: string = "manual"): Promise<SuppressionEntry> {
+export async function addSuppression(email: string, reason: string = "manual", userId?: string): Promise<SuppressionEntry> {
   const domain = email.includes("@") ? email.split("@")[1] : undefined;
 
   if (isDatabaseConfigured()) {
     try {
-      const user = await prisma.user.findFirst();
-      const userId = user?.id || "usr-demo-lead";
+      const resolvedUserId = userId || "usr-demo-lead";
 
       const created = await prisma.suppression.create({
         data: {
-          userId,
+          userId: resolvedUserId,
           email,
           reason,
         },

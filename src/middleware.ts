@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Explicitly allow public PWA assets and static routes
@@ -21,9 +22,26 @@ export function middleware(request: NextRequest) {
 
   // Protect /app, /onboarding, and /admin
   if (pathname.startsWith("/app") || pathname.startsWith("/onboarding") || pathname.startsWith("/admin")) {
-    // In Demo Mode with no DB, only allow /app and /onboarding without auth. Never /admin!
-    if (isDemo && !pathname.startsWith("/admin")) {
-      return NextResponse.next();
+    const secret =
+      process.env.AUTH_SECRET ||
+      process.env.NEXTAUTH_SECRET ||
+      "sponfy-dev-auth-secret-super-safe-fallback-32chars";
+
+    let token: any = null;
+    try {
+      token = await getToken({
+        req: request,
+        secret,
+      });
+    } catch {
+      // In edge or decrypt mismatch, token remains null
+    }
+
+    // If token exists but is flagged as invalid or points to a non-existent database user
+    if (token?.invalid || token?.userNotFound || (token && !token.sub)) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("error", "SessionExpired");
+      return NextResponse.redirect(loginUrl);
     }
 
     // Check for Auth.js session token cookie
@@ -33,10 +51,38 @@ export function middleware(request: NextRequest) {
       request.cookies.get("next-auth.session-token") ||
       request.cookies.get("__Secure-next-auth.session-token");
 
-    if (!sessionToken) {
+    // In Demo Mode with no DB and no session, only allow /app and /onboarding without auth. Never /admin!
+    if (!token && !sessionToken) {
+      if (isDemo && !pathname.startsWith("/admin")) {
+        return NextResponse.next();
+      }
+
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+
+    // Signed-in user onboarding status check:
+    // Skip onboarding restrictions for ADMIN.
+    if (token && token.role !== "ADMIN") {
+      const status = (token.onboardingStatus as string) || "COMPLETE";
+
+      // If a COMPLETE user manually opens /onboarding (or /onboarding/pending), redirect to /app
+      if ((pathname === "/onboarding" || pathname === "/onboarding/pending") && status === "COMPLETE") {
+        return NextResponse.redirect(new URL("/app", request.url));
+      }
+
+      // If user is accessing /app/* and their onboardingStatus is not COMPLETE,
+      // redirect them to their appropriate onboarding step.
+      if (pathname.startsWith("/app") && status !== "COMPLETE") {
+        const dest = status === "PENDING_APPROVAL" ? "/onboarding/pending" : "/onboarding";
+        return NextResponse.redirect(new URL(dest, request.url));
+      }
+
+      // If user has PENDING_APPROVAL and visits /onboarding, send them to /onboarding/pending
+      if (pathname === "/onboarding" && status === "PENDING_APPROVAL") {
+        return NextResponse.redirect(new URL("/onboarding/pending", request.url));
+      }
     }
   }
 

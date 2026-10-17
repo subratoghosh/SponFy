@@ -37,11 +37,57 @@ export async function GET(request: NextRequest) {
       pagination: { total: 0, page: 1, limit, totalPages: 0, hasMore: false },
     });
   }
-
   try {
-    const andConditions: any[] = [{ OR: [{ userId }, { userId: "usr-demo-lead" }] }];
+    const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+    const andConditions: any[] = [];
+
     if (campaignId) {
+      const access = await getCampaignAccess(userId, campaignId);
+      if (!access.allowed) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          pagination: { total: 0, page: 1, limit, totalPages: 0, hasMore: false },
+        });
+      }
       andConditions.push({ campaignId });
+    } else {
+      const userCampaigns = await prisma.campaign.findMany({
+        where: {
+          OR: [
+            { userId },
+            {
+              members: {
+                some: {
+                  userId,
+                  status: "ACTIVE",
+                },
+              },
+            },
+            {
+              organisation: {
+                members: {
+                  some: {
+                    userId,
+                    role: "ORGANISER",
+                    status: "ACTIVE",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+      const accessibleCampaignIds = userCampaigns.map((c) => c.id);
+
+      andConditions.push({
+        OR: [
+          { userId },
+          { userId: "usr-demo-lead" },
+          { campaignId: { in: accessibleCampaignIds } },
+        ],
+      });
     }
 
     if (search) {

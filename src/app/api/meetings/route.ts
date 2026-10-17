@@ -98,13 +98,14 @@ export async function POST(req: Request) {
 
     const resolvedCompanyId = parsed.data.companyId?.trim() || `comp-adhoc-${Date.now()}`;
 
+    let ownedCompany: any = null;
     // 3. Verify company belongs to the authenticated user if referencing an existing company
     if (
       parsed.data.companyId &&
       !parsed.data.companyId.startsWith("comp-adhoc-") &&
       !parsed.data.companyId.startsWith("custom-")
     ) {
-      const ownedCompany = await verifyCompanyOwnership(parsed.data.companyId, userId);
+      ownedCompany = await verifyCompanyOwnership(parsed.data.companyId, userId);
       if (!ownedCompany) {
         return NextResponse.json(
           { error: "Company not found or access denied", code: "FORBIDDEN" },
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
       userId,
       companyId: resolvedCompanyId,
       companyName,
-      campaignId,
+      campaignId: campaignId || (ownedCompany as any).campaignId,
       contactName,
       contactEmail: contactEmail || undefined,
       replyMessageId,

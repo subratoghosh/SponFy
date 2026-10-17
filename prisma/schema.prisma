@@ -100,7 +100,41 @@ enum ResearchStatus {
 
 enum Role {
   USER
+  EXECUTIVE
+  ORGANISER
   ADMIN
+}
+
+enum AccountMode {
+  INDIVIDUAL
+  ORGANISER
+  EXECUTIVE
+}
+
+enum OnboardingStatus {
+  NOT_STARTED
+  DETAILS_DONE
+  PENDING_APPROVAL
+  COMPLETE
+}
+
+enum OrgRole {
+  ORGANISER
+  EXECUTIVE
+}
+
+enum MemberStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  REMOVED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum AccountStatus {
@@ -120,6 +154,12 @@ model User {
   orgName       String?
   orgType       String?
   onboarded     Boolean       @default(false)
+  phone         String?
+  designation   String?
+  department    String?
+  collegeOrCompany String?
+  accountMode   AccountMode   @default(INDIVIDUAL)
+  onboardingStatus OnboardingStatus @default(NOT_STARTED)
   role          Role          @default(USER)
   status        AccountStatus @default(ACTIVE)
   lastActiveAt  DateTime?
@@ -146,6 +186,15 @@ model User {
   userActivities   UserActivityLog[]
   discoveryResults DiscoveryResult[]
   meetings         Meeting[]
+
+  // Organisation & Member relations
+  createdOrganisations    Organisation[]       @relation("OrganisationCreator")
+  organisationMemberships  OrganisationMember[] @relation("OrgMemberUser")
+  decidedOrgMemberships    OrganisationMember[] @relation("OrgMemberDecider")
+  campaignMemberships     CampaignMember[]
+  accessRequests          AccessRequest[]      @relation("AccessRequester")
+  decidedAccessRequests   AccessRequest[]      @relation("AccessDecider")
+  notifications           Notification[]
 
   @@map("users")
 }
@@ -209,12 +258,17 @@ model Campaign {
   updatedAt           DateTime @updatedAt
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   companies Company[]
   insights         Insight[]
   jobs             AiJob[]
   discoveryResults DiscoveryResult[]
+  members          CampaignMember[]
+  accessRequests   AccessRequest[]
 
   @@index([userId])
+  @@index([organisationId])
   @@map("campaigns")
 }
 
@@ -648,6 +702,107 @@ model Meeting {
   @@index([startsAt])
   @@map("meetings")
 }
+
+model Organisation {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  type        String   // College Club, Company, NGO, Fest Committee, Other
+  description String?
+  website     String?
+  city        String?
+  logoUrl     String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy      User                 @relation("OrganisationCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  members        OrganisationMember[]
+  campaigns      Campaign[]
+  accessRequests AccessRequest[]
+
+  @@index([createdById])
+  @@map("organisations")
+}
+
+model OrganisationMember {
+  id             String       @id @default(cuid())
+  organisationId String
+  userId         String
+  role           OrgRole
+  status         MemberStatus
+  decidedById    String?
+  decidedAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user         User         @relation("OrgMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+  decidedBy    User?        @relation("OrgMemberDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@unique([organisationId, userId])
+  @@index([userId])
+  @@index([organisationId, status])
+  @@map("organisation_members")
+}
+
+model CampaignMember {
+  id         String       @id @default(cuid())
+  campaignId String
+  userId     String
+  role       OrgRole
+  status     MemberStatus
+  createdAt  DateTime     @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+  @@index([userId])
+  @@index([campaignId, status])
+  @@map("campaign_members")
+}
+
+model AccessRequest {
+  id             String        @id @default(cuid())
+  requesterId    String
+  campaignId     String
+  organisationId String?
+  requestedRole  OrgRole
+  message        String?
+  details        Json          @default("{}")
+  status         RequestStatus @default(PENDING)
+  decidedById    String?
+  decidedAt      DateTime?
+  decisionNote   String?
+  createdAt      DateTime      @default(now())
+
+  requester    User          @relation("AccessRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  decidedBy    User?         @relation("AccessDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  organisation Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId, status])
+  @@index([requesterId])
+  @@index([organisationId])
+  @@map("access_requests")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
 
 
 

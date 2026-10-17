@@ -374,9 +374,78 @@ export interface GmailConnectionStatus {
   isMock: boolean;
 }
 
+// ---------- Roles & Organisation Types ----------
+
+export type UserRole = "USER" | "EXECUTIVE" | "ORGANISER" | "ADMIN";
+export type Role = UserRole;
+export type AccountMode = "INDIVIDUAL" | "ORGANISER" | "EXECUTIVE";
+export type OnboardingStatus = "NOT_STARTED" | "DETAILS_DONE" | "PENDING_APPROVAL" | "COMPLETE";
+export type OrgRole = "ORGANISER" | "EXECUTIVE";
+export type MemberStatus = "PENDING" | "ACTIVE" | "REJECTED" | "REMOVED";
+export type RequestStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+export interface Organisation {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  description?: string | null;
+  website?: string | null;
+  city?: string | null;
+  logoUrl?: string | null;
+  createdById: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface OrganisationMember {
+  id: string;
+  organisationId: string;
+  userId: string;
+  role: OrgRole;
+  status: MemberStatus;
+  decidedById?: string | null;
+  decidedAt?: string | Date | null;
+  createdAt: string | Date;
+}
+
+export interface CampaignMember {
+  id: string;
+  campaignId: string;
+  userId: string;
+  role: OrgRole;
+  status: MemberStatus;
+  createdAt: string | Date;
+}
+
+export interface AccessRequest {
+  id: string;
+  requesterId: string;
+  campaignId: string;
+  organisationId?: string | null;
+  requestedRole: OrgRole;
+  message?: string | null;
+  details: Record<string, any>;
+  status: RequestStatus;
+  decidedById?: string | null;
+  decidedAt?: string | Date | null;
+  decisionNote?: string | null;
+  createdAt: string | Date;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  href?: string | null;
+  readAt?: string | Date | null;
+  createdAt: string | Date;
+}
+
 // ---------- Administrative Dashboard Types ----------
 
-export type UserRole = "USER" | "ADMIN";
 export type AccountStatus = "ACTIVE" | "SUSPENDED";
 
 export interface AdminUser {

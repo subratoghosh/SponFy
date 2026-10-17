@@ -16,10 +16,12 @@ import {
   BarChart3,
   Download,
   CalendarDays,
+  Users,
 } from "lucide-react";
 import { getCampaigns } from "@/lib/data/repositories/campaigns";
 import { Campaign } from "@/types";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { cn } from "@/lib/utils";
 import { MAIN_NAV_ITEMS } from "@/lib/config/nav";
 import { useInstallPrompt } from "@/lib/hooks/useInstallPrompt";
@@ -109,6 +111,9 @@ export const TopBar: React.FC = () => {
     !isDemo &&
     ((user as any)?.role === "ADMIN" ||
       user?.email === "admin@sponfy.dev");
+  const isOrganiser =
+    !isDemo &&
+    ((user as any)?.role === "ORGANISER" || isAdmin);
   const displayName = user?.name || (isDemo ? "Demo Organizer" : "Event Organizer");
   const displayEmail = user?.email || (isDemo ? "demo@sponfy.dev" : "");
   const initials = displayName
@@ -227,6 +232,9 @@ export const TopBar: React.FC = () => {
           </span>
         )}
 
+        {/* Notifications Dropdown Bell */}
+        <NotificationBell />
+
         {/* User Profile Dropdown Button */}
         <div className="relative shrink-0" ref={profileRef}>
           <button
@@ -321,6 +329,25 @@ export const TopBar: React.FC = () => {
                     </div>
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-amber-200 text-amber-800">
                       Admin
+                    </span>
+                  </Link>
+                </div>
+              )}
+
+              {/* Organiser Team Management Link */}
+              {isOrganiser && (
+                <div className="border-t border-green-dark/10 pt-1.5 text-xs font-bold">
+                  <Link
+                    href="/app/team"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-green-dark hover:bg-butter-warm/60 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Users className="w-4 h-4 text-green-mid shrink-0" />
+                      <span>Team & Requests</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
+                      Organiser
                     </span>
                   </Link>
                 </div>

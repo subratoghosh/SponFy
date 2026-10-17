@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import {
   ArrowRight,
   ArrowLeft,
+  AlertCircle,
   Eye,
   EyeOff,
-  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SponfyBrand } from "@/components/ui/SponfyBrand";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -42,11 +42,16 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      // 1. Register and persist user in database
+      // 1. Register user
       const regRes = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, festName }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          festName,
+        }),
       });
 
       const regData = await regRes.json();
@@ -169,7 +174,7 @@ export default function SignupPage() {
           </span>
         </div>
 
-        {/* Credentials Registration Form (No Placeholders) */}
+        {/* Credentials Registration Form */}
         <form onSubmit={handleSignup} className="space-y-3.5">
           <Input
             label="Full Name"
@@ -229,7 +234,7 @@ export default function SignupPage() {
 
         {/* Switch to Login */}
         <div className="pt-3 border-t border-green-dark/10 flex flex-col sm:flex-row items-center justify-between text-xs text-text-muted gap-2">
-          <span>Already have an organizer account?</span>
+          <span>Already have an account?</span>
           <Link
             href="/login"
             className="font-bold text-green-dark hover:underline flex items-center gap-1"
@@ -239,5 +244,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-butter-bg flex items-center justify-center text-green-dark font-bold">Loading...</div>}>
+      <SignupForm />
+    </Suspense>
   );
 }

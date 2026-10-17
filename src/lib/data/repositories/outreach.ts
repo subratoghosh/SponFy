@@ -35,7 +35,29 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
       const dbStatus = status ? DRAFT_STATUS_TO_DB[status] : undefined;
       const where: any = {};
       if (dbStatus) where.status = dbStatus;
-      if (userId) where.userId = userId;
+      if (userId) {
+        const userCampaigns = await prisma.campaign.findMany({
+          where: {
+            OR: [
+              { userId },
+              {
+                members: {
+                  some: {
+                    userId,
+                    status: "ACTIVE",
+                  },
+                },
+              },
+            ],
+          },
+          select: { id: true },
+        });
+        const accessibleIds = userCampaigns.map((c) => c.id);
+        where.OR = [
+          { userId },
+          { company: { campaignId: { in: accessibleIds } } },
+        ];
+      }
       const records = await prisma.emailDraft.findMany({
         where: Object.keys(where).length > 0 ? where : undefined,
         orderBy: { createdAt: "desc" },

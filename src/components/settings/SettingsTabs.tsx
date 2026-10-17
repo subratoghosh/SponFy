@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   User,
   Mail,
@@ -238,6 +239,34 @@ export function SettingsTabs() {
                   <Button type="submit" className="bg-[#0C382E] text-[#FFF0B3] hover:bg-[#0C382E]/90 text-xs font-bold">
                     Save Profile Changes
                   </Button>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-[#0C382E]/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-bold text-[#0C382E] flex items-center gap-2">
+                      <span>Workspace Mode:</span>
+                      <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-800 border-emerald-300">
+                        {session?.user?.accountMode || 'INDIVIDUAL'}
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-[#0C382E]/60 mt-0.5">
+                      Want to collaborate with an organisation team or manage shared campaigns?
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/onboarding/organiser"
+                      className="text-xs font-bold text-[#0C382E] hover:underline px-3 py-1.5 rounded-lg border border-[#0C382E]/15 hover:bg-[#FAF4E6]"
+                    >
+                      Switch to Organiser
+                    </Link>
+                    <Link
+                      href="/onboarding/executive"
+                      className="text-xs font-bold text-[#0C382E] hover:underline px-3 py-1.5 rounded-lg border border-[#0C382E]/15 hover:bg-[#FAF4E6]"
+                    >
+                      Join as Executive
+                    </Link>
+                  </div>
                 </div>
               </form>
             </CardContent>

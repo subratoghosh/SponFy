@@ -69,12 +69,38 @@ export async function getSponsors(campaignId?: string, userId?: string): Promise
 
   if (isDatabaseConfigured()) {
     try {
-      const where: any = {};
-      if (userId) {
-        where.userId = userId;
-      }
+      let where: any = {};
       if (campaignId) {
+        if (userId) {
+          const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+          const access = await getCampaignAccess(userId, campaignId);
+          if (!access.allowed) {
+            return [];
+          }
+        }
         where.campaignId = campaignId;
+      } else if (userId) {
+        const userCampaigns = await prisma.campaign.findMany({
+          where: {
+            OR: [
+              { userId },
+              {
+                members: {
+                  some: {
+                    userId,
+                    status: "ACTIVE",
+                  },
+                },
+              },
+            ],
+          },
+          select: { id: true },
+        });
+        const accessibleIds = userCampaigns.map((c) => c.id);
+        where.OR = [
+          { userId },
+          { campaignId: { in: accessibleIds } },
+        ];
       }
 
       const companies = await prisma.company.findMany({
@@ -337,17 +363,14 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
 
   if (isDatabaseConfigured()) {
     try {
-      let userId = company.userId;
-      if (!userId && company.campaignId) {
+      let resolvedUserId = company.userId;
+      if (!resolvedUserId && company.campaignId) {
         const camp = await prisma.campaign.findUnique({ where: { id: company.campaignId } });
         if (camp) {
-          userId = camp.userId;
+          resolvedUserId = camp.userId;
         }
       }
-      if (!userId) {
-        const user = await prisma.user.findFirst();
-        userId = user?.id || "usr-demo-lead";
-      }
+      const userId = resolvedUserId || "usr-demo-lead";
 
       const created = await prisma.company.create({
         data: {

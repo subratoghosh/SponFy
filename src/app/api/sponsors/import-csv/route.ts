@@ -49,15 +49,19 @@ export async function POST(req: Request) {
     let targetCampaignId = campaignId;
 
     if (isDatabaseConfigured()) {
-      const user = session?.user?.id
-        ? await prisma.user.findUnique({ where: { id: session.user.id } })
-        : await prisma.user.findFirst();
-
-      const userId = user?.id || "usr-demo-lead";
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const userId = session.user.id;
 
       if (!targetCampaignId) {
         const existingCampaign = await prisma.campaign.findFirst({
-          where: { userId },
+          where: {
+            OR: [
+              { userId },
+              { members: { some: { userId, status: "ACTIVE" } } },
+            ],
+          },
           orderBy: { createdAt: "desc" },
         });
 
@@ -67,6 +71,15 @@ export async function POST(req: Request) {
           return NextResponse.json(
             { error: "No campaign found. Please create your first campaign before importing sponsors." },
             { status: 400 }
+          );
+        }
+      } else {
+        const { requireCampaignAccess } = await import("@/lib/security/campaign-access");
+        const access = await requireCampaignAccess(userId, targetCampaignId, "ORGANISER");
+        if (!access.allowed) {
+          return NextResponse.json(
+            { error: "Forbidden. You do not have access to manage this campaign." },
+            { status: 403 }
           );
         }
       }

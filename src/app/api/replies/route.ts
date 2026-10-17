@@ -28,7 +28,36 @@ export async function GET(request: NextRequest) {
     const userId = session?.user?.id;
     const where: any = { direction: "INBOUND" };
     if (userId && !isDemo) {
-      where.userId = userId;
+      const userCampaigns = await prisma.campaign.findMany({
+        where: {
+          OR: [
+            { userId },
+            {
+              members: {
+                some: {
+                  userId,
+                  status: "ACTIVE",
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+      const accessibleIds = userCampaigns.map((c) => c.id);
+      where.AND = [
+        { direction: "INBOUND" },
+        {
+          OR: [
+            { userId },
+            {
+              company: {
+                campaignId: { in: accessibleIds },
+              },
+            },
+          ],
+        },
+      ];
     }
 
     const messages = await prisma.message.findMany({

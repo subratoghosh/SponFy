@@ -95,12 +95,41 @@ export async function getMeetings(userId: string, campaignId?: string): Promise<
 
   if (isDatabaseConfigured()) {
     try {
-      const where: any = { userId };
+      let where: any = {};
       if (campaignId) {
+        if (userId) {
+          const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+          const access = await getCampaignAccess(userId, campaignId);
+          if (!access.allowed) {
+            return [];
+          }
+        }
         where.campaignId = campaignId;
+      } else if (userId) {
+        const userCampaigns = await prisma.campaign.findMany({
+          where: {
+            OR: [
+              { userId },
+              {
+                members: {
+                  some: {
+                    userId,
+                    status: "ACTIVE",
+                  },
+                },
+              },
+            ],
+          },
+          select: { id: true },
+        });
+        const accessibleIds = userCampaigns.map((c) => c.id);
+        where.OR = [
+          { userId },
+          { campaignId: { in: accessibleIds } },
+        ];
       }
       const records = await (prisma as any).meeting.findMany({
-        where,
+        where: Object.keys(where).length > 0 ? where : undefined,
         orderBy: { startsAt: "asc" },
       });
       return records.map(mapPrismaMeeting);
@@ -124,9 +153,20 @@ export async function getMeetingById(id: string, userId: string): Promise<Meetin
   if (isDatabaseConfigured()) {
     try {
       const record = await (prisma as any).meeting.findFirst({
-        where: { id, userId },
+        where: { id },
       });
-      return record ? mapPrismaMeeting(record) : null;
+      if (!record) return null;
+      if (record.userId === userId) {
+        return mapPrismaMeeting(record);
+      }
+      if (record.campaignId) {
+        const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+        const access = await getCampaignAccess(userId, record.campaignId);
+        if (access.allowed) {
+          return mapPrismaMeeting(record);
+        }
+      }
+      return null;
     } catch (err) {
       console.warn("Prisma getMeetingById failed, falling back to memory store:", err);
     }
@@ -214,9 +254,17 @@ export async function updateMeeting(
   if (isDatabaseConfigured()) {
     try {
       const existing = await (prisma as any).meeting.findFirst({
-        where: { id, userId },
+        where: { id },
       });
       if (!existing) return null;
+
+      let allowed = existing.userId === userId;
+      if (!allowed && existing.campaignId) {
+        const { requireCampaignAccess } = await import("@/lib/security/campaign-access");
+        const access = await requireCampaignAccess(userId, existing.campaignId, "ORGANISER");
+        allowed = access.allowed;
+      }
+      if (!allowed) return null;
 
       const dataToUpdate: any = {};
       if (patch.title !== undefined) dataToUpdate.title = patch.title;
