@@ -4,11 +4,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Mail, RefreshCw, Inbox } from 'lucide-react';
 import { getInboundThreads } from '@/lib/data/repositories/replies';
 import { getSponsors } from '@/lib/data/repositories/sponsors';
-import { Message, ReplyAnalysis, Company } from '@/types';
+import { Message, ReplyAnalysis, Company, Meeting } from '@/types';
 import { ThreadList } from '@/components/replies/ThreadList';
 import { ThreadView } from '@/components/replies/ThreadView';
 import { ReplyAnalysisPanel } from '@/components/replies/ReplyAnalysisPanel';
 import { ReplyComposerModal } from '@/components/replies/ReplyComposerModal';
+import { ScheduleMeetingModal } from '@/components/replies/ScheduleMeetingModal';
+import { formatMeetingDate, formatMeetingTimeRange } from '@/lib/meetings/calendar-helpers';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { InboxSkeleton } from '@/components/skeletons/InboxSkeleton';
@@ -16,11 +18,15 @@ import { InboxSkeleton } from '@/components/skeletons/InboxSkeleton';
 export default function RepliesPage() {
   const [threadItems, setThreadItems] = useState<Array<{ message: Message; analysis?: ReplyAnalysis }>>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [filterIntent, setFilterIntent] = useState<string>('all');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [composerInitialBody, setComposerInitialBody] = useState<string | undefined>(undefined);
+  const [composerInitialSubject, setComposerInitialSubject] = useState<string | undefined>(undefined);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [showIntelligence, setShowIntelligence] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
@@ -28,12 +34,16 @@ export default function RepliesPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [threads, comps] = await Promise.all([
+      const [threads, comps, meetingsRes] = await Promise.all([
         getInboundThreads(),
         getSponsors(),
+        fetch('/api/meetings').then((res) => res.json()).catch(() => ({ data: [] })),
       ]);
       setThreadItems(threads);
       setCompanies(comps);
+      if (meetingsRes?.success && Array.isArray(meetingsRes.data)) {
+        setMeetings(meetingsRes.data);
+      }
       setSelectedMessageId((prev) => prev || (threads.length > 0 ? threads[0].message.id : null));
     } finally {
       setLoading(false);
@@ -75,6 +85,25 @@ export default function RepliesPage() {
     toast(`Reply sent to ${selectedCompany?.name || selectedItem.message.fromEmail}!`, 'success');
   };
 
+  const selectedMeeting = meetings.find(
+    (m) =>
+      (m.replyMessageId === selectedItem?.message.id || m.companyId === selectedItem?.message.companyId) &&
+      m.status !== 'cancelled'
+  ) || null;
+
+  const handleDraftConfirmation = (m: Meeting) => {
+    const formattedDate = formatMeetingDate(m.startsAt);
+    const formattedTime = formatMeetingTimeRange(m.startsAt, m.durationMins);
+    setComposerInitialSubject(`Confirmed: ${m.title}`);
+    setComposerInitialBody(
+      `Hi ${m.contactName || selectedCompany?.name || 'there'},\n\n` +
+      `Thank you for your interest! I have arranged our sponsorship discussion for ${formattedDate} at ${formattedTime}.\n\n` +
+      `Meeting link: ${m.location}\nDuration: ${m.durationMins} minutes\n\n` +
+      `Looking forward to speaking with you!\n\nBest regards,\nSponsorship Lead`
+    );
+    setIsComposerOpen(true);
+  };
+
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col bg-[#FAF4E6]">
       {/* Top action bar */}
@@ -86,7 +115,7 @@ export default function RepliesPage() {
           <div>
             <h1 className="font-heading font-bold text-lg md:text-xl text-[#0C382E]">Replies Inbox</h1>
             <p className="text-xs text-[#0C382E]/60 hidden sm:block">
-              AI-classified thread responses with one-click approved replies
+              AI-classified thread responses with one-click approved replies & meeting scheduling
             </p>
           </div>
         </div>
@@ -151,6 +180,7 @@ export default function RepliesPage() {
               threads={filteredThreads}
               companies={companies}
               selectedMessageId={selectedMessageId}
+              meetings={meetings}
               onSelectThread={(id) => {
                 setSelectedMessageId(id);
                 setMobileView('thread');
@@ -189,9 +219,15 @@ export default function RepliesPage() {
                 message={selectedItem.message}
                 company={selectedCompany}
                 analysis={selectedItem.analysis}
+                meeting={selectedMeeting}
                 showIntelligence={showIntelligence}
                 onToggleIntelligence={() => setShowIntelligence(!showIntelligence)}
-                onComposeReply={() => setIsComposerOpen(true)}
+                onArrangeMeeting={() => setIsScheduleOpen(true)}
+                onComposeReply={() => {
+                  setComposerInitialSubject(undefined);
+                  setComposerInitialBody(undefined);
+                  setIsComposerOpen(true);
+                }}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center text-center p-8 bg-[#FFFDF6]">
@@ -213,8 +249,14 @@ export default function RepliesPage() {
               <div className="relative ml-auto h-full w-full max-w-sm md:w-88 md:max-w-none md:static shadow-2xl md:shadow-none">
                 <ReplyAnalysisPanel
                   analysis={selectedItem.analysis}
+                  meeting={selectedMeeting}
                   onClose={() => setShowIntelligence(false)}
-                  onExecuteRecommendation={() => setIsComposerOpen(true)}
+                  onArrangeMeeting={() => setIsScheduleOpen(true)}
+                  onExecuteRecommendation={() => {
+                    setComposerInitialSubject(undefined);
+                    setComposerInitialBody(undefined);
+                    setIsComposerOpen(true);
+                  }}
                 />
               </div>
             </div>
@@ -228,8 +270,30 @@ export default function RepliesPage() {
         company={selectedCompany}
         analysis={selectedItem?.analysis}
         isOpen={isComposerOpen}
-        onClose={() => setIsComposerOpen(false)}
+        initialSubject={composerInitialSubject}
+        initialBody={composerInitialBody}
+        onClose={() => {
+          setIsComposerOpen(false);
+          setComposerInitialSubject(undefined);
+          setComposerInitialBody(undefined);
+        }}
         onSend={handleSendReply}
+      />
+
+      {/* Schedule Meeting Modal */}
+      <ScheduleMeetingModal
+        isOpen={isScheduleOpen}
+        onClose={() => setIsScheduleOpen(false)}
+        companyName={selectedCompany?.name || 'Sponsor'}
+        companyId={selectedCompany?.id || selectedItem?.message.companyId || ''}
+        campaignId={selectedCompany?.campaignId}
+        contactName={selectedCompany?.contacts?.[0]?.name}
+        contactEmail={selectedCompany?.contacts?.[0]?.email || selectedItem?.message.fromEmail}
+        replyMessageId={selectedItem?.message.id}
+        onSuccess={(newMeeting) => {
+          setMeetings((prev) => [newMeeting, ...prev.filter((m) => m.id !== newMeeting.id)]);
+        }}
+        onDraftConfirmationReply={handleDraftConfirmation}
       />
     </div>
   );

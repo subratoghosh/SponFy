@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { Message, ReplyAnalysis, Company } from "@/types";
+import { Message, ReplyAnalysis, Company, Meeting } from "@/types";
 import { INTENT_CONFIG } from "@/lib/config/constants";
 import { formatTimeAgo } from "@/lib/utils";
+import { formatMeetingDateShort } from "@/lib/meetings/calendar-helpers";
 import { Mail, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ interface ThreadListProps {
   companies: Company[];
   selectedMessageId: string | null;
   onSelectThread: (msgId: string) => void;
+  meetings?: Meeting[];
 }
 
 export const ThreadList: React.FC<ThreadListProps> = ({
@@ -19,6 +21,7 @@ export const ThreadList: React.FC<ThreadListProps> = ({
   companies,
   selectedMessageId,
   onSelectThread,
+  meetings = [],
 }) => {
   return (
     <div className="bg-white rounded-3xl p-5 border border-green-dark/12 shadow-sm space-y-3 h-full flex flex-col">
@@ -88,11 +91,28 @@ export const ThreadList: React.FC<ThreadListProps> = ({
 
               <div className="flex items-center justify-between text-[10px] text-text-muted pt-1.5 border-t border-green-dark/6">
                 <span>{formatTimeAgo(message.sentAt)}</span>
-                {analysis?.meetingRequested && (
-                  <span className="text-green-700 font-bold flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> Meeting Asked
-                  </span>
-                )}
+                {(() => {
+                  const m = meetings.find(
+                    (item) =>
+                      (item.replyMessageId === message.id || item.companyId === message.companyId) &&
+                      item.status !== "cancelled"
+                  );
+                  if (m) {
+                    return (
+                      <span className="text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        <Calendar className="w-3 h-3 text-emerald-600" /> Meeting: {formatMeetingDateShort(m.startsAt)}
+                      </span>
+                    );
+                  }
+                  if (analysis?.meetingRequested) {
+                    return (
+                      <span className="text-green-700 font-bold flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> Meeting Asked
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </div>
           );

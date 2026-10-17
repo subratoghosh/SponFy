@@ -15,6 +15,7 @@ import {
   Clock,
   BarChart3,
   Download,
+  CalendarDays,
 } from "lucide-react";
 import { getCampaigns } from "@/lib/data/repositories/campaigns";
 import { Campaign } from "@/types";
@@ -23,11 +24,12 @@ import { cn } from "@/lib/utils";
 import { MAIN_NAV_ITEMS } from "@/lib/config/nav";
 import { useInstallPrompt } from "@/lib/hooks/useInstallPrompt";
 
-const MOBILE_DROPDOWN_LABELS = ["Campaigns", "Follow-ups", "Analytics", "Settings"] as const;
+const MOBILE_DROPDOWN_LABELS = ["Campaigns", "Schedule", "Follow-ups", "Analytics", "Settings"] as const;
 
 const NAV_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   FolderKanban,
   Compass,
+  CalendarDays,
   Clock,
   BarChart3,
   Settings,

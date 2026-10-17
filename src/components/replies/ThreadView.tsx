@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Clock, Send, User, MessageSquare, Brain, HelpCircle, CheckCircle, ArrowRight } from 'lucide-react';
-import { Message, Company, ReplyAnalysis } from '@/types';
+import Link from 'next/link';
+import { Mail, Clock, Send, User, MessageSquare, Brain, HelpCircle, CheckCircle, ArrowRight, Calendar } from 'lucide-react';
+import { Message, Company, ReplyAnalysis, Meeting } from '@/types';
 import { formatDate } from '@/lib/utils';
+import { formatMeetingDateShort } from '@/lib/meetings/calendar-helpers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,6 +18,8 @@ interface ThreadViewProps {
   showIntelligence?: boolean;
   onToggleIntelligence?: () => void;
   onComposeReply: () => void;
+  meeting?: Meeting | null;
+  onArrangeMeeting?: () => void;
 }
 
 export function ThreadView({
@@ -26,9 +30,14 @@ export function ThreadView({
   showIntelligence,
   onToggleIntelligence,
   onComposeReply,
+  meeting,
+  onArrangeMeeting,
 }: ThreadViewProps) {
   const [activeTab, setActiveTab] = useState<'stream' | 'intel'>('stream');
   const messagesToDisplay = allThreadMessages.length > 0 ? allThreadMessages : [message];
+
+  const isDeclined = analysis?.intent === 'Not Interested' || (analysis?.intent as any) === 'Declined';
+  const canArrangeMeeting = !isDeclined && (analysis?.intent === 'Interested' || analysis?.intent === 'Positive' || Boolean(analysis?.meetingRequested));
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#FFFDF6] overflow-hidden min-w-0">
@@ -60,7 +69,34 @@ export function ThreadView({
         </div>
 
         {/* Action Buttons: Strictly Non-Wrapping */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+          {/* Meeting Scheduled Badge vs Arrange Meeting Button */}
+          {meeting ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shrink-0">
+              <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Meeting: {formatMeetingDateShort(meeting.startsAt)}</span>
+              <Link
+                href="/app/schedule"
+                className="ml-1 text-[11px] underline text-emerald-900 hover:text-green-dark"
+              >
+                View in Schedule →
+              </Link>
+            </div>
+          ) : (
+            canArrangeMeeting &&
+            onArrangeMeeting && (
+              <Button
+                onClick={onArrangeMeeting}
+                variant="butter"
+                size="sm"
+                className="text-xs gap-1.5 font-bold whitespace-nowrap shrink-0 shadow-xs border border-[#0C382E]/15 text-[#0C382E]"
+              >
+                <Calendar className="w-3.5 h-3.5 shrink-0 text-[#0C382E]" />
+                <span>Arrange Meeting</span>
+              </Button>
+            )
+          )}
+
           <Button
             onClick={onComposeReply}
             variant="green"
@@ -212,7 +248,7 @@ export function ThreadView({
               )}
 
               {/* Action Banner */}
-              <div className="bg-gradient-to-r from-[#0C382E] to-[#154D40] text-[#FFF0B3] p-5 rounded-2xl shadow-sm flex items-center justify-between gap-4">
+              <div className="bg-gradient-to-r from-[#0C382E] to-[#154D40] text-[#FFF0B3] p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[11px] font-bold text-[#FFF0B3]/70 uppercase tracking-wider block mb-0.5">
                     Recommended Next Action
@@ -220,16 +256,38 @@ export function ThreadView({
                   <p className="text-sm font-bold text-white">
                     {analysis.nextAction}
                   </p>
+                  {meeting && (
+                    <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/70 text-emerald-200 border border-emerald-500/30 text-xs">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Meeting booked for {formatMeetingDateShort(meeting.startsAt)}</span>
+                      <Link href="/app/schedule" className="underline text-butter-cream hover:text-white font-bold ml-1">
+                        View →
+                      </Link>
+                    </div>
+                  )}
                 </div>
-                <Button
-                  onClick={onComposeReply}
-                  variant="butter"
-                  size="sm"
-                  className="font-bold shrink-0 text-xs gap-1.5"
-                >
-                  <span>Execute Reply Draft</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {!meeting && canArrangeMeeting && onArrangeMeeting && (
+                    <Button
+                      onClick={onArrangeMeeting}
+                      variant="butter"
+                      size="sm"
+                      className="font-bold shrink-0 text-xs gap-1.5"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Arrange Meeting</span>
+                    </Button>
+                  )}
+                  <Button
+                    onClick={onComposeReply}
+                    variant="outline"
+                    size="sm"
+                    className="font-bold shrink-0 text-xs gap-1.5 bg-white/10 text-white border-white/20 hover:bg-white/20"
+                  >
+                    <span>Execute Reply Draft</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}

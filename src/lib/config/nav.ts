@@ -13,6 +13,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Discover", href: "/app/discover", icon: "Compass", description: "Find prospective sponsors" },
   { label: "Outreach", href: "/app/outreach", icon: "Send", description: "Draft approval & Gmail dispatch" },
   { label: "Replies", href: "/app/replies", icon: "MailQuestion", description: "Reply intelligence inbox" },
+  { label: "Schedule", href: "/app/schedule", icon: "CalendarDays", description: "Calendar & scheduled meetings" },
   { label: "Follow-ups", href: "/app/follow-ups", icon: "Clock", description: "Sequenced follow-up queue" },
   { label: "Analytics", href: "/app/analytics", icon: "BarChart3", description: "Sponsorship conversion analytics" },
   { label: "Settings", href: "/app/settings", icon: "Settings", description: "Integrations, caps & Gmail status" },

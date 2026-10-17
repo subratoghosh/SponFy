@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { PIPELINE_STAGES } from "@/lib/config/pipeline";
+import { getMeetings } from "@/lib/data/repositories/meetings";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       messageWhere.userId = userId;
     }
 
-    const [companies, drafts, messages, campaigns] = await Promise.all([
+    const [companies, drafts, messages, campaigns, userMeetings] = await Promise.all([
       prisma.company.findMany({
         where: companyWhere,
         select: {
@@ -71,6 +72,7 @@ export async function GET(request: NextRequest) {
           targetAmount: true,
         },
       }),
+      userId ? getMeetings(userId, campaignId) : Promise.resolve([]),
     ]);
 
     const activeCampaign = campaigns[0] || null;
@@ -191,7 +193,14 @@ export async function GET(request: NextRequest) {
           repliesCount,
           overallReplyRate,
           positiveReplyRate,
-          meetingCount: messages.filter((m) => m.analysis?.meetingRequested).length,
+          meetingCount: (() => {
+            const booked = (userMeetings || []).filter(
+              (m: any) => m.status === "scheduled" || m.status === "completed"
+            );
+            return booked.length > 0
+              ? booked.length
+              : messages.filter((m) => m.analysis?.meetingRequested).length;
+          })(),
           negotiationsCount: companies.filter((s) => s.stage === "NEGOTIATION").length,
           committedCount: committed,
           committedAmount,
