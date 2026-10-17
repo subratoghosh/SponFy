@@ -108,9 +108,15 @@ export class RealGmailClient implements IGmailClient {
       oauth2Client.setCredentials(this.tokens);
 
       const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+      // RFC 2047 compliant subject header encoding for non-ASCII characters
+      const cleanSubject = (subject || "").trim();
+      const encodedSubject = /[^ -~]/.test(cleanSubject)
+        ? `=?UTF-8?B?${Buffer.from(cleanSubject, "utf-8").toString("base64")}?=`
+        : cleanSubject;
+
       const rawMessage = [
         `To: ${to}`,
-        `Subject: ${subject}`,
+        `Subject: ${encodedSubject}`,
         `Content-Type: text/plain; charset=utf-8`,
         "",
         body,
