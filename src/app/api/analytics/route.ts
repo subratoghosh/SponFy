@@ -26,12 +26,34 @@ export async function GET(request: NextRequest) {
     const messageWhere: any = {};
 
     if (campaignId) {
+      if (userId && !isDemo) {
+        const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+        const { allowed } = await getCampaignAccess(userId, campaignId);
+        if (!allowed) {
+          return NextResponse.json({ error: "Forbidden. No access to this campaign." }, { status: 403 });
+        }
+      }
       companyWhere.campaignId = campaignId;
       campaignWhere.id = campaignId;
+      messageWhere.company = { campaignId };
     } else if (userId && !isDemo) {
-      companyWhere.userId = userId;
-      campaignWhere.userId = userId;
-      messageWhere.userId = userId;
+      const { getUserAccessibleCampaignIds } = await import("@/lib/security/campaign-access");
+      const accessibleIds = await getUserAccessibleCampaignIds(userId);
+      if (accessibleIds.length > 0) {
+        companyWhere.OR = [
+          { userId },
+          { campaignId: { in: accessibleIds } },
+        ];
+        campaignWhere.id = { in: accessibleIds };
+        messageWhere.OR = [
+          { userId },
+          { company: { campaignId: { in: accessibleIds } } },
+        ];
+      } else {
+        companyWhere.userId = userId;
+        campaignWhere.userId = userId;
+        messageWhere.userId = userId;
+      }
     }
 
     const [companies, drafts, messages, campaigns, userMeetings] = await Promise.all([

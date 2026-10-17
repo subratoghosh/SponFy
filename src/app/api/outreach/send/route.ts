@@ -144,7 +144,7 @@ export async function POST(req: Request) {
     const todayMidnight = getTodayMidnight();
     const [suppressed, companyMessages, sentInWindow, profile] = await Promise.all([
       isSuppressed(recipient.recipient),
-      getMessages(company.id, userId),
+      getMessages(company.id), // Scoped across all campaign/org members so evaluateSend enforces anti-duplicate teammate guard
       countOutboundSince(todayMidnight, userId),
       getUserProfile(),
     ]);

@@ -114,6 +114,9 @@ export const TopBar: React.FC = () => {
   const isOrganiser =
     !isDemo &&
     ((user as any)?.role === "ORGANISER" || isAdmin);
+  const isExecutive =
+    !isDemo &&
+    ((user as any)?.role === "EXECUTIVE" || (user as any)?.accountMode === "EXECUTIVE");
   const displayName = user?.name || (isDemo ? "Demo Organizer" : "Event Organizer");
   const displayEmail = user?.email || (isDemo ? "demo@sponfy.dev" : "");
   const initials = displayName
@@ -162,14 +165,16 @@ export const TopBar: React.FC = () => {
               </span>
               {campaigns.length === 0 ? (
                 <div className="px-3 py-3 text-xs text-text-muted text-center space-y-2">
-                  <p>No campaigns created yet.</p>
-                  <Link
-                    href="/app/campaigns"
-                    onClick={() => setCampaignDropdownOpen(false)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-green-dark bg-butter-cream px-3 py-1.5 rounded-lg hover:bg-butter-gold transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Create Campaign
-                  </Link>
+                  <p>{isExecutive ? "No campaigns assigned yet." : "No campaigns created yet."}</p>
+                  {!isExecutive && (
+                    <Link
+                      href="/app/campaigns"
+                      onClick={() => setCampaignDropdownOpen(false)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-green-dark bg-butter-cream px-3 py-1.5 rounded-lg hover:bg-butter-gold transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Create Campaign
+                    </Link>
+                  )}
                 </div>
               ) : (
                 <>
@@ -188,15 +193,17 @@ export const TopBar: React.FC = () => {
                       )}
                     </button>
                   ))}
-                  <div className="border-t border-green-dark/10 my-1 pt-1">
-                    <Link
-                      href="/app/campaigns"
-                      onClick={() => setCampaignDropdownOpen(false)}
-                      className="w-full px-3 py-2 text-xs font-bold text-green-dark hover:text-green-mid flex items-center gap-1.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Create New Campaign
-                    </Link>
-                  </div>
+                  {!isExecutive && (
+                    <div className="border-t border-green-dark/10 my-1 pt-1">
+                      <Link
+                        href="/app/campaigns"
+                        onClick={() => setCampaignDropdownOpen(false)}
+                        className="w-full px-3 py-2 text-xs font-bold text-green-dark hover:text-green-mid flex items-center gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Create New Campaign
+                      </Link>
+                    </div>
+                  )}
                 </>
               )}
             </div>

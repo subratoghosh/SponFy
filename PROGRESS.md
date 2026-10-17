@@ -1,15 +1,45 @@
 # SponFy — Implementation Progress
 
 ## STATUS
-- **Current Milestone**: Production Security, Distributed Upstash Redis Rate Limiting, IDOR Defense & Performance Optimization Complete
-- **Last Verified**: Vitest (14/14 test suites, 122/122 tests passing), TypeScript (0 errors), Next.js 15 production build (61/61 static/dynamic pages compiled)
-- **Security & Reliability Baseline**:
-  1. Distributed rate limiting powered by `@upstash/ratelimit` and `@upstash/redis` with sliding windows and fail-closed policies for expensive operations.
-  2. Centralized server-side API authentication & IDOR resource ownership enforcement on all private endpoints.
-  3. SSRF and open redirect defense blocking cloud metadata (169.254.169.254), loopback (localhost, 127.0.0.1, [::1]), and RFC 1918 private subnets.
-  4. Atomic check-and-set claims for email sending preventing concurrent and duplicate sends.
-  5. Strict production security headers configured in `next.config.ts`.
-- **Interruption Recovery**: Codebase is fully functional, secure, and production ready for Vercel deployment.
+- **Current Milestone**: Organization Multi-Tenant System Integration Complete (Branch `integrate/sneha-org-model`)
+- **Last Verified**:
+  - Vitest: **21/21 test files, 186/186 tests passing (100%)**
+  - TypeScript: `tsc --noEmit` passed with 0 errors
+  - ESLint: `next lint` passed with 0 errors
+  - Next.js 15 Production Build: **91/91 static & dynamic routes compiled successfully** with 0 errors
+- **Key Architecture & Security Highlights**:
+  1. Relational multi-tenant model (`Organisation`, `OrganisationMember`, `CampaignMember`, `AccessRequest`, `Notification`) without JSON arrays.
+  2. Strict server-side authorization: Organizers inherit campaigns owned by their organization; Executives only access explicitly assigned campaigns; pending/revoked users receive zero access.
+  3. Non-negotiable protection: Last active Organizer cannot be removed (`CANNOT_REMOVE_LAST_ORGANIZER`).
+  4. Separate Executive approval & campaign assignment with atomic campaign creation + assignment.
+  5. Multi-executive duplicate email guard across team members and item-by-item authorization in bulk sends.
+  6. Additive migration (`20261017_organisation_multi_tenant_model`) preserving all existing individual users and campaigns with zero data deletion.
+  7. Rollout runbook created at `docs/ORG_ROLLOUT.md`.
+- **Interruption Recovery**: Codebase is clean, tested, and ready for deployment.
+
+---
+
+## [2026-10-17 23:45] M10 – Organization Multi-Tenant Model Integration Complete
+- **Done**:
+  - Phase A: Performed comprehensive git reconnaissance of Sneha's branch `origin/sneha` against merge-base `d46daccb234b16325f1dea6d973bf320c25db640`. Created `docs/SNEHA_BRANCH_REVIEW.md`.
+  - Phase B: Merged `origin/sneha` into local `integrate/sneha-org-model` with full conflict resolution in `src/app/api/sponsors/route.ts`. Preserved all of main's rate limiting, Gmail safeguards, and scoring.
+  - Phase C: Completed Gap Analysis against `docs/ORG_MODEL_SPEC.md` and implemented all missing capabilities:
+    - Updated schema for organization-first join requests (nullable `campaignId`, `assignedById`, `revokedAt`).
+    - Implemented rate-limited public organization search (`GET /api/organisations?q=...`).
+    - Built complete Executive onboarding workflow at `/onboarding/executive` and adapted `/onboarding/pending`.
+    - Implemented campaign assignment endpoints at `/api/team/assign` (POST / DELETE).
+    - Upgraded `/app/team` with Executive campaign assignment modal and last organizer protection.
+    - Implemented Executive empty state on dashboard when 0 campaigns are assigned.
+    - Added team-wide duplicate outreach protection and item-by-item bulk authorization.
+    - Scoped analytics to accessible campaigns and organizations.
+    - Created additive migration SQL at `prisma/migrations/20261017_organisation_multi_tenant_model/migration.sql`.
+    - Created operational runbook at `docs/ORG_ROLLOUT.md`.
+    - Added 6 focused spec unit tests in `tests/org-model.test.ts`.
+- **Verified**:
+  - `npm test`: 21 test files, 186 unit/integration tests passing (100%).
+  - `npm run typecheck`: Passed with 0 errors.
+  - `npm run lint`: Passed with 0 errors.
+  - `npm run build`: Passed (all 91 pages compiled successfully).
 
 ---
 

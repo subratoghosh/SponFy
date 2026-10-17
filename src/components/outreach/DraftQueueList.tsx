@@ -2,7 +2,7 @@
 
 import React from "react";
 import { EmailDraft, Company } from "@/types";
-import { CheckCircle2, AlertTriangle, CheckSquare, Square, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertTriangle, CheckSquare, Square, Loader2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DraftQueueListProps {
@@ -147,6 +147,16 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
                       )}
                     </button>
                   )}
+                  {/* Sent Attribution Tag (Username tag in front of sent email) */}
+                  {d.status === "sent" && (
+                    <span
+                      title={`Sent by ${d.sentByName || d.sentByUsername || "Team Member"}`}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 shrink-0"
+                    >
+                      <User className="w-2.5 h-2.5 text-blue-600" />
+                      <span>@{d.sentByUsername || d.sentByName || "executive"}</span>
+                    </span>
+                  )}
                   <span className="font-bold text-green-dark truncate">
                     {comp?.name || "Company"}
                   </span>
@@ -178,7 +188,13 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
               </p>
               <div className="flex items-center justify-between text-[10px] text-text-muted pt-1 border-t border-green-dark/6">
                 <span>Quality: {d.quality?.overall != null ? `${d.quality.overall}%` : "–"}</span>
-                <span className="truncate ml-2">{comp?.contacts?.[0]?.name || comp?.contacts?.[0]?.email || "No contact yet"}</span>
+                {d.status === "sent" && (d.sentByName || d.sentByUsername) ? (
+                  <span className="font-semibold text-blue-700 truncate ml-2">
+                    Sent by @{d.sentByUsername || d.sentByName}
+                  </span>
+                ) : (
+                  <span className="truncate ml-2">{comp?.contacts?.[0]?.name || comp?.contacts?.[0]?.email || "No contact yet"}</span>
+                )}
               </div>
             </div>
           );

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
-import { demoCampaignMembersRef } from "@/lib/security/campaign-access";
+import { demoAccessRequestsRef, demoCampaignMembersRef } from "@/lib/security/campaign-access";
 
 export async function POST() {
   const authRes = await requireAuth();
@@ -30,17 +29,29 @@ export async function POST() {
         },
       });
 
-      if (!approvedReq && !activeMember) {
+      const activeOrgMember = await (prisma as any).organisationMember.findFirst({
+        where: {
+          userId,
+          status: "ACTIVE",
+        },
+      });
+
+      if (!approvedReq && !activeMember && !activeOrgMember) {
         return NextResponse.json(
-          { error: "No approved access request found for your account." },
+          { error: "No approved access request or active membership found for your account." },
           { status: 400 }
         );
       }
 
-      const targetRole = approvedReq?.requestedRole || activeMember?.role || "EXECUTIVE";
+      const assignedRole =
+        approvedReq?.requestedRole === "EXECUTIVE" ||
+        activeOrgMember?.role === "EXECUTIVE" ||
+        activeMember?.role === "EXECUTIVE"
+          ? "EXECUTIVE"
+          : "ORGANISER";
 
-      // Activate CampaignMember if not already active
-      if (approvedReq) {
+      // Activate CampaignMember if campaign linked
+      if (approvedReq && approvedReq.campaignId) {
         await (prisma as any).campaignMember.upsert({
           where: {
             campaignId_userId: {
@@ -49,46 +60,45 @@ export async function POST() {
             },
           },
           update: {
-            role: targetRole,
+            role: assignedRole,
             status: "ACTIVE",
           },
           create: {
             campaignId: approvedReq.campaignId,
             userId,
-            role: targetRole,
+            role: assignedRole,
             status: "ACTIVE",
           },
         });
+      }
 
-        // Activate OrganisationMember if organisation linked
-        const orgId = approvedReq.organisationId;
-        if (orgId) {
-          await (prisma as any).organisationMember.upsert({
-            where: {
-              organisationId_userId: {
-                organisationId: orgId,
-                userId,
-              },
-            },
-            update: {
-              role: targetRole,
-              status: "ACTIVE",
-            },
-            create: {
-              organisationId: orgId,
+      // Activate OrganisationMember if organisation linked
+      if (approvedReq && approvedReq.organisationId) {
+        await (prisma as any).organisationMember.upsert({
+          where: {
+            organisationId_userId: {
+              organisationId: approvedReq.organisationId,
               userId,
-              role: targetRole,
-              status: "ACTIVE",
             },
-          });
-        }
+          },
+          update: {
+            role: assignedRole,
+            status: "ACTIVE",
+          },
+          create: {
+            organisationId: approvedReq.organisationId,
+            userId,
+            role: assignedRole,
+            status: "ACTIVE",
+          },
+        });
       }
 
       await (prisma as any).user.update({
         where: { id: userId },
         data: {
-          role: targetRole,
-          accountMode: targetRole,
+          role: assignedRole,
+          accountMode: assignedRole,
           onboardingStatus: "COMPLETE",
           onboarded: true,
         },
@@ -109,7 +119,7 @@ export async function POST() {
     );
     const targetRole = approvedDemoReq?.requestedRole || "EXECUTIVE";
 
-    if (approvedDemoReq) {
+    if (approvedDemoReq && approvedDemoReq.campaignId) {
       const existingMember = demoCampaignMembersRef.value.find(
         (m) => m.campaignId === approvedDemoReq.campaignId && m.userId === userId
       );

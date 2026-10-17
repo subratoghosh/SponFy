@@ -18,10 +18,10 @@ export async function PATCH(
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
   const { role } = body;
-
-  if (!role || !["USER", "ADMIN"].includes(role)) {
+  const allowedRoles: UserRole[] = ["USER", "ORGANISER", "EXECUTIVE", "ADMIN"];
+  if (!role || !allowedRoles.includes(role)) {
     return NextResponse.json(
-      { error: "Invalid role value. Must be USER or ADMIN." },
+      { error: "Invalid role value. Must be USER, ORGANISER, EXECUTIVE, or ADMIN." },
       { status: 400 }
     );
   }

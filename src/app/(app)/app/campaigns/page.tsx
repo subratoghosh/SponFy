@@ -76,6 +76,8 @@ export default function CampaignsPage() {
     };
   }, [loadData]);
 
+  const isExecutive = session?.user?.role === "EXECUTIVE" || (session?.user as any)?.accountMode === "EXECUTIVE";
+
   const eventTypes = useMemo(() => {
     const types = new Set(campaigns.map((c) => c.eventType).filter(Boolean));
     return Array.from(types);
@@ -108,17 +110,21 @@ export default function CampaignsPage() {
             Campaigns
           </h1>
           <p className="text-xs sm:text-sm text-text-dim mt-0.5">
-            Manage your campaigns, conferences, and event sponsorship initiatives.
+            {isExecutive
+              ? "View and work on the campaigns assigned to you by your organisation."
+              : "Manage your campaigns, conferences, and event sponsorship initiatives."}
           </p>
         </div>
-        <Button
-          variant="butter"
-          size="sm"
-          onClick={() => setModalOpen(true)}
-          className="font-bold shadow-md self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4 mr-1" /> New Campaign
-        </Button>
+        {!isExecutive && (
+          <Button
+            variant="butter"
+            size="sm"
+            onClick={() => setModalOpen(true)}
+            className="font-bold shadow-md self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4 mr-1" /> New Campaign
+          </Button>
+        )}
       </div>
 
       {/* Interactive Options Bar (Status Filter Buttons + View Toggles + Search) */}
@@ -242,14 +248,22 @@ export default function CampaignsPage() {
       ) : filteredCampaigns.length === 0 ? (
         <EmptyState
           icon={FolderKanban}
-          title={campaigns.length === 0 ? "No campaigns created yet" : "No matching campaigns"}
+          title={
+            campaigns.length === 0
+              ? isExecutive
+                ? "No campaigns assigned yet"
+                : "No campaigns created yet"
+              : "No matching campaigns"
+          }
           description={
             campaigns.length === 0
-              ? "Create your first campaign or event sponsorship initiative to start discovering high-fit sponsors."
+              ? isExecutive
+                ? "You will be able to view and manage campaigns once an organiser assigns you to them."
+                : "Create your first campaign or event sponsorship initiative to start discovering high-fit sponsors."
               : "Try adjusting your search terms or filter options above."
           }
-          actionLabel={campaigns.length === 0 ? "Create First Campaign" : undefined}
-          onAction={campaigns.length === 0 ? () => setModalOpen(true) : undefined}
+          actionLabel={!isExecutive && campaigns.length === 0 ? "Create First Campaign" : undefined}
+          onAction={!isExecutive && campaigns.length === 0 ? () => setModalOpen(true) : undefined}
         />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
@@ -346,11 +360,13 @@ export default function CampaignsPage() {
       )}
 
       {/* Creation Wizard Dialog */}
-      <CreateCampaignModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={loadData}
-      />
+      {!isExecutive && modalOpen && (
+        <CreateCampaignModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onCreated={loadData}
+        />
+      )}
     </div>
   );
 }

@@ -36,6 +36,107 @@ function generateSlug(name: string): string {
   return `${base || "org"}-${randomSuffix}`;
 }
 
+export async function GET(req: Request) {
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
+
+  // Rate limiting: 60 reads/minute/user
+  const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+  const rateLimit = await checkRateLimit("read", userId);
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
+  const { searchParams } = new URL(req.url);
+  const q = searchParams.get("q")?.trim() || "";
+
+  try {
+    if (isDatabaseConfigured()) {
+      const where: any = q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { city: { contains: q, mode: "insensitive" } },
+              { slug: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {};
+
+      const orgs = await (prisma as any).organisation.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          type: true,
+          city: true,
+          website: true,
+          description: true,
+          logoUrl: true,
+          createdAt: true,
+          _count: {
+            select: {
+              campaigns: true,
+              members: {
+                where: { status: "ACTIVE" },
+              },
+            },
+          },
+        },
+        take: 20,
+        orderBy: { name: "asc" },
+      });
+
+      return NextResponse.json({
+        success: true,
+        organisations: orgs.map((o: any) => ({
+          id: o.id,
+          name: o.name,
+          slug: o.slug,
+          type: o.type,
+          city: o.city,
+          website: o.website,
+          description: o.description,
+          logoUrl: o.logoUrl,
+          campaignsCount: o._count?.campaigns ?? 0,
+          membersCount: o._count?.members ?? 0,
+        })),
+      });
+    }
+
+    // Demo mode
+    const lower = q.toLowerCase();
+    const filtered = demoOrganisationsRef.value.filter(
+      (o) =>
+        !q ||
+        o.name.toLowerCase().includes(lower) ||
+        (o.city && o.city.toLowerCase().includes(lower)) ||
+        o.slug.toLowerCase().includes(lower)
+    );
+
+    return NextResponse.json({
+      success: true,
+      organisations: filtered.map((o) => ({
+        id: o.id,
+        name: o.name,
+        slug: o.slug,
+        type: o.type,
+        city: o.city,
+        website: o.website,
+        description: o.description,
+        campaignsCount: 1,
+        membersCount: 1,
+      })),
+    });
+  } catch (err: any) {
+    console.error("[Organisations GET] Error searching organisations:", err);
+    return NextResponse.json({ error: "Failed to search organisations" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   const authRes = await requireAuth();
   if (!authRes.success) {

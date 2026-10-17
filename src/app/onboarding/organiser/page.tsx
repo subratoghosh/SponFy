@@ -32,6 +32,8 @@ interface ExistingOrg {
   city?: string | null;
   website?: string | null;
   description?: string | null;
+  campaignsCount?: number;
+  membersCount?: number;
 }
 
 interface SearchCampaign {
@@ -59,6 +61,11 @@ export default function OnboardingOrganiserPage() {
   // Existing user organisations (for reuse)
   const [myOrgs, setMyOrgs] = useState<ExistingOrg[]>([]);
   const [selectedExistingOrgId, setSelectedExistingOrgId] = useState<string>("");
+
+  // Platform-wide organisations (for selecting existing companies/organisations)
+  const [platformOrgs, setPlatformOrgs] = useState<ExistingOrg[]>([]);
+  const [searchingOrgs, setSearchingOrgs] = useState(false);
+  const [existingViewTab, setExistingViewTab] = useState<"orgs" | "campaigns">("orgs");
 
   // New Org + Campaign Form State
   const [orgForm, setOrgForm] = useState({
@@ -128,23 +135,46 @@ export default function OnboardingOrganiserPage() {
     }
   };
 
-  // Search campaigns for Join flow
+  // Search campaigns and organisations for Join/Existing flow
   useEffect(() => {
     if (mode !== "JOIN") return;
     const timer = setTimeout(() => {
       setSearching(true);
-      fetch(`/api/campaigns/search?q=${encodeURIComponent(searchQuery)}`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data?.campaigns) {
-            setSearchResults(data.campaigns);
-          }
-        })
-        .finally(() => setSearching(false));
+      setSearchingOrgs(true);
+      Promise.allSettled([
+        fetch(`/api/campaigns/search?q=${encodeURIComponent(searchQuery)}`).then((r) =>
+          r.ok ? r.json() : null
+        ),
+        fetch(`/api/organisations?q=${encodeURIComponent(searchQuery)}`).then((r) =>
+          r.ok ? r.json() : null
+        ),
+      ]).then(([campRes, orgRes]) => {
+        if (campRes.status === "fulfilled" && campRes.value?.campaigns) {
+          setSearchResults(campRes.value.campaigns);
+        }
+        if (orgRes.status === "fulfilled" && orgRes.value?.organisations) {
+          setPlatformOrgs(orgRes.value.organisations);
+        }
+        setSearching(false);
+        setSearchingOrgs(false);
+      });
     }, 250);
 
     return () => clearTimeout(timer);
   }, [searchQuery, mode]);
+
+  const handleSelectPlatformOrgForNewCampaign = (org: ExistingOrg) => {
+    setSelectedExistingOrgId(org.id);
+    setOrgForm({
+      name: org.name,
+      type: (org.type as any) || "College Club",
+      description: org.description || "",
+      website: org.website || "",
+      city: org.city || "",
+    });
+    setMode("NEW");
+    toast(`Selected "${org.name}". Now set up your sponsorship campaign.`, "info");
+  };
 
   const toggleIndustry = (ind: string) => {
     setCampaignForm((prev) => {
@@ -278,7 +308,7 @@ export default function OnboardingOrganiserPage() {
 
       {/* Main Container */}
       <div className="w-full max-w-4xl bg-white rounded-3xl border border-green-dark/15 shadow-2xl p-6 sm:p-10 transition-all">
-        {/* STEP A: Two Big Choices */}
+        {/* STEP A: Two Big Choices: Existing Company vs Create Own */}
         {mode === "CHOICE" && (
           <div className="space-y-6">
             <div>
@@ -287,31 +317,36 @@ export default function OnboardingOrganiserPage() {
                 Organiser Mode Setup
               </div>
               <h1 className="heading-font font-black text-2xl sm:text-3xl text-green-dark tracking-tight">
-                How would you like to get started?
+                Choose your organisation setup
               </h1>
               <p className="text-xs sm:text-sm text-text-dim mt-1.5 leading-relaxed">
-                Choose whether you want to set up an organisation with a brand-new campaign, or request access to collaborate on an existing one.
+                Select an existing company or organisation on SponFy to manage campaigns, or create a brand-new one from scratch.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3">
-              {/* Choice 1: New Campaign */}
+              {/* Choice 1: Select Existing Company / Organisation */}
               <div
-                onClick={() => setMode("NEW")}
+                onClick={() => setMode("JOIN")}
                 className="group relative rounded-3xl p-6 sm:p-8 border-2 border-green-dark/15 hover:border-green-dark bg-white hover:bg-butter-cream/20 transition-all cursor-pointer flex flex-col justify-between shadow-xs hover:shadow-lg"
               >
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
-                    <Building2 className="w-7 h-7" />
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Building2 className="w-7 h-7" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      Existing Entity
+                    </span>
                   </div>
                   <h3 className="font-black text-lg sm:text-xl text-green-dark">
-                    Organise a new campaign
+                    Select existing company / organisation
                   </h3>
                   <p className="text-xs font-semibold text-green-dark/80 mt-1.5">
-                    Register an organisation and launch your sponsorship campaign.
+                    Choose from registered companies, clubs, and fests on SponFy.
                   </p>
                   <p className="text-[12px] text-text-dim mt-3 leading-relaxed">
-                    Set up your club or committee profile, define your target amount and tiers, and start discovering sponsors right away.
+                    Search and pick an existing company or student organisation. You can launch campaigns under it or join active campaign teams.
                   </p>
                 </div>
 
@@ -319,32 +354,41 @@ export default function OnboardingOrganiserPage() {
                   <Button
                     type="button"
                     variant="green"
-                    onClick={() => setMode("NEW")}
+                    onClick={() => setMode("JOIN")}
                     className="w-full text-xs font-bold justify-center"
                   >
-                    Start New Campaign
+                    Select Existing Company / Org
                     <ArrowRight className="w-4 h-4 ml-1.5" />
                   </Button>
                 </div>
               </div>
 
-              {/* Choice 2: Join Existing Campaign */}
+              {/* Choice 2: Create Your Own Company / Organisation */}
               <div
-                onClick={() => setMode("JOIN")}
+                onClick={() => {
+                  setSelectedExistingOrgId("");
+                  setOrgForm({ name: "", type: "College Club", description: "", website: "", city: "" });
+                  setMode("NEW");
+                }}
                 className="group relative rounded-3xl p-6 sm:p-8 border-2 border-green-dark/15 hover:border-green-dark bg-white hover:bg-butter-cream/20 transition-all cursor-pointer flex flex-col justify-between shadow-xs hover:shadow-lg"
               >
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
-                    <Users className="w-7 h-7" />
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Sparkles className="w-7 h-7" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      New Entity
+                    </span>
                   </div>
                   <h3 className="font-black text-lg sm:text-xl text-green-dark">
-                    Join an existing campaign
+                    Create your own company / organisation
                   </h3>
                   <p className="text-xs font-semibold text-green-dark/80 mt-1.5">
-                    Request organiser access to a live campaign team.
+                    Register a brand-new organisation profile from scratch.
                   </p>
                   <p className="text-[12px] text-text-dim mt-3 leading-relaxed">
-                    Search your college or organisation's active campaigns and request access to coordinate outreach and approve sponsor drafts.
+                    Set up your college club, fest committee, or company profile, configure funding goals and sponsor tiers, and start outreach.
                   </p>
                 </div>
 
@@ -352,10 +396,14 @@ export default function OnboardingOrganiserPage() {
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={() => setMode("JOIN")}
+                    onClick={() => {
+                      setSelectedExistingOrgId("");
+                      setOrgForm({ name: "", type: "College Club", description: "", website: "", city: "" });
+                      setMode("NEW");
+                    }}
                     className="w-full text-xs font-bold justify-center"
                   >
-                    Find Existing Campaign
+                    Create New Organisation
                     <ArrowRight className="w-4 h-4 ml-1.5" />
                   </Button>
                 </div>
@@ -636,12 +684,128 @@ export default function OnboardingOrganiserPage() {
               />
             </div>
 
-            {/* Search Results List */}
+            {/* Sub-Tabs: Organisations vs Campaigns */}
+            <div className="flex items-center gap-2 border-b border-green-dark/10 pb-2">
+              <button
+                type="button"
+                onClick={() => setExistingViewTab("orgs")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  existingViewTab === "orgs"
+                    ? "bg-green-dark text-butter-cream shadow-xs"
+                    : "bg-butter-warm/40 text-green-dark hover:bg-butter-warm/80"
+                }`}
+              >
+                Registered Companies / Orgs ({platformOrgs.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setExistingViewTab("campaigns")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  existingViewTab === "campaigns"
+                    ? "bg-green-dark text-butter-cream shadow-xs"
+                    : "bg-butter-warm/40 text-green-dark hover:bg-butter-warm/80"
+                }`}
+              >
+                Live Campaigns ({searchResults.length})
+              </button>
+            </div>
+
+            {/* Results List */}
             {!selectedCampaign ? (
-              <div className="space-y-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-text-dim block">
-                  Available Organisation Campaigns ({searchResults.length})
-                </span>
+              existingViewTab === "orgs" ? (
+                <div className="space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-text-dim block">
+                    Available Organisations on SponFy ({platformOrgs.length})
+                  </span>
+
+                  {searchingOrgs ? (
+                    <div className="py-10 text-center text-xs text-text-muted">
+                      Searching organisations...
+                    </div>
+                  ) : platformOrgs.length === 0 ? (
+                    <div className="py-10 text-center text-xs text-text-muted space-y-2">
+                      <Building2 className="w-8 h-8 text-green-dark/30 mx-auto mb-1" />
+                      <p className="font-bold text-green-dark">No organisations found</p>
+                      <p className="text-[11px] text-text-dim">
+                        Cannot find what you're looking for? Create your own organisation instead.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="green"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedExistingOrgId("");
+                          setMode("NEW");
+                        }}
+                        className="text-xs font-bold mt-2"
+                      >
+                        Create New Organisation
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-1">
+                      {platformOrgs.map((org) => (
+                        <div
+                          key={org.id}
+                          className="p-4 rounded-2xl border-2 border-green-dark/15 hover:border-green-dark bg-white hover:bg-butter-cream/20 transition-all flex flex-col justify-between shadow-2xs space-y-3"
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                {org.type}
+                              </span>
+                              {org.city && (
+                                <span className="text-[11px] text-text-dim flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" /> {org.city}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="font-black text-sm text-green-dark leading-snug">
+                              {org.name}
+                            </h4>
+                            {org.description && (
+                              <p className="text-[11px] text-text-dim mt-1 line-clamp-2 leading-relaxed">
+                                {org.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-3 text-[10px] text-text-muted font-semibold mt-2">
+                              <span>{org.campaignsCount ?? 1} campaign(s)</span>
+                              <span>•</span>
+                              <span>{org.membersCount ?? 1} member(s)</span>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-green-dark/10 flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSearchQuery(org.name);
+                                setExistingViewTab("campaigns");
+                              }}
+                              className="text-[11px] font-bold text-text-muted hover:text-green-dark underline"
+                            >
+                              View Campaigns
+                            </button>
+                            <Button
+                              type="button"
+                              variant="green"
+                              size="sm"
+                              onClick={() => handleSelectPlatformOrgForNewCampaign(org)}
+                              className="text-xs font-bold"
+                            >
+                              Organise for this Org &rarr;
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-text-dim block">
+                    Available Organisation Campaigns ({searchResults.length})
+                  </span>
 
                 {searching ? (
                   <div className="py-10 text-center text-xs text-text-muted">
@@ -691,7 +855,7 @@ export default function OnboardingOrganiserPage() {
                   </div>
                 )}
               </div>
-            ) : (
+            )) : (
               /* Selected Campaign Join Form */
               <form onSubmit={handleJoinSubmit} className="space-y-5 animate-fade-in">
                 <div className="p-4 rounded-2xl bg-butter-cream/40 border border-green-dark/15 flex items-start justify-between gap-3">

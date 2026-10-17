@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
+import { demoAccessRequestsRef } from "@/lib/security/campaign-access";
 
 export async function POST() {
   const authRes = await requireAuth();
