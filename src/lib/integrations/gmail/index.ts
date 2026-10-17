@@ -75,17 +75,6 @@ export class RealGmailClient implements IGmailClient {
     let email = "";
     try {
       const gmail = google.gmail({ version: "v1", auth: oauth2Client });
-
-      // Fetch user profile to get authentic sender email address for SPF/DMARC alignment
-      let fromAddress = "";
-      try {
-        const profile = await gmail.users.getProfile({ userId: "me" });
-        if (profile.data.emailAddress) {
-          fromAddress = profile.data.emailAddress;
-        }
-      } catch (pErr) {
-        console.warn("Could not retrieve user emailAddress for From header:", pErr);
-      }
       const profile = await gmail.users.getProfile({ userId: "me" });
       email = profile.data.emailAddress || "";
     } catch {
@@ -108,21 +97,47 @@ export class RealGmailClient implements IGmailClient {
       oauth2Client.setCredentials(this.tokens);
 
       const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+      // Fetch user profile to get authentic sender email address for SPF/DMARC alignment
+      let fromAddress = "";
+      try {
+        const profile = await gmail.users.getProfile({ userId: "me" });
+        if (profile.data.emailAddress) {
+          fromAddress = profile.data.emailAddress;
+        }
+      } catch (pErr) {
+        console.warn("Could not retrieve user emailAddress for From header:", pErr);
+      }
+
       // RFC 2047 compliant subject header encoding for non-ASCII characters
       const cleanSubject = (subject || "").trim();
-      const encodedSubject = /[^ -~]/.test(cleanSubject)
+      const encodedSubject = /[^\u0020-\u007E]/.test(cleanSubject)
         ? `=?UTF-8?B?${Buffer.from(cleanSubject, "utf-8").toString("base64")}?=`
         : cleanSubject;
 
-      const rawMessage = [
-        `To: ${to}`,
-        `Subject: ${encodedSubject}`,
-        `Content-Type: text/plain; charset=utf-8`,
-        "",
-        body,
-      ].join("\n");
+      // RFC 5322 Message-ID domain
+      const senderDomain = fromAddress && fromAddress.includes("@") ? fromAddress.split("@")[1] : "sponfy.dev";
+      const messageId = `<${Date.now()}.${Math.random().toString(36).substring(2, 10)}@${senderDomain}>`;
+      const dateHeader = new Date().toUTCString();
 
-      const encodedMessage = Buffer.from(rawMessage)
+      // Ensure proper CRLF line endings throughout body (RFC 5321 SMTP forbids bare LF)
+      const normalizedBody = (body || "").replace(/\r?\n/g, "\r\n");
+
+      // Construct complete RFC 5322 MIME message with standard headers
+      const headers = [
+        fromAddress ? `From: ${fromAddress}` : null,
+        `To: ${to.trim()}`,
+        `Subject: ${encodedSubject}`,
+        `Date: ${dateHeader}`,
+        `Message-ID: ${messageId}`,
+        `MIME-Version: 1.0`,
+        `Content-Type: text/plain; charset=UTF-8`,
+        `Content-Transfer-Encoding: 8bit`,
+      ].filter(Boolean) as string[];
+
+      const rawMessage = headers.join("\r\n") + "\r\n\r\n" + normalizedBody;
+
+      const encodedMessage = Buffer.from(rawMessage, "utf-8")
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
