@@ -143,6 +143,30 @@ export interface ReplyAnalysis {
   createdAt: string;
 }
 
+// Meeting Types
+export type MeetingMode = "video" | "phone" | "in_person";
+export type MeetingStatus = "scheduled" | "completed" | "cancelled";
+
+export interface Meeting {
+  id: string;
+  userId: string;
+  companyId: string;
+  companyName: string;
+  campaignId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  replyMessageId?: string;
+  title: string;
+  startsAt: string; // ISO
+  durationMins: number;
+  mode: MeetingMode;
+  location: string;
+  notes?: string;
+  status: MeetingStatus;
+  createdAt: string;
+}
+
+
 // Company (Sponsor)
 export interface Company {
   id: string;
