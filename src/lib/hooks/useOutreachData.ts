@@ -25,7 +25,8 @@ export function useOutreachData() {
     () => fetcher("/api/outreach/state"),
     {
       revalidateOnFocus: true,
-      dedupingInterval: 10000, // 10s deduplication window
+      revalidateOnMount: true,
+      dedupingInterval: 300, // Instantaneous revalidation
       keepPreviousData: true,
     }
   );

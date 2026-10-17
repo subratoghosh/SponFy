@@ -47,14 +47,15 @@ export function useSponsorsData(options: UseSponsorsOptions = {}) {
 
   const url = `/api/sponsors?${queryParams.toString()}`;
   // User ID included in SWR key to guarantee zero cross-user cache contamination
-  const swrKey = session?.user ? [url, userId] : null;
+  const swrKey = [url, userId];
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     swrKey,
     () => fetcher(url),
     {
       revalidateOnFocus: true,
-      dedupingInterval: 10000, // 10s deduplication window
+      revalidateOnMount: true,
+      dedupingInterval: 300, // Instantaneous revalidation
       keepPreviousData: true, // Smooth transitions during pagination/filters
     }
   );

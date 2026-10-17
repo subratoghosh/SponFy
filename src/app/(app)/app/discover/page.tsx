@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, Layers, BarChart2 } from "lucide-react";
 import { DiscoveryAnalyticsModal } from "@/components/discover/DiscoveryAnalyticsModal";
+import { mutate } from "swr";
 
 export default function DiscoverPage() {
   const { toast } = useToast();
@@ -178,6 +179,8 @@ export default function DiscoverPage() {
 
       // Refresh list
       loadSavedResults(selectedCampaignId);
+      mutate("/api/sponsors");
+      mutate("/api/outreach");
     } catch (err: any) {
       toast(err.message || "Failed to approve candidates", "error");
     } finally {
@@ -214,6 +217,8 @@ export default function DiscoverPage() {
 
       // Refresh list
       loadSavedResults(selectedCampaignId);
+      mutate("/api/sponsors");
+      mutate("/api/outreach");
     } catch (err: any) {
       toast(err.message || "Failed to approve candidates", "error");
     } finally {
