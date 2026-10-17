@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDraftById, saveDraft } from "@/lib/data/repositories/outreach";
+import { addContact } from "@/lib/data/repositories/sponsors";
 import { requireAuth, verifyCompanyOwnership } from "@/lib/security/auth-guard";
 import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limit";
 
@@ -66,10 +67,37 @@ export async function POST(req: Request) {
       body: body.trim(),
     });
 
-    // Only subject/body can change here. Status/approval stay server-controlled.
+    const rawToEmail = (bodyData?.toEmail || bodyData?.contactEmail || "").trim();
+    let targetContactId = existing.contactId;
+
+    if (rawToEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawToEmail)) {
+      const cleanTo = rawToEmail.toLowerCase();
+      let targetContact = (company.contacts as any[])?.find((c: any) => c.email?.toLowerCase() === cleanTo);
+      if (!targetContact) {
+        try {
+          const newContact = await addContact(company.id, {
+            name: `${company.name} Contact`,
+            email: cleanTo,
+            role: "Direct Outreach / Sponsor Relations",
+            status: "verified",
+          });
+          if (newContact) {
+            targetContact = newContact;
+          }
+        } catch (cErr) {
+          console.warn("Could not auto-persist contact on draft save:", cErr);
+        }
+      }
+      if (targetContact?.id) {
+        targetContactId = targetContact.id;
+      }
+    }
+
+    // Only subject/body/contact can change here. Status/approval stay server-controlled.
     const saved = await saveDraft({
       id,
       companyId: existing.companyId,
+      contactId: targetContactId,
       subject: subject.trim(),
       body: body.trim(),
       quality,

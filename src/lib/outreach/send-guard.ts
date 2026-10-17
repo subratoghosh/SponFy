@@ -85,6 +85,13 @@ export function resolveRecipient(input: {
   }
 
   if (requestedTo && requestedTo.trim().toLowerCase() !== email.toLowerCase()) {
+    // If the user specified a custom/alternate contact on file for this company, resolve to it
+    const matchingContact = contacts.find(
+      (c) => c.email && c.email.trim().toLowerCase() === requestedTo.trim().toLowerCase()
+    );
+    if (matchingContact && matchingContact.email && EMAIL_RE.test(matchingContact.email.trim())) {
+      return { ok: true, recipient: matchingContact.email.trim() };
+    }
     return fail(409, "recipient_mismatch", "The recipient shown does not match the contact on file. Refresh and try again.");
   }
 

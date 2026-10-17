@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getDraftById,
+  updateDraft,
   getMessages,
   recordSentMessage,
   claimDraftForSending,
@@ -33,14 +34,20 @@ export async function POST(req: Request) {
     return createRateLimitResponse(rateLimit);
   }
 
-  let body: { draftId?: string; toEmail?: string; allowOverLimit?: boolean };
+  let body: {
+    draftId?: string;
+    toEmail?: string;
+    allowOverLimit?: boolean;
+    isCustomEmail?: boolean;
+    allowCustomEmail?: boolean;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { draftId, toEmail, allowOverLimit } = body;
+  const { draftId, toEmail, allowOverLimit, isCustomEmail, allowCustomEmail } = body;
   if (!draftId) {
     return NextResponse.json({ error: "Draft ID required" }, { status: 400 });
   }
@@ -65,11 +72,15 @@ export async function POST(req: Request) {
       );
     }
 
+    let targetContactId = draft.contactId;
+
     // If the user specified a custom or typed email in the modal/dialog:
     if (toEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail.trim())) {
       const cleanTo = toEmail.trim().toLowerCase();
-      const existingContact = company.contacts?.find((c) => c.email?.toLowerCase() === cleanTo);
-      if (!existingContact) {
+      let targetContact = company.contacts?.find((c) => c.email?.toLowerCase() === cleanTo);
+
+      // Only auto-create new contact if explicitly authorized (custom typed email flow)
+      if (!targetContact && (isCustomEmail || allowCustomEmail)) {
         try {
           const newContact = await addContact(company.id, {
             name: `${company.name} Contact`,
@@ -79,16 +90,27 @@ export async function POST(req: Request) {
           });
           if (newContact) {
             company.contacts = [...(company.contacts ?? []), newContact];
+            targetContact = newContact;
           }
         } catch (cErr) {
           console.warn("Could not auto-persist custom contact:", cErr);
+        }
+      }
+
+      if (targetContact?.id) {
+        targetContactId = targetContact.id;
+        try {
+          await updateDraft(draft.id, { contactId: targetContactId });
+          draft.contactId = targetContactId;
+        } catch (uErr) {
+          console.warn("Could not sync draft contactId:", uErr);
         }
       }
     }
 
     // Recipient comes from the stored contact or verified direct outreach address
     const recipient = resolveRecipient({
-      contactId: draft.contactId,
+      contactId: targetContactId,
       contacts: company.contacts ?? [],
       requestedTo: toEmail,
       companyDomain: company.domain,

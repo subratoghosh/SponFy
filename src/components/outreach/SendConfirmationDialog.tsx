@@ -33,7 +33,7 @@ interface SendConfirmationDialogProps {
   draft: EmailDraft;
   toEmail: string;
   companyName: string;
-  onConfirmSend: (email: string) => void;
+  onConfirmSend: (email: string, isCustomEmail?: boolean) => void;
   loading: boolean;
   isPatternGuess?: boolean;
   remainingDailyCap?: number;
@@ -58,10 +58,12 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
   const [verifResult, setVerifResult] = useState<VerificationDetails | null>(null);
 
   useEffect(() => {
-    setSelectedSource(toEmail ? "discovered" : "custom");
-    setCustomEmail("");
-    setVerifResult(null);
-  }, [toEmail, open]);
+    if (open) {
+      setSelectedSource(toEmail ? "discovered" : "custom");
+      setCustomEmail("");
+      setVerifResult(null);
+    }
+  }, [open, draft.id]);
 
   const activeEmail = (selectedSource === "discovered" && toEmail ? toEmail : customEmail).trim();
   const isValidSyntax = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(activeEmail);
@@ -252,6 +254,28 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
 
           <div>
             <span className="font-bold text-text-muted uppercase text-[10px] block">
+              Sending To (Recipient Email):
+            </span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="font-mono font-bold text-green-dark text-sm break-all">
+                {activeEmail || "No recipient selected"}
+              </span>
+              {isValidSyntax && (
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    selectedSource === "custom"
+                      ? "bg-amber-100 text-amber-900 border border-amber-300"
+                      : "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                  }`}
+                >
+                  {selectedSource === "custom" ? "Custom / Typed Email" : "Discovered Contact"}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <span className="font-bold text-text-muted uppercase text-[10px] block">
               Company Name:
             </span>
             <span className="font-bold text-green-dark text-sm">{companyName}</span>
@@ -285,12 +309,16 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
             size="sm"
             loading={loading || verifying}
             disabled={!isValidSyntax || loading}
-            onClick={() => onConfirmSend(activeEmail)}
+            onClick={() => onConfirmSend(activeEmail, selectedSource === "custom")}
             className="font-bold shadow-md cursor-pointer disabled:opacity-50"
             title={hasAlert ? "Alert detected: you may choose to take the risk and send" : undefined}
           >
             <Send className="w-3.5 h-3.5 mr-1" />
-            {hasAlert ? "Send Anyway (Take Risk)" : "Approve & Dispatch Email"}
+            {selectedSource === "custom"
+              ? "Send to Custom Email via Gmail"
+              : hasAlert
+              ? "Send Anyway (Take Risk)"
+              : "Approve & Dispatch Email"}
           </Button>
         </div>
       </div>

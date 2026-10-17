@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST, GET } from "@/app/api/meetings/route";
 import { formatMeetingTimeRange, formatMeetingDate } from "@/lib/meetings/calendar-helpers";
 import { getMeetings, createMeeting } from "@/lib/data/repositories/meetings";
+import { resolveRecipient } from "@/lib/outreach/send-guard";
 
 describe("Schedule Calendar, Multiple Meetings & Reminders Suite", () => {
   const testUserId = "user-calendar-test-123";
@@ -32,8 +33,9 @@ describe("Schedule Calendar, Multiple Meetings & Reminders Suite", () => {
       title: "Sponsorship Intro - Morning",
       startsAt: date1.toISOString(),
       durationMins: 30,
+      mode: "video",
       location: "https://meet.google.com/abc-defg-hij",
-      status: "confirmed",
+      status: "scheduled",
     });
 
     expect(m1.id).toBeDefined();
@@ -52,8 +54,9 @@ describe("Schedule Calendar, Multiple Meetings & Reminders Suite", () => {
       title: "Follow-up Sync - Afternoon",
       startsAt: date2.toISOString(),
       durationMins: 45,
+      mode: "video",
       location: "https://zoom.us/j/123456789",
-      status: "confirmed",
+      status: "scheduled",
     });
 
     expect(m2.id).toBeDefined();
@@ -72,8 +75,9 @@ describe("Schedule Calendar, Multiple Meetings & Reminders Suite", () => {
       title: "Contract Review - Evening",
       startsAt: date3.toISOString(),
       durationMins: 30,
+      mode: "phone",
       location: "Phone Call",
-      status: "confirmed",
+      status: "scheduled",
     });
 
     expect(m3.id).toBeDefined();
@@ -98,13 +102,13 @@ describe("Schedule Calendar, Multiple Meetings & Reminders Suite", () => {
         id: "m-today-1",
         title: "Morning Partner Call",
         startsAt: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30).toISOString(),
-        status: "confirmed",
+        status: "scheduled",
       },
       {
         id: "m-today-2",
         title: "Afternoon Sync",
         startsAt: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 0).toISOString(),
-        status: "confirmed",
+        status: "scheduled",
       },
       {
         id: "m-cancelled",
@@ -116,7 +120,7 @@ describe("Schedule Calendar, Multiple Meetings & Reminders Suite", () => {
         id: "m-tomorrow",
         title: "Tomorrow Call",
         startsAt: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 10, 0).toISOString(),
-        status: "confirmed",
+        status: "scheduled",
       },
     ];
 
@@ -131,5 +135,26 @@ describe("Schedule Calendar, Multiple Meetings & Reminders Suite", () => {
 
     expect(todayActive.length).toBe(2);
     expect(todayActive.map((x) => x.id)).toEqual(["m-today-1", "m-today-2"]);
+  });
+
+  it("resolves and routes outreach sends when user overrides a searched contact with a custom email", () => {
+    const contacts = [
+      { id: "c-searched", email: "original.searched@company.com" },
+      { id: "c-custom", email: "mycustom@gmail.com" },
+    ];
+
+    // User draft was created with original searched contact
+    const inputWithCustom = {
+      contactId: "c-searched",
+      contacts,
+      requestedTo: "mycustom@gmail.com",
+    };
+
+    const resolved = resolveRecipient(inputWithCustom);
+    expect(resolved.ok).toBe(true);
+    if (resolved.ok) {
+      expect(resolved.recipient).toBe("mycustom@gmail.com");
+      expect(resolved.recipient).not.toBe("original.searched@company.com");
+    }
   });
 });
