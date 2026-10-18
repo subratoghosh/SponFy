@@ -272,6 +272,8 @@ export default function OnboardingOrganiserPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           campaignId: selectedCampaign.id,
+          // Joining an existing campaign from the organiser flow = co-organiser request
+          requestedRole: "ORGANISER",
           roleInTeam: joinForm.roleInTeam.trim(),
           whyJoin: joinForm.whyJoin.trim(),
           message: joinForm.message.trim() || undefined,
