@@ -36,15 +36,24 @@ const DB_TO_INTENT: Record<string, ReplyIntent> = {
   UNCLEAR: "Unclear",
 };
 
-export async function getReplyAnalyses(companyId?: string): Promise<ReplyAnalysis[]> {
+export async function getReplyAnalyses(companyId?: string, userId?: string): Promise<ReplyAnalysis[]> {
   if (isDatabaseConfigured()) {
     try {
+      let where: any = {};
+      if (companyId) {
+        where.message = { companyId };
+      }
+      if (userId) {
+        where.message = {
+          ...(where.message || {}),
+          OR: [
+            { userId },
+            { company: { userId } },
+          ],
+        };
+      }
       const records = await prisma.replyAnalysis.findMany({
-        where: companyId
-          ? {
-              message: { companyId },
-            }
-          : undefined,
+        where: Object.keys(where).length > 0 ? where : undefined,
         include: {
           message: true,
         },
@@ -72,10 +81,13 @@ export async function getReplyAnalyses(companyId?: string): Promise<ReplyAnalysi
     }
   }
 
-  if (companyId) {
-    return replyAnalysesStoreRef.value.filter((r) => r.companyId === companyId);
+  if (process.env.NODE_ENV === "test") {
+    if (companyId) {
+      return replyAnalysesStoreRef.value.filter((r) => r.companyId === companyId);
+    }
+    return [...replyAnalysesStoreRef.value];
   }
-  return [...replyAnalysesStoreRef.value];
+  return [];
 }
 
 export async function getInboundThreads(userId?: string): Promise<{ message: Message; analysis?: ReplyAnalysis }[]> {
@@ -130,7 +142,7 @@ export async function getInboundThreads(userId?: string): Promise<{ message: Mes
           {
             OR: [
               { userId },
-              { userId: "usr-demo-lead" },
+              ...(userId === "usr-demo-lead" || process.env.NODE_ENV === "test" ? [{ userId: "usr-demo-lead" }] : []),
               ...(accessibleCompanyIds.length > 0
                 ? [{ companyId: { in: accessibleCompanyIds } }]
                 : []),
@@ -147,54 +159,56 @@ export async function getInboundThreads(userId?: string): Promise<{ message: Mes
         orderBy: { sentAt: "desc" },
       });
 
-      if (messages.length > 0) {
-        return messages.map((msg) => ({
-          message: {
-            id: msg.id,
-            draftId: msg.draftId || undefined,
-            companyId: msg.companyId || "",
-            gmailMessageId: msg.gmailMessageId || undefined,
-            gmailThreadId: msg.gmailThreadId || undefined,
-            direction: "inbound",
-            fromEmail: msg.fromEmail || "",
-            toEmail: msg.toEmail || "",
-            subject: msg.subject || "",
-            body: msg.body,
-            sentAt: msg.sentAt.toISOString(),
-          },
-          analysis: msg.analysis
-            ? {
-                id: msg.analysis.id,
-                messageId: msg.analysis.messageId,
-                companyId: msg.companyId || "",
-                intent: DB_TO_INTENT[msg.analysis.intent] || "Interested",
-                sentiment: msg.analysis.sentiment as any,
-                confidence: msg.analysis.confidence,
-                summary: msg.analysis.summary,
-                questions: (msg.analysis.questions as any) || [],
-                requestedInfo: msg.analysis.requestedInfo ? [msg.analysis.requestedInfo] : [],
-                nextAction: msg.analysis.nextAction,
-                urgency: msg.analysis.urgency as any,
-                meetingRequested: msg.analysis.meetingRequested,
-                createdAt: msg.analysis.createdAt.toISOString(),
-              }
-            : undefined,
-        }));
-      }
+      return messages.map((msg) => ({
+        message: {
+          id: msg.id,
+          draftId: msg.draftId || undefined,
+          companyId: msg.companyId || "",
+          gmailMessageId: msg.gmailMessageId || undefined,
+          gmailThreadId: msg.gmailThreadId || undefined,
+          direction: "inbound",
+          fromEmail: msg.fromEmail || "",
+          toEmail: msg.toEmail || "",
+          subject: msg.subject || "",
+          body: msg.body,
+          sentAt: msg.sentAt.toISOString(),
+        },
+        analysis: msg.analysis
+          ? {
+              id: msg.analysis.id,
+              messageId: msg.analysis.messageId,
+              companyId: msg.companyId || "",
+              intent: DB_TO_INTENT[msg.analysis.intent] || "Interested",
+              sentiment: msg.analysis.sentiment as any,
+              confidence: msg.analysis.confidence,
+              summary: msg.analysis.summary,
+              questions: (msg.analysis.questions as any) || [],
+              requestedInfo: msg.analysis.requestedInfo ? [msg.analysis.requestedInfo] : [],
+              nextAction: msg.analysis.nextAction,
+              urgency: msg.analysis.urgency as any,
+              meetingRequested: msg.analysis.meetingRequested,
+              createdAt: msg.analysis.createdAt.toISOString(),
+            }
+          : undefined,
+      }));
     } catch (err) {
       console.warn("Prisma getInboundThreads failed:", err);
     }
   }
 
-  const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
-  return inbounds.map((msg) => {
-    const analysis = replyAnalysesStoreRef.value.find((r) => r.messageId === msg.id || r.companyId === msg.companyId) ||
-      DEMO_REPLIES.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
-    return {
-      message: msg,
-      analysis,
-    };
-  });
+  if (process.env.NODE_ENV === "test") {
+    const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
+    return inbounds.map((msg) => {
+      const analysis = replyAnalysesStoreRef.value.find((r) => r.messageId === msg.id || r.companyId === msg.companyId) ||
+        DEMO_REPLIES.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
+      return {
+        message: msg,
+        analysis,
+      };
+    });
+  }
+
+  return [];
 }
 
 export async function recordInboundReply(

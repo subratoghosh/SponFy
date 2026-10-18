@@ -23,18 +23,21 @@ export async function GET(request: NextRequest) {
   const isDemo = session?.user?.email === "demo@sponfy.dev";
 
   if (!isDatabaseConfigured()) {
-    const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
-    const demoData = inbounds.map((msg) => {
-      const analysis = DEMO_REPLIES.find(
-        (r) => r.messageId === msg.id || r.companyId === msg.companyId
-      );
-      return {
-        message: msg,
-        analysis,
-        allThreadMessages: [msg],
-      };
-    });
-    return NextResponse.json({ success: true, data: demoData });
+    if (process.env.NODE_ENV === "test") {
+      const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
+      const demoData = inbounds.map((msg) => {
+        const analysis = DEMO_REPLIES.find(
+          (r) => r.messageId === msg.id || r.companyId === msg.companyId
+        );
+        return {
+          message: msg,
+          analysis,
+          allThreadMessages: [msg],
+        };
+      });
+      return NextResponse.json({ success: true, data: demoData });
+    }
+    return NextResponse.json({ success: true, data: [] });
   }
 
   try {
@@ -88,7 +91,6 @@ export async function GET(request: NextRequest) {
         {
           OR: [
             { userId },
-            { userId: "usr-demo-lead" },
             ...(accessibleCompanyIds.length > 0
               ? [{ companyId: { in: accessibleCompanyIds } }]
               : []),
@@ -105,7 +107,7 @@ export async function GET(request: NextRequest) {
       orderBy: { sentAt: "desc" },
     });
 
-    if (messages.length === 0 && (isDemo || process.env.NODE_ENV === "test")) {
+    if (messages.length === 0 && (isDemo || (process.env.NODE_ENV === "test" && !userId))) {
       const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
       const demoData = inbounds.map((msg) => {
         const analysis = DEMO_REPLIES.find(

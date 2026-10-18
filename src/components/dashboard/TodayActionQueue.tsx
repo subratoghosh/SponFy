@@ -64,7 +64,7 @@ interface TodayActionQueueProps {
 }
 
 export const TodayActionQueue: React.FC<TodayActionQueueProps> = ({ items }) => {
-  const actions = items !== undefined ? items : DEFAULT_DEMO_ACTIONS;
+  const actions = items || [];
 
   return (
     <div className="bg-white rounded-3xl p-6 sm:p-7 border border-green-dark/12 shadow-sm space-y-5">

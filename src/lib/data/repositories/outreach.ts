@@ -5,8 +5,8 @@ import { updateSponsorStage } from "./sponsors";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { DraftStatus as DbDraftStatus, Direction } from "@prisma/client";
 
-const draftsStoreRef = memoryStore<EmailDraft[]>("drafts", () => [...DEMO_DRAFTS]);
-const messagesStoreRef = memoryStore<Message[]>("messages", () => [...DEMO_MESSAGES]);
+const draftsStoreRef = memoryStore<EmailDraft[]>("drafts", () => process.env.NODE_ENV === "test" ? [...DEMO_DRAFTS] : []);
+const messagesStoreRef = memoryStore<Message[]>("messages", () => process.env.NODE_ENV === "test" ? [...DEMO_MESSAGES] : []);
 
 const DRAFT_STATUS_TO_DB: Record<string, DbDraftStatus> = {
   draft: "DRAFT",
@@ -153,13 +153,17 @@ export async function getDraftById(id: string): Promise<EmailDraft | null> {
           senderRole: senderUser?.designation || senderUser?.role || undefined,
         };
       }
+      return null;
     } catch (err) {
       console.warn("Prisma getDraftById failed, falling back to memory store:", err);
     }
   }
 
-  const found = draftsStoreRef.value.find((d) => d.id === id);
-  return found || null;
+  if (process.env.NODE_ENV === "test") {
+    const found = draftsStoreRef.value.find((d) => d.id === id);
+    return found || null;
+  }
+  return null;
 }
 
 export async function getDraftsByCompanyId(companyId: string): Promise<EmailDraft[]> {
@@ -184,33 +188,34 @@ export async function getDraftsByCompanyId(companyId: string): Promise<EmailDraf
         },
         orderBy: { createdAt: "desc" },
       });
-      if (records.length > 0) {
-        return records.map((r: any) => {
-          const outboundMsg = r.messages?.[0];
-          const senderUser = outboundMsg?.user || r.user;
-          return {
-            id: r.id,
-            companyId: r.companyId,
-            contactId: r.contactId || undefined,
-            subject: r.subject,
-            body: r.body,
-            quality: (r.quality as any) || {},
-            status: DB_TO_DRAFT_STATUS[r.status] || "draft",
-            approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
-            sentAt: r.sentAt ? r.sentAt.toISOString() : outboundMsg?.sentAt ? outboundMsg.sentAt.toISOString() : undefined,
-            createdAt: r.createdAt.toISOString(),
-            senderName: senderUser?.name || undefined,
-            senderEmail: senderUser?.email || outboundMsg?.fromEmail || undefined,
-            senderRole: senderUser?.designation || senderUser?.role || undefined,
-          };
-        });
-      }
+      return records.map((r: any) => {
+        const outboundMsg = r.messages?.[0];
+        const senderUser = outboundMsg?.user || r.user;
+        return {
+          id: r.id,
+          companyId: r.companyId,
+          contactId: r.contactId || undefined,
+          subject: r.subject,
+          body: r.body,
+          quality: (r.quality as any) || {},
+          status: DB_TO_DRAFT_STATUS[r.status] || "draft",
+          approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
+          sentAt: r.sentAt ? r.sentAt.toISOString() : outboundMsg?.sentAt ? outboundMsg.sentAt.toISOString() : undefined,
+          createdAt: r.createdAt.toISOString(),
+          senderName: senderUser?.name || undefined,
+          senderEmail: senderUser?.email || outboundMsg?.fromEmail || undefined,
+          senderRole: senderUser?.designation || senderUser?.role || undefined,
+        };
+      });
     } catch (err) {
       console.warn("Prisma getDraftsByCompanyId failed, falling back to memory store:", err);
     }
   }
 
-  return draftsStoreRef.value.filter((d) => d.companyId === companyId);
+  if (process.env.NODE_ENV === "test") {
+    return draftsStoreRef.value.filter((d) => d.companyId === companyId);
+  }
+  return [];
 }
 
 export async function getDraftByCompanyId(companyId: string): Promise<EmailDraft | null> {

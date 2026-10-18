@@ -1,42 +1,30 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getCampaigns } from "@/lib/data/repositories/campaigns";
-import { getSponsors } from "@/lib/data/repositories/sponsors";
-import { getDrafts } from "@/lib/data/repositories/outreach";
-import { getReplyAnalyses } from "@/lib/data/repositories/replies";
-import { getAnalyticsData } from "@/lib/data/repositories/analytics";
-import { Company, EmailDraft, ReplyAnalysis } from "@/types";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
     const session = await auth();
-    const isDemoUser = !session?.user || session.user.email === "demo@sponfy.dev";
 
-    if (isDemoUser) {
-      // In Demo mode, return the demo numbers with clear demo flag
-      return NextResponse.json({
-        prospects: 24,
-        qualified: 18,
-        actionQueue: 3,
-        drafts: 2,
-        replies: 1,
-        followups: 1,
-        activities: 5,
-        sentEmails: 12,
-        committedCount: 3,
-        committedAmount: 225000,
-        pipelineAmount: 850000,
-        isDemo: true,
-      });
+    let userId = session?.user?.id || null;
+    if (!userId && session?.user?.email && isDatabaseConfigured()) {
+      try {
+        const u = await prisma.user.findUnique({
+          where: { email: session.user.email },
+          select: { id: true },
+        });
+        if (u) userId = u.id;
+      } catch {
+        // continue
+      }
     }
 
-    const rawCampaigns = await getCampaigns();
-    const userCampaigns = rawCampaigns.filter(
-      (c) => c.name !== "SponFy Hackathon 2026" && c.name !== "SponFy Flagship Campaign 2026" && c.id !== "camp-demo-1" && c.id !== "camp-sponfy-2026"
-    );
+    const isDemo = session?.user?.email === "demo@sponfy.dev";
 
-    // If new user has zero campaigns, return 0 everywhere
-    if (userCampaigns.length === 0) {
+    // If unauthenticated or no database configured, return exact zero counts
+    if (!userId || !isDatabaseConfigured()) {
       return NextResponse.json({
         prospects: 0,
         qualified: 0,
@@ -53,47 +41,98 @@ export async function GET() {
       });
     }
 
-    const campaignId = userCampaigns[0].id;
-    const [sponsors, allDrafts, replies, analytics] = await Promise.all([
-      getSponsors(campaignId),
-      getDrafts(),
-      getReplyAnalyses(),
-      getAnalyticsData(campaignId),
+    // Find accessible campaigns for this user
+    const userCampaigns = await prisma.campaign.findMany({
+      where: {
+        OR: [
+          { userId },
+          { members: { some: { userId, status: "ACTIVE" } } },
+        ],
+      },
+      select: { id: true },
+    });
+    const accessibleCampaignIds = userCampaigns.map((c) => c.id);
+
+    const companyWhere: any = {
+      OR: [
+        { userId },
+        ...(isDemo ? [{ userId: "usr-demo-lead" }] : []),
+        ...(accessibleCampaignIds.length > 0 ? [{ campaignId: { in: accessibleCampaignIds } }] : []),
+      ],
+    };
+
+    const [companies, drafts, messages, followups, activitiesCount] = await Promise.all([
+      prisma.company.findMany({
+        where: companyWhere,
+        select: {
+          id: true,
+          stage: true,
+          fitScore: true,
+          pipelineValue: true,
+        },
+      }),
+      prisma.emailDraft.findMany({
+        where: { userId },
+        select: { id: true, status: true },
+      }),
+      prisma.message.findMany({
+        where: { userId },
+        select: { id: true, direction: true },
+      }),
+      prisma.followupTask.findMany({
+        where: {
+          status: "PENDING",
+          sequence: { userId },
+        },
+        select: { id: true },
+      }),
+      prisma.activity.count({
+        where: { userId },
+      }),
     ]);
 
-    const sponsorCompanyIds = new Set(sponsors.map((s: Company) => s.id));
+    const prospects = companies.length;
+    const qualified = companies.filter((c) => (c.fitScore || 0) >= 70).length;
+    const pendingDrafts = drafts.filter((d) => d.status === "DRAFT").length;
+    const sentEmails = drafts.filter((d) => d.status === "SENT").length;
+    const repliesCount = messages.filter((m) => m.direction === "INBOUND").length;
+    const followupsCount = followups.length;
+    const actionQueue = pendingDrafts + repliesCount + followupsCount;
 
-    const pendingDrafts = allDrafts.filter(
-      (d: EmailDraft) => d.status === "draft" && sponsorCompanyIds.has(d.companyId)
-    );
-    const campaignReplies = replies.filter(
-      (r: ReplyAnalysis) => sponsorCompanyIds.has(r.companyId)
-    );
-    const qualifiedSponsors = sponsors.filter(
-      (s: Company) => (s.fitScore || 0) >= 70
-    );
-
-    const actionQueueCount = pendingDrafts.length + campaignReplies.length;
+    const committedCompanies = companies.filter((c) => c.stage === "COMMITTED");
+    const committedCount = committedCompanies.length;
+    const committedAmount = committedCompanies.reduce((sum, c) => sum + (c.pipelineValue || 0), 0);
+    const pipelineAmount = companies.reduce((sum, c) => sum + (c.pipelineValue || 0), 0);
 
     return NextResponse.json({
-      prospects: sponsors.length,
-      qualified: qualifiedSponsors.length,
-      actionQueue: actionQueueCount,
-      drafts: pendingDrafts.length,
-      replies: campaignReplies.length,
-      followups: 0,
-      activities: 0,
-      sentEmails: analytics.summary.sentEmails,
-      committedCount: analytics.summary.committedCount,
-      committedAmount: analytics.summary.committedAmount,
-      pipelineAmount: analytics.summary.pipelineAmount,
+      prospects,
+      qualified,
+      actionQueue,
+      drafts: pendingDrafts,
+      replies: repliesCount,
+      followups: followupsCount,
+      activities: activitiesCount,
+      sentEmails,
+      committedCount,
+      committedAmount,
+      pipelineAmount,
       isDemo: false,
     });
   } catch (error) {
     console.error("Error in /api/counts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch counts" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      prospects: 0,
+      qualified: 0,
+      actionQueue: 0,
+      drafts: 0,
+      replies: 0,
+      followups: 0,
+      activities: 0,
+      sentEmails: 0,
+      committedCount: 0,
+      committedAmount: 0,
+      pipelineAmount: 0,
+      isDemo: false,
+    });
   }
 }

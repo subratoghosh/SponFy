@@ -10,7 +10,10 @@ import {
 export async function GET(req: Request) {
   try {
     const session = await auth().catch(() => null);
-    const userId = session?.user?.id || "usr-demo-lead";
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+    if (!userId) {
+      return NextResponse.json({ success: true, count: 0, data: [] });
+    }
 
     const { searchParams } = new URL(req.url);
     const campaignId = searchParams.get("campaignId") || undefined;
@@ -30,7 +33,10 @@ export async function GET(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
-    const userId = session?.user?.id || "usr-demo-lead";
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : null);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

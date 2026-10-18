@@ -82,12 +82,16 @@ export async function POST(req: Request) {
     try {
       polledMessages = await gmail.pollReplies();
     } catch (pollErr: any) {
-      console.warn("Real Gmail poll failed, attempting fallback:", pollErr?.message || pollErr);
-      const { MockGmailClient } = await import("@/lib/integrations/gmail");
-      gmail = new MockGmailClient();
-      try {
-        polledMessages = await gmail.pollReplies();
-      } catch {
+      console.warn("Real Gmail poll failed:", pollErr?.message || pollErr);
+      if (process.env.NODE_ENV === "test") {
+        const { MockGmailClient } = await import("@/lib/integrations/gmail");
+        gmail = new MockGmailClient();
+        try {
+          polledMessages = await gmail.pollReplies();
+        } catch {
+          polledMessages = [];
+        }
+      } else {
         polledMessages = [];
       }
     }

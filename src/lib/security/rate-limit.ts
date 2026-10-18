@@ -157,7 +157,7 @@ export async function checkRateLimit(
 
     return {
       allowed: res.success,
-      limit: res.limit,
+      limit: res.limit || policy.limit,
       remaining: res.remaining,
       reset: res.reset,
       retryAfter: res.success ? 0 : retryAfter,

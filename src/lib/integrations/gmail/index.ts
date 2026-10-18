@@ -371,8 +371,11 @@ export class MockGmailClient implements IGmailClient {
   }
 
   async pollReplies(lastSyncedAt?: string): Promise<Message[]> {
-    const { DEMO_MESSAGES } = await import("@/lib/data/seed-data");
-    return DEMO_MESSAGES.filter((m) => m.direction === "inbound");
+    if (process.env.NODE_ENV === "test") {
+      const { DEMO_MESSAGES } = await import("@/lib/data/seed-data");
+      return DEMO_MESSAGES.filter((m) => m.direction === "inbound");
+    }
+    return [];
   }
 
   async scanBounces(): Promise<BounceEvent[]> {

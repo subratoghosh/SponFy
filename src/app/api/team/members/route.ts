@@ -97,39 +97,42 @@ export async function GET() {
       return NextResponse.json({ success: true, members: mapped });
     }
 
-    // Demo Mode fallback
-    const mockMembers = [
-      {
-        id: "mem-1",
-        userId: viewerId,
-        name: authRes.context.user.name || "Subrato Ghosh",
-        email: authRes.context.user.email || "organiser@sponfy.dev",
-        designation: "Head of Partnerships",
-        collegeOrCompany: "TechFest Committee",
-        role: "ORGANISER",
-        status: "ACTIVE",
-        joinedAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-        campaignId: "cmp_demo_org_1",
-        campaignName: "InnovateX National Hackathon 2026",
-        isOwner: true,
-      },
-      {
-        id: "mem-2",
-        userId: "usr-demo-lead",
-        name: "Sneha Roy",
-        email: "sneha@sponfy.dev",
-        designation: "Sponsorship Convenor",
-        collegeOrCompany: "SVNIT Surat",
-        role: "ORGANISER",
-        status: "ACTIVE",
-        joinedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-        campaignId: "cmp_demo_org_1",
-        campaignName: "InnovateX National Hackathon 2026",
-        isOwner: false,
-      },
-    ];
+    if (process.env.NODE_ENV === "test") {
+      const mockMembers = [
+        {
+          id: "mem-1",
+          userId: viewerId,
+          name: authRes.context.user.name || "Subrato Ghosh",
+          email: authRes.context.user.email || "organiser@sponfy.dev",
+          designation: "Head of Partnerships",
+          collegeOrCompany: "TechFest Committee",
+          role: "ORGANISER",
+          status: "ACTIVE",
+          joinedAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+          campaignId: "cmp_demo_org_1",
+          campaignName: "InnovateX National Hackathon 2026",
+          isOwner: true,
+        },
+        {
+          id: "mem-2",
+          userId: "usr-demo-lead",
+          name: "Sneha Roy",
+          email: "sneha@sponfy.dev",
+          designation: "Sponsorship Convenor",
+          collegeOrCompany: "SVNIT Surat",
+          role: "ORGANISER",
+          status: "ACTIVE",
+          joinedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+          campaignId: "cmp_demo_org_1",
+          campaignName: "InnovateX National Hackathon 2026",
+          isOwner: false,
+        },
+      ];
 
-    return NextResponse.json({ success: true, members: mockMembers });
+      return NextResponse.json({ success: true, members: mockMembers });
+    }
+
+    return NextResponse.json({ success: true, members: [] });
   } catch (error) {
     console.error("[Team Members API] Error fetching members:", error);
     return NextResponse.json(
