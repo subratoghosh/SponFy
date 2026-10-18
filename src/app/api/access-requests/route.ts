@@ -166,9 +166,9 @@ export async function POST(req: Request) {
       await (prisma as any).user.update({
         where: { id: userId },
         data: {
+          // Role and account mode are granted only when an organiser approves
+          // (PATCH /api/access-requests/[id]); never before.
           onboardingStatus: "PENDING_APPROVAL",
-          accountMode: requestedRole || "EXECUTIVE",
-          role: requestedRole || "EXECUTIVE",
           designation: roleTitle,
           department: dept,
         },
