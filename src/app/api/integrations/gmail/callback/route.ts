@@ -79,6 +79,7 @@ export async function GET(req: Request) {
             refreshTokenEnc: refreshToken ? encrypt(refreshToken) : undefined,
             accessTokenEnc: accessToken ? encrypt(accessToken) : null,
             expiresAt,
+            scopes: tokens.scope || "gmail.send gmail.readonly",
             status: "ACTIVE",
             lastSyncAt: new Date(),
           },
