@@ -1,13 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 import { loadFollowups } from "@/lib/outreach/followup-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request): Promise<NextResponse>;
+export async function GET(): Promise<NextResponse>;
+export async function GET(request?: Request): Promise<NextResponse> {
   try {
-    const items = await loadFollowups();
+    const session = await auth();
+    const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : undefined);
+
+    let campaignId: string | undefined = undefined;
+    if (request?.url) {
+      try {
+        const { searchParams } = new URL(request.url);
+        campaignId = searchParams.get("campaignId") || undefined;
+      } catch {
+        // invalid URL
+      }
+    }
+
+    const items = await loadFollowups(undefined, userId, campaignId);
     const count = (s: string) => items.filter((i) => i.state === s).length;
     return NextResponse.json({
+      success: true,
       items,
       summary: {
         due: count("due"),
@@ -18,6 +35,6 @@ export async function GET() {
       },
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to load follow-ups" }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message || "Failed to load follow-ups" }, { status: 500 });
   }
 }

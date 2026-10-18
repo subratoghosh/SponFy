@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   CheckCircle,
   Clock,
@@ -12,6 +13,9 @@ import {
   XCircle,
   Loader2,
   AlertTriangle,
+  RefreshCw,
+  MessageSquare,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,14 +48,15 @@ export function FollowupQueue() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchActionBusy, setBatchActionBusy] = useState(false);
   const [confirmBulkSend, setConfirmBulkSend] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/followups', { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load follow-ups');
-      setItems(data.items);
-      setSummary(data.summary);
+      setItems(data.items || []);
+      setSummary(data.summary || null);
     } catch (err: any) {
       toast(err.message || 'Failed to load follow-ups', 'error');
     } finally {
@@ -59,13 +64,48 @@ export function FollowupQueue() {
     }
   }, [toast]);
 
+  const handleSyncGmail = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/replies/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.syncedCount > 0) {
+          toast(`Synced ${data.syncedCount} new reply(ies) from Gmail! Follow-up statuses updated.`, 'success');
+        } else {
+          toast('Gmail inbox is up to date. No new replies found.', 'info');
+        }
+        await load();
+      } else {
+        toast(data.error || 'Failed to sync replies from Gmail', 'error');
+      }
+    } catch (err: any) {
+      toast(err.message || 'Failed to sync Gmail inbox', 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   useEffect(() => {
     load();
+    // Background sync on initial mount
+    fetch('/api/replies/sync', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.syncedCount > 0) {
+          load();
+        }
+      })
+      .catch(() => {});
   }, [load]);
 
   const attention = items.filter((i) => i.state === 'due' || i.state === 'draft_ready');
   const waiting = items.filter((i) => i.state === 'waiting');
-  const finished = items.filter((i) => !['due', 'draft_ready', 'waiting'].includes(i.state));
+  const replied = items.filter((i) => i.state === 'replied');
+  const finished = items.filter((i) => !['due', 'draft_ready', 'waiting', 'replied'].includes(i.state));
 
   const eligibleForDrafting = attention.filter((i) => i.state === 'due');
   const eligibleForBulkSend = attention.filter((i) => i.state === 'draft_ready' && i.pendingDraft?.status === 'approved');
@@ -149,11 +189,41 @@ export function FollowupQueue() {
   };
 
   if (loading) {
-    return <div className="text-sm text-[#0C382E]/60 p-6">Loading follow-ups...</div>;
+    return (
+      <div className="flex items-center justify-center p-12 text-sm text-[#0C382E]/60 gap-2">
+        <Loader2 className="w-5 h-5 animate-spin text-[#0C382E]" />
+        <span>Loading follow-up queue...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Top Header & Gmail Sync Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div>
+          <h1 className="font-heading font-black text-2xl sm:text-3xl text-green-dark">
+            Follow-up Queue
+          </h1>
+          <p className="text-xs sm:text-sm text-text-dim mt-0.5">
+            Automated multi-touch outreach tracking synced directly with your Gmail inbox.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSyncGmail}
+            disabled={isSyncing}
+            className="font-bold border-[#0C382E]/20 text-[#0C382E] hover:bg-[#FAF4E6] gap-1.5 shadow-xs cursor-pointer"
+          >
+            <RefreshCw className={`w-4 h-4 text-[#2D6A4F] ${isSyncing ? "animate-spin" : ""}`} />
+            <span>{isSyncing ? "Syncing Gmail..." : "Sync Gmail Inbox"}</span>
+          </Button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Need follow-up" value={(summary?.due ?? 0) + (summary?.draftReady ?? 0)} />
         <Stat label="Waiting for window" value={summary?.waiting ?? 0} />
@@ -292,6 +362,25 @@ export function FollowupQueue() {
         </section>
       )}
 
+      {replied.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading font-bold text-lg text-emerald-900 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Received Replies from Sponsors ({replied.length})</span>
+            </h2>
+            <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
+              Sequence halted
+            </span>
+          </div>
+          <div className="space-y-2">
+            {replied.map((item) => (
+              <RepliedCard key={item.companyId} item={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {finished.length > 0 && (
         <section>
           <h2 className="font-heading font-bold text-lg text-[#0C382E] mb-3">Halted or finished</h2>
@@ -311,6 +400,52 @@ function Stat({ label, value }: { label: string; value: number }) {
     <div className="bg-white border border-[#0C382E]/10 rounded-2xl p-4 shadow-sm">
       <div className="text-2xl font-heading font-bold text-[#0C382E]">{value}</div>
       <div className="text-[11px] text-[#0C382E]/60 font-medium">{label}</div>
+    </div>
+  );
+}
+
+function RepliedCard({ item }: { item: FollowupItem }) {
+  return (
+    <div className="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:border-emerald-300 transition-colors">
+      <div className="flex items-start gap-3.5 min-w-0">
+        <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200 font-black text-sm">
+          {item.companyName.charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0 space-y-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              href={`/app/sponsors/${item.companyId}`}
+              className="font-heading font-bold text-base text-green-dark hover:underline truncate"
+            >
+              {item.companyName}
+            </Link>
+            <Badge variant="success" className="text-xs font-bold bg-emerald-100 text-emerald-800 border-emerald-300">
+              Replied
+            </Badge>
+          </div>
+          <div className="text-xs text-text-dim flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-green-dark/80">{item.recipientEmail}</span>
+            <span>·</span>
+            <span>Last contact {Math.floor(item.daysSinceLast)}d ago</span>
+            <span>·</span>
+            <span className="text-emerald-800 font-semibold">{item.reason}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <Link href={`/app/sponsors/${item.companyId}`}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs font-bold border-emerald-300 text-emerald-900 hover:bg-emerald-100 gap-1.5 shadow-2xs cursor-pointer"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-700" />
+            <span>View Conversation</span>
+            <ArrowRight className="w-3 h-3 text-emerald-700" />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

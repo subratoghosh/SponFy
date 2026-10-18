@@ -992,7 +992,11 @@ export const DEMO_DRAFTS: EmailDraft[] = [
     sentByName: "Rohan Verma",
     sentByUsername: "rohan",
     approvedAt: "2026-08-16T14:00:00Z",
+    sentAt: "2026-08-16T14:15:00Z",
     createdAt: "2026-08-16T12:00:00Z",
+    senderName: "Subrato Ghosh",
+    senderEmail: "organizer@sponfy.dev",
+    senderRole: "EXECUTIVE",
   },
   {
     id: "draft-razorpay",
@@ -1015,7 +1019,11 @@ export const DEMO_DRAFTS: EmailDraft[] = [
     sentByName: "Sneha Patel",
     sentByUsername: "sneha",
     approvedAt: "2026-08-18T10:00:00Z",
+    sentAt: "2026-08-18T10:15:00Z",
     createdAt: "2026-08-18T09:00:00Z",
+    senderName: "Subrato Ghosh",
+    senderEmail: "organizer@sponfy.dev",
+    senderRole: "EXECUTIVE",
   },
   {
     id: "draft-polygon",

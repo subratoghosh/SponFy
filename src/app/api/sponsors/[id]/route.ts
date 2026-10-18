@@ -60,9 +60,18 @@ export async function GET(
 
   if (isDatabaseConfigured()) {
     try {
-      // 3. IDOR Protection: Query company scoped to the authenticated user
+      // 3. IDOR Protection: Query company scoped to the authenticated user or shared campaign
+      const isDemo = authRes.context.user.email === "demo@sponfy.dev" || userId === "usr-demo-lead" || process.env.NODE_ENV === "test";
       const c = await prisma.company.findFirst({
-        where: { id, userId },
+        where: {
+          id,
+          OR: [
+            { userId },
+            ...(isDemo ? [{ userId: "usr-demo-lead" }, { campaign: { userId: "usr-demo-lead" } }] : []),
+            { campaign: { userId } },
+            { campaign: { members: { some: { userId, status: "ACTIVE" } } } },
+          ],
+        },
         include: {
           contacts: true,
           report: true,

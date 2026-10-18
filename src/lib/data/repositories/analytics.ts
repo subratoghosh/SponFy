@@ -88,11 +88,14 @@ export async function getAnalyticsData(campaignId?: string, userId?: string) {
   const positiveCount = replies.filter((r) => ["Interested", "Positive", "Negotiating"].includes(r.intent)).length;
   const positiveReplyRate = repliesCount > 0 ? Math.round((positiveCount / repliesCount) * 100) : 0;
 
-  const outreachTrends = [
-    { week: "Week 1", sent: Math.round(sentEmails * 0.2), replies: Math.round(repliesCount * 0.1), replyRate: overallReplyRate },
-    { week: "Week 2", sent: Math.round(sentEmails * 0.4), replies: Math.round(repliesCount * 0.3), replyRate: overallReplyRate },
-    { week: "Week 3", sent: sentEmails, replies: repliesCount, replyRate: overallReplyRate },
-  ];
+  const outreachTrends =
+    sentEmails > 0 || repliesCount > 0
+      ? [
+          { week: "Week 1", sent: 0, replies: 0, replyRate: 0 },
+          { week: "Week 2", sent: 0, replies: 0, replyRate: 0 },
+          { week: "Week 3", sent: sentEmails, replies: repliesCount, replyRate: overallReplyRate },
+        ]
+      : [];
 
   // 3. Pipeline Value by Stage
   const pipelineValueByStage = PIPELINE_STAGES.map((st) => {
@@ -121,11 +124,13 @@ export async function getAnalyticsData(campaignId?: string, userId?: string) {
   });
 
   // 5. Followup Lift
-  const followupLift = [
-    { channel: "Initial Email", responses: Math.round(repliesCount * 0.6), share: 60 },
-    { channel: "Follow-up 1 (+2 days)", responses: Math.round(repliesCount * 0.3), share: 30 },
-    { channel: "Follow-up 2 (+2 days)", responses: Math.round(repliesCount * 0.1), share: 10 },
-  ];
+  const followupLift =
+    repliesCount > 0
+      ? [
+          { channel: "Initial Email", responses: repliesCount, share: 100 },
+          { channel: "Follow-up Touchpoints", responses: 0, share: 0 },
+        ]
+      : [];
 
   // 6. Intent Distribution
   const intentCounts: Record<string, number> = {};

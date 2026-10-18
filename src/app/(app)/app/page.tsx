@@ -256,7 +256,7 @@ export default async function OverviewPage(props: {
       getMeetings(userId, selectedCampaignId !== "all" ? selectedCampaignId : undefined),
       getDrafts(undefined, userId),
       loadFollowups(undefined, userId, selectedCampaignId !== "all" ? selectedCampaignId : undefined),
-      getReplyAnalyses(),
+      getReplyAnalyses(undefined, userId),
     ]);
 
     const meetings = meetingsRes.status === "fulfilled" ? meetingsRes.value : [];
@@ -472,7 +472,7 @@ export default async function OverviewPage(props: {
     getSponsors(activeCampaign?.id, userId),
     getDrafts(undefined, userId),
     loadFollowups(undefined, userId, activeCampaign?.id),
-    getReplyAnalyses(),
+    getReplyAnalyses(undefined, userId),
   ]);
 
   const sponsors = sponsorsRes.status === "fulfilled" ? sponsorsRes.value : [];
@@ -582,6 +582,42 @@ export default async function OverviewPage(props: {
     });
   }
 
+  let realActivities: any[] = [];
+  let realInsights: string[] = [];
+
+  if (userId && isDatabaseConfigured()) {
+    try {
+      const [acts, dbInsights] = await Promise.all([
+        prisma.activity.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        }),
+        prisma.insight.findMany({
+          where: { userId },
+          orderBy: { generatedAt: "desc" },
+          take: 5,
+        }),
+      ]);
+
+      realActivities = acts.map((a) => {
+        const payload: any = a.payload || {};
+        return {
+          id: a.id,
+          type: a.type.toLowerCase(),
+          title: payload.title || a.type.replace(/_/g, " "),
+          description: payload.description || payload.text || "",
+          timestamp: a.createdAt.toISOString(),
+        };
+      });
+
+      realInsights = dbInsights.map((i) => i.text);
+    } catch {
+      realActivities = [];
+      realInsights = [];
+    }
+  }
+
   const demoInsights = isDemoUser
     ? [
         "Developer Tools and Cloud companies in your pipeline have an 82% positive reply rate — 2.4x higher than FMCG brands.",
@@ -590,18 +626,13 @@ export default async function OverviewPage(props: {
       ]
     : [];
 
-  const finalActionQueue =
-    isDemoUser && computedActions.length === 0
-      ? undefined // Falls back to DEFAULT_DEMO_ACTIONS for demo user
-      : computedActions;
-
   return (
     <CampaignDashboardView
       analytics={analytics}
       campaignName={campaignName}
-      activities={isDemoUser ? DEMO_ACTIVITIES : []}
-      insights={isDemoUser ? demoInsights : []}
-      actionQueue={finalActionQueue}
+      activities={isDemoUser && realActivities.length === 0 ? DEMO_ACTIVITIES : realActivities}
+      insights={isDemoUser && realInsights.length === 0 ? demoInsights : realInsights}
+      actionQueue={computedActions}
       hasCampaigns={isDemoUser || userCampaigns.length > 0}
     />
   );

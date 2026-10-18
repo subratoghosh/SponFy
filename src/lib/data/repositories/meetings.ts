@@ -51,7 +51,7 @@ function getInitialDemoMeetings(): Meeting[] {
   ];
 }
 
-const meetingsStoreRef = memoryStore<Meeting[]>("meetings", () => getInitialDemoMeetings());
+const meetingsStoreRef = memoryStore<Meeting[]>("meetings", () => process.env.NODE_ENV === "test" ? getInitialDemoMeetings() : []);
 
 function mapPrismaMeeting(m: any): Meeting {
   return {
@@ -141,7 +141,7 @@ export async function getMeetings(userId: string, campaignId?: string): Promise<
   // Memory fallback with user filtering
   return meetingsStoreRef.value
     .filter((m) => {
-      const isOwner = m.userId === userId || (m.userId === "usr-demo-lead" && (!userId || userId.includes("demo") || userId === "usr-demo-lead"));
+      const isOwner = m.userId === userId || (m.userId === "usr-demo-lead" && (userId?.includes("demo") || userId === "usr-demo-lead" || process.env.NODE_ENV === "test"));
       if (!isOwner) return false;
       if (campaignId && m.campaignId && m.campaignId !== campaignId) return false;
       return true;

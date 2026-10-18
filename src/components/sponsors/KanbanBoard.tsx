@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { Company, PipelineStage } from "@/types";
 import { PIPELINE_STAGES } from "@/lib/config/pipeline";
@@ -11,8 +11,6 @@ import {
   ArrowRight,
   UserCheck,
   Tag,
-  DollarSign,
-  ChevronDown,
   Trash2,
   Mail,
 } from "lucide-react";
@@ -35,107 +33,29 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onToggleSelectSponsor,
   onDraftEmail,
 }) => {
-  // Category dropdown selection: "all" or specific PipelineStage
-  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-    // If some stage has sponsors, pick it; otherwise "all"
-    const firstWithSponsors = PIPELINE_STAGES.find(
-      (st) => sponsors.filter((s) => s.stage === st.id).length > 0
-    );
-    return firstWithSponsors ? firstWithSponsors.id : "all";
-  });
-
-  const activeStageDef = PIPELINE_STAGES.find((st) => st.id === selectedCategory);
-
-  // Filter sponsors based on category selection
-  const displayedSponsors =
-    selectedCategory === "all"
-      ? sponsors
-      : sponsors.filter((s) => s.stage === selectedCategory);
-
   return (
-    <div className="space-y-5 pt-1">
-      {/* Category Dropdown Bar */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-green-dark/12 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <label
-            htmlFor="stage-category-select"
-            className="text-xs font-bold uppercase tracking-wider text-green-dark flex items-center gap-1.5 shrink-0"
-          >
-            <span>Category:</span>
-          </label>
-
-          <div className="relative min-w-[260px] sm:w-72">
-            <select
-              id="stage-category-select"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full appearance-none pl-3.5 pr-10 py-2.5 bg-butter-panel text-green-dark text-xs sm:text-sm font-semibold rounded-xl border border-green-dark/15 focus:border-green-dark focus:ring-2 focus:ring-butter-warm outline-none cursor-pointer"
-            >
-              <option value="all">
-                All Categories ({sponsors.length} sponsors)
-              </option>
-              {PIPELINE_STAGES.map((stage) => {
-                const count = sponsors.filter((s) => s.stage === stage.id).length;
-                return (
-                  <option key={stage.id} value={stage.id}>
-                    {stage.label} ({count})
-                  </option>
-                );
-              })}
-            </select>
-            <ChevronDown className="w-4 h-4 text-green-dark/60 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs text-text-dim">
-          {activeStageDef && (
-            <div className="flex items-center gap-1.5 hidden sm:flex">
-              <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: activeStageDef.color }}
-              />
-              <span className="font-semibold text-green-dark">
-                {activeStageDef.label}:
-              </span>
-              <span className="truncate max-w-[220px] text-text-muted">
-                {activeStageDef.description}
-              </span>
-            </div>
-          )}
-          <span className="ml-auto font-mono text-xs">
-            Showing <strong className="text-green-dark">{displayedSponsors.length}</strong> of{" "}
-            <strong>{sponsors.length}</strong>
-          </span>
-        </div>
+    <div className="space-y-4 pt-1">
+      {/* Header bar showing total count */}
+      <div className="flex items-center justify-between text-xs text-text-dim px-1">
+        <span className="font-semibold text-green-dark">
+          Prospective Sponsors ({sponsors.length})
+        </span>
+        <span className="font-mono text-xs">
+          Showing <strong className="text-green-dark">{sponsors.length}</strong> companies
+        </span>
       </div>
 
       {/* Vertical Company List */}
-      {displayedSponsors.length === 0 ? (
+      {sponsors.length === 0 ? (
         <div className="p-12 text-center bg-white rounded-3xl border border-green-dark/10 shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-butter-panel text-green-dark/40 flex items-center justify-center mx-auto">
             <Building2 className="w-6 h-6" />
           </div>
-          <h4 className="text-base font-bold text-green-dark">
-            {selectedCategory === "all"
-              ? "No sponsors found"
-              : `No sponsors in ${activeStageDef?.label || selectedCategory}`}
-          </h4>
+          <h4 className="text-base font-bold text-green-dark">No sponsors found</h4>
           <p className="text-xs text-text-dim max-w-md mx-auto">
-            {selectedCategory === "all"
-              ? "You haven't discovered or added any prospective sponsors yet."
-              : `Switch to "All Categories" or another stage to view existing companies, or discover new prospective sponsors.`}
+            You haven&apos;t discovered or added any prospective sponsors yet. Use AI discovery to find and approve new sponsors.
           </p>
           <div className="pt-2 flex items-center justify-center gap-3">
-            {selectedCategory !== "all" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedCategory("all")}
-                className="text-xs font-bold"
-              >
-                View All Categories
-              </Button>
-            )}
             <Link href="/app/discover">
               <Button variant="green" size="sm" className="text-xs font-bold shadow-xs">
                 Discover Sponsors
@@ -145,7 +65,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {displayedSponsors.map((sponsor) => {
+          {sponsors.map((sponsor) => {
             const stageConfig = PIPELINE_STAGES.find((s) => s.id === sponsor.stage);
             const primaryContact = sponsor.contacts?.[0];
 

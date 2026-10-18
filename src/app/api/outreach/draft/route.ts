@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { runOutreachWorkflow } from "@/lib/workflows/outreach-graph";
-import { getSponsorById, getSponsors } from "@/lib/data/repositories/sponsors";
 import { getCampaignById } from "@/lib/data/repositories/campaigns";
-import { saveDraft, getDraftsByCompanyId, deleteDraft, getDraftById } from "@/lib/data/repositories/outreach";
+import { getSponsorById } from "@/lib/data/repositories/sponsors";
+import { saveDraft, getDraftsByCompanyId, deleteDraft, deleteDrafts, getDraftById } from "@/lib/data/repositories/outreach";
 import { getCustomTemplates, interpolateTemplate } from "@/lib/data/repositories/templates";
 import { evaluateEmailQuality } from "@/lib/services/quality-evaluator";
 import { Company, Campaign } from "@/types";
@@ -328,22 +328,49 @@ export async function DELETE(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const draftId = searchParams.get("id");
-    if (!draftId) {
-      return NextResponse.json({ error: "draftId (id) is required" }, { status: 400 });
+    const queryId = searchParams.get("id");
+    let targetIds: string[] = [];
+
+    if (queryId) {
+      targetIds = [queryId];
+    } else {
+      try {
+        const body = await req.json();
+        if (Array.isArray(body?.ids)) {
+          targetIds = body.ids.filter((id: any) => typeof id === "string" && id.trim().length > 0);
+        } else if (typeof body?.id === "string") {
+          targetIds = [body.id];
+        }
+      } catch {
+        // Request body may be empty
+      }
     }
 
-    const draft = await getDraftById(draftId);
-    if (!draft) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    if (targetIds.length === 0) {
+      return NextResponse.json({ error: "draftId (id) or ids array is required" }, { status: 400 });
     }
 
-    if (draft.status === "sent" || draft.status === "sending") {
-      return NextResponse.json({ error: "Cannot reject a draft that has already been dispatched" }, { status: 400 });
+    if (targetIds.length === 1) {
+      const draftId = targetIds[0];
+      const draft = await getDraftById(draftId);
+      if (!draft) {
+        return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+      }
+
+      if (draft.status === "sent" || draft.status === "sending") {
+        return NextResponse.json({ error: "Cannot remove a draft that has already been dispatched" }, { status: 400 });
+      }
+
+      await deleteDraft(draftId, userId);
+      return NextResponse.json({ success: true, message: "Draft removed from queue successfully", removedCount: 1 });
     }
 
-    await deleteDraft(draftId, userId);
-    return NextResponse.json({ success: true, message: "Draft rejected and deleted successfully" });
+    const removedCount = await deleteDrafts(targetIds, userId);
+    return NextResponse.json({
+      success: true,
+      message: `Successfully removed ${removedCount} draft(s) from outreach queue`,
+      removedCount,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Failed to delete draft" }, { status: 500 });
   }

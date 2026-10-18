@@ -95,7 +95,12 @@ function LoginForm() {
         setErrorMsg("Invalid credentials. Please verify your email and password.");
         setLoading(false);
       } else {
-        window.location.href = "/app";
+        const callbackUrl = searchParams.get("callbackUrl");
+        if (callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
+          window.location.href = callbackUrl;
+        } else {
+          window.location.href = "/app";
+        }
       }
     } catch {
       window.location.href = "/app";

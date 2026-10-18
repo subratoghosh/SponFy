@@ -25,7 +25,7 @@ import { SponfyBrand } from "@/components/ui/SponfyBrand";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const { toast } = useToast();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -40,6 +40,24 @@ export default function OnboardingPage() {
   const [collegeOrCompany, setCollegeOrCompany] = useState("");
   const [department, setDepartment] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch("/api/onboarding/profile")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.profile) {
+          if (data.profile.name) setName((prev) => prev || data.profile.name);
+          if (data.profile.phone) setPhone((prev) => prev || data.profile.phone);
+          if (data.profile.designation) setDesignation((prev) => prev || data.profile.designation);
+          if (data.profile.collegeOrCompany) setCollegeOrCompany((prev) => prev || data.profile.collegeOrCompany);
+          if (data.profile.department) setDepartment((prev) => prev || data.profile.department);
+          if (data.profile.onboardingStatus === "DETAILS_DONE") {
+            setStep(2);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (session?.user) {
@@ -104,6 +122,9 @@ export default function OnboardingPage() {
       }
 
       toast("Your basic profile has been updated.", "success");
+      try {
+        await update?.();
+      } catch {}
       setStep(2);
     } catch (err: any) {
       const msg = err.message || "Failed to save details. Please try again.";
@@ -142,6 +163,9 @@ export default function OnboardingPage() {
       }
 
       toast("Your individual workspace is ready.", "success");
+      try {
+        await update?.();
+      } catch {}
       window.location.href = data.redirectUrl || "/app";
     } catch (err: any) {
       const msg = err.message || "Failed to complete onboarding.";

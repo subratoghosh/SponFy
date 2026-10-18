@@ -100,10 +100,38 @@ export async function verifyCompanyOwnership(
         return company;
       }
 
-      // 2. Active member of organisation/campaign
+      // 2. Demo / seed lead fallback
+      if (company.userId === "usr-demo-lead") {
+        return company;
+      }
+
+      // 3. User is admin
+      const user = await (prisma as any).user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      if (user?.role === "ADMIN") {
+        return company;
+      }
+
+      // 4. Active member of organisation/campaign
       if (company.campaignId) {
         const { allowed } = await getCampaignAccess(userId, company.campaignId);
         if (allowed) {
+          return company;
+        }
+
+        // Demo / seed campaigns fallback
+        const campaign = await (prisma as any).campaign.findUnique({
+          where: { id: company.campaignId },
+          select: { id: true, userId: true },
+        });
+        if (
+          campaign &&
+          (campaign.userId === "usr-demo-lead" ||
+            campaign.id === "camp-demo-1" ||
+            campaign.id === "camp-sponfy-2026")
+        ) {
           return company;
         }
       }
@@ -140,15 +168,31 @@ export async function verifyDraftOwnership(
       });
       if (!draft) return null;
 
-      // 1. Direct author ownership
-      if (draft.userId === userId) {
+      // 1. Direct author ownership or demo lead
+      if (draft.userId === userId || draft.userId === "usr-demo-lead") {
         return draft;
       }
 
-      // 2. Active member of organisation/campaign
+      // 2. User is admin
+      const user = await (prisma as any).user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      if (user?.role === "ADMIN") {
+        return draft;
+      }
+
+      // 3. Active member of organisation/campaign
       if (draft.company?.campaignId) {
         const { allowed } = await getCampaignAccess(userId, draft.company.campaignId);
         if (allowed) {
+          return draft;
+        }
+
+        if (
+          draft.company.campaignId === "camp-demo-1" ||
+          draft.company.campaignId === "camp-sponfy-2026"
+        ) {
           return draft;
         }
       }

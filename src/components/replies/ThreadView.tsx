@@ -63,7 +63,7 @@ export function ThreadView({
             )}
           </div>
           <p className="text-xs text-[#0C382E]/60 truncate">
-            Sponsor: <span className="font-semibold text-[#0C382E]">{company?.name || 'Partner'}</span> •{' '}
+            Sponsor: <span className="font-semibold text-[#0C382E]">{company?.name || message.fromEmail.split('@')[0]}</span> •{' '}
             <span className="font-mono text-neutral-600">{message.fromEmail}</span>
           </p>
         </div>

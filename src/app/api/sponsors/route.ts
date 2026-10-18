@@ -80,11 +80,12 @@ export async function GET(request: NextRequest) {
         select: { id: true },
       });
       const accessibleCampaignIds = userCampaigns.map((c) => c.id);
+      const isDemo = session?.user?.email === "demo@sponfy.dev" || userId === "usr-demo-lead";
 
       andConditions.push({
         OR: [
           { userId },
-          { userId: "usr-demo-lead" },
+          ...(isDemo ? [{ userId: "usr-demo-lead" }] : []),
           { campaignId: { in: accessibleCampaignIds } },
         ],
       });

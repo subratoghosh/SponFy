@@ -387,6 +387,7 @@ export async function addSponsor(company: Omit<Company, "id" | "createdAt" | "up
           pipelineValue: company.pipelineValue || 0,
           signals: (company.signals as any) || [],
           confidence: company.confidence || 0,
+          sponsorApproved: true,
           researchStatus: "NOT_STARTED",
         },
         include: {
@@ -498,14 +499,57 @@ export async function removeSponsor(companyId: string): Promise<boolean> {
   const { deleteDraftsByCompanyId } = await import("./outreach");
   await deleteDraftsByCompanyId(companyId);
 
+  let deleted = false;
   if (isDatabaseConfigured()) {
     try {
-      // Delete the company record (contacts, sources, research report cascade deleted)
-      // Historical sent messages and suppression records remain preserved independently
+      // 1. Unlink historical messages so they don't block foreign key constraint
+      await (prisma as any).message.updateMany({
+        where: { companyId },
+        data: { companyId: null },
+      }).catch(() => {});
+
+      // 2. Delete meetings associated with this company
+      await (prisma as any).meeting.deleteMany({
+        where: { companyId },
+      }).catch(() => {});
+
+      // 3. Delete followup tasks and sequences
+      const seqs = await (prisma as any).followupSequence.findMany({
+        where: { companyId },
+        select: { id: true },
+      }).catch(() => []);
+      if (Array.isArray(seqs) && seqs.length > 0) {
+        const seqIds = seqs.map((s: any) => s.id);
+        await (prisma as any).followupTask.deleteMany({
+          where: { sequenceId: { in: seqIds } },
+        }).catch(() => {});
+        await (prisma as any).followupSequence.deleteMany({
+          where: { id: { in: seqIds } },
+        }).catch(() => {});
+      }
+
+      // 4. Delete drafts, activities, contacts, sources, report
+      await (prisma as any).emailDraft.deleteMany({
+        where: { companyId },
+      }).catch(() => {});
+      await (prisma as any).activity.deleteMany({
+        where: { companyId },
+      }).catch(() => {});
+      await (prisma as any).contact.deleteMany({
+        where: { companyId },
+      }).catch(() => {});
+      await (prisma as any).source.deleteMany({
+        where: { companyId },
+      }).catch(() => {});
+      await (prisma as any).researchReport.deleteMany({
+        where: { companyId },
+      }).catch(() => {});
+
+      // 5. Delete the company record
       await prisma.company.delete({
         where: { id: companyId },
       });
-      return true;
+      deleted = true;
     } catch (err) {
       console.warn("Prisma removeSponsor failed, falling back to memory store:", err);
     }
@@ -514,9 +558,9 @@ export async function removeSponsor(companyId: string): Promise<boolean> {
   const idx = sponsorsStoreRef.value.findIndex((c) => c.id === companyId);
   if (idx !== -1) {
     sponsorsStoreRef.value.splice(idx, 1);
-    return true;
+    deleted = true;
   }
-  return false;
+  return deleted;
 }
 
 export async function removeSponsors(companyIds: string[], userId?: string): Promise<number> {
@@ -534,10 +578,53 @@ export async function removeSponsors(companyIds: string[], userId?: string): Pro
   let dbCount = 0;
   if (isDatabaseConfigured()) {
     try {
+      // 1. Unlink historical messages for these companies
+      await (prisma as any).message.updateMany({
+        where: { companyId: { in: companyIds } },
+        data: { companyId: null },
+      }).catch(() => {});
+
+      // 2. Delete meetings
+      await (prisma as any).meeting.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }).catch(() => {});
+
+      // 3. Delete followup tasks and sequences
+      const seqs = await (prisma as any).followupSequence.findMany({
+        where: { companyId: { in: companyIds } },
+        select: { id: true },
+      }).catch(() => []);
+      if (Array.isArray(seqs) && seqs.length > 0) {
+        const seqIds = seqs.map((s: any) => s.id);
+        await (prisma as any).followupTask.deleteMany({
+          where: { sequenceId: { in: seqIds } },
+        }).catch(() => {});
+        await (prisma as any).followupSequence.deleteMany({
+          where: { id: { in: seqIds } },
+        }).catch(() => {});
+      }
+
+      // 4. Delete child records
+      await (prisma as any).emailDraft.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }).catch(() => {});
+      await (prisma as any).activity.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }).catch(() => {});
+      await (prisma as any).contact.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }).catch(() => {});
+      await (prisma as any).source.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }).catch(() => {});
+      await (prisma as any).researchReport.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }).catch(() => {});
+
+      // 5. Delete companies
       const res = await prisma.company.deleteMany({
         where: {
           id: { in: companyIds },
-          ...(userId ? { userId } : {}),
         },
       });
       dbCount = res.count;

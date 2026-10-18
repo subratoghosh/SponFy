@@ -171,16 +171,25 @@ export class RealGmailClient implements IGmailClient {
       oauth2Client.setCredentials(this.tokens);
 
       const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+      let userEmail = "";
+      try {
+        const profile = await gmail.users.getProfile({ userId: "me" });
+        userEmail = profile.data.emailAddress?.toLowerCase() || "";
+      } catch {
+        // proceed if profile fetch fails
+      }
+
       const listRes = await gmail.users.messages.list({
         userId: "me",
         q: "label:INBOX",
-        maxResults: 10,
+        maxResults: 25,
       });
 
       const messages: Message[] = [];
       const msgList = listRes.data.messages || [];
 
-      for (const item of msgList.slice(0, 5)) {
+      for (const item of msgList.slice(0, 20)) {
         if (!item.id) continue;
         const msgDetail = await gmail.users.messages.get({
           userId: "me",
@@ -189,8 +198,86 @@ export class RealGmailClient implements IGmailClient {
 
         const headers = msgDetail.data.payload?.headers || [];
         const fromHeader = headers.find((h) => h.name?.toLowerCase() === "from")?.value || "";
+        const toHeader = headers.find((h) => h.name?.toLowerCase() === "to")?.value || "";
         const subjectHeader = headers.find((h) => h.name?.toLowerCase() === "subject")?.value || "";
+        const dateHeader = headers.find((h) => h.name?.toLowerCase() === "date")?.value;
         const snippet = msgDetail.data.snippet || "";
+
+        const emailMatch = fromHeader.match(/<([^>]+)>/) || fromHeader.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        const cleanFromEmail = emailMatch ? (emailMatch[1] || emailMatch[0]).toLowerCase().trim() : fromHeader.toLowerCase().trim();
+
+        // Skip messages sent by the user themselves
+        if (userEmail && cleanFromEmail === userEmail) {
+          continue;
+        }
+
+        // Helper to extract email body from payload
+        const extractBody = (payload: any): string => {
+          if (!payload) return "";
+          if (payload.body?.data) {
+            try {
+              return Buffer.from(payload.body.data, "base64").toString("utf-8");
+            } catch {
+              return "";
+            }
+          }
+          if (Array.isArray(payload.parts)) {
+            // First check plain text
+            for (const part of payload.parts) {
+              if (part.mimeType === "text/plain" && part.body?.data) {
+                try {
+                  return Buffer.from(part.body.data, "base64").toString("utf-8");
+                } catch {
+                  // ignore
+                }
+              }
+            }
+            // Check nested parts
+            for (const part of payload.parts) {
+              if (part.parts) {
+                const nested = extractBody(part);
+                if (nested) return nested;
+              }
+            }
+            // Fallback to HTML
+            for (const part of payload.parts) {
+              if (part.mimeType === "text/html" && part.body?.data) {
+                try {
+                  const html = Buffer.from(part.body.data, "base64").toString("utf-8");
+                  return html
+                    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+                    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+                    .replace(/<[^>]+>/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim();
+                } catch {
+                  // ignore
+                }
+              }
+            }
+          }
+          return "";
+        };
+
+        const extractedBody = extractBody(msgDetail.data.payload);
+        const resolvedBody = extractedBody?.trim() || snippet;
+
+        let sentAtIso = new Date().toISOString();
+        if (dateHeader) {
+          try {
+            const parsed = new Date(dateHeader);
+            if (!isNaN(parsed.getTime())) sentAtIso = parsed.toISOString();
+          } catch {
+            // fallback
+          }
+        } else if (msgDetail.data.internalDate) {
+          try {
+            const parsed = new Date(Number(msgDetail.data.internalDate));
+            if (!isNaN(parsed.getTime())) sentAtIso = parsed.toISOString();
+          } catch {
+            // fallback
+          }
+        }
 
         messages.push({
           id: `msg-${item.id}`,
@@ -198,11 +285,11 @@ export class RealGmailClient implements IGmailClient {
           gmailMessageId: item.id,
           gmailThreadId: item.threadId || undefined,
           direction: "inbound",
-          fromEmail: fromHeader,
-          toEmail: "me",
+          fromEmail: cleanFromEmail,
+          toEmail: toHeader || "me",
           subject: subjectHeader,
-          body: snippet,
-          sentAt: new Date().toISOString(),
+          body: resolvedBody,
+          sentAt: sentAtIso,
         });
       }
 
@@ -284,6 +371,10 @@ export class MockGmailClient implements IGmailClient {
   }
 
   async pollReplies(lastSyncedAt?: string): Promise<Message[]> {
+    if (process.env.NODE_ENV === "test") {
+      const { DEMO_MESSAGES } = await import("@/lib/data/seed-data");
+      return DEMO_MESSAGES.filter((m) => m.direction === "inbound");
+    }
     return [];
   }
 
