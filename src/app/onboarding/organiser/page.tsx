@@ -780,22 +780,22 @@ export default function OnboardingOrganiserPage() {
                           <div className="pt-2 border-t border-green-dark/10 flex items-center justify-between gap-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                setSearchQuery(org.name);
-                                setExistingViewTab("campaigns");
-                              }}
+                              onClick={() => handleSelectPlatformOrgForNewCampaign(org)}
                               className="text-[11px] font-bold text-text-muted hover:text-green-dark underline"
                             >
-                              View Campaigns
+                              Start a new campaign here
                             </button>
                             <Button
                               type="button"
                               variant="green"
                               size="sm"
-                              onClick={() => handleSelectPlatformOrgForNewCampaign(org)}
+                              onClick={() => {
+                                setSearchQuery(org.name);
+                                setExistingViewTab("campaigns");
+                              }}
                               className="text-xs font-bold"
                             >
-                              Organise for this Org &rarr;
+                              Request to join a campaign &rarr;
                             </Button>
                           </div>
                         </div>
