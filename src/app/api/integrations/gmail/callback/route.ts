@@ -40,6 +40,19 @@ export async function GET(req: Request) {
     if (client instanceof RealGmailClient) {
       const { tokens, email } = await client.exchangeCodeForTokens(code);
 
+      // Google's consent screen lets people untick individual permissions.
+      // Without gmail.send every send fails with "Insufficient Permission",
+      // so refuse to save a connection that cannot send.
+      const grantedScopes = String(tokens.scope || "");
+      if (!grantedScopes.includes("https://www.googleapis.com/auth/gmail.send")) {
+        console.warn("[GmailCallback] gmail.send scope not granted. Granted scopes:", grantedScopes);
+        settingsUrl.searchParams.set(
+          "error",
+          "Send permission was not granted. Click Connect Gmail Inbox again and tick 'Send email on your behalf' on Google's screen."
+        );
+        return NextResponse.redirect(settingsUrl);
+      }
+
       const userEmail = email || session?.user?.email || "connected@gmail.com";
       const refreshToken = tokens.refresh_token || "";
       const accessToken = tokens.access_token || "";
