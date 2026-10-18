@@ -4,12 +4,12 @@ import { requireAuth } from "@/lib/security/auth-guard";
 import { requireCampaignAccess } from "@/lib/security/campaign-access";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { createNotification } from "@/lib/data/repositories/notifications";
-import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
-import { demoCampaignMembersRef } from "@/lib/security/campaign-access";
+import { demoAccessRequestsRef, demoCampaignMembersRef } from "@/lib/security/campaign-access";
 
 const decisionSchema = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
   note: z.string().trim().max(500).optional().nullable(),
+  assignedCampaignIds: z.array(z.string()).optional(),
 });
 
 export async function PATCH(
@@ -35,13 +35,14 @@ export async function PATCH(
       );
     }
 
-    const { action, note } = result.data;
+    const { action, note, assignedCampaignIds } = result.data;
 
     if (isDatabaseConfigured()) {
       const accessRequest = await (prisma as any).accessRequest.findUnique({
         where: { id },
         include: {
           campaign: { select: { id: true, name: true, organisationId: true, userId: true } },
+          organisation: { select: { id: true, name: true, createdById: true } },
           requester: { select: { id: true, name: true, email: true } },
         },
       });
@@ -65,13 +66,34 @@ export async function PATCH(
         );
       }
 
-      // Security: Must be an ORGANISER of this campaign (or OWNER / ADMIN)
-      const accessCheck = await requireCampaignAccess(viewerId, accessRequest.campaignId, "ORGANISER");
-      if (!accessCheck.allowed) {
-        return accessCheck.response || NextResponse.json({ error: "Forbidden." }, { status: 403 });
+      // Security: Must be an active ORGANISER of the organisation (or creator)
+      const orgId = accessRequest.organisationId || accessRequest.campaign?.organisationId;
+      if (!orgId) {
+        return NextResponse.json({ error: "No organization attached to this request." }, { status: 400 });
       }
 
-      const campaignName = accessRequest.campaign?.name || "the campaign";
+      const org = accessRequest.organisation || (await (prisma as any).organisation.findUnique({
+        where: { id: orgId },
+        select: { id: true, name: true, createdById: true },
+      }));
+
+      const isOrgOrganiser = await (prisma as any).organisationMember.findFirst({
+        where: {
+          organisationId: orgId,
+          userId: viewerId,
+          role: "ORGANISER",
+          status: "ACTIVE",
+        },
+      });
+
+      if (!isOrgOrganiser && org?.createdById !== viewerId) {
+        return NextResponse.json(
+          { error: "Forbidden. You must be an active Organiser of this organisation to decide membership requests." },
+          { status: 403 }
+        );
+      }
+
+      const orgName = org?.name || "the organisation";
 
       if (action === "APPROVE") {
         await prisma.$transaction(async (tx: any) => {
@@ -86,49 +108,56 @@ export async function PATCH(
             },
           });
 
-          // 2. Activate CampaignMember
-          await tx.campaignMember.upsert({
+          // 2. Activate OrganisationMember
+          await tx.organisationMember.upsert({
             where: {
-              campaignId_userId: {
-                campaignId: accessRequest.campaignId,
+              organisationId_userId: {
+                organisationId: orgId,
                 userId: accessRequest.requesterId,
               },
             },
             update: {
               role: accessRequest.requestedRole,
               status: "ACTIVE",
+              decidedById: viewerId,
+              decidedAt: new Date(),
             },
             create: {
-              campaignId: accessRequest.campaignId,
+              organisationId: orgId,
               userId: accessRequest.requesterId,
               role: accessRequest.requestedRole,
               status: "ACTIVE",
+              decidedById: viewerId,
+              decidedAt: new Date(),
             },
           });
 
-          // 3. Activate OrganisationMember if organisation linked
-          const orgId = accessRequest.organisationId || accessRequest.campaign?.organisationId;
-          if (orgId) {
-            await tx.organisationMember.upsert({
+          // 3. Assign campaigns if specified, or auto-assign requested campaign if present
+          const campaignsToAssign = Array.isArray(assignedCampaignIds) && assignedCampaignIds.length > 0
+            ? assignedCampaignIds
+            : accessRequest.campaignId
+            ? [accessRequest.campaignId]
+            : [];
+
+          for (const campId of campaignsToAssign) {
+            await tx.campaignMember.upsert({
               where: {
-                organisationId_userId: {
-                  organisationId: orgId,
+                campaignId_userId: {
+                  campaignId: campId,
                   userId: accessRequest.requesterId,
                 },
               },
               update: {
                 role: accessRequest.requestedRole,
                 status: "ACTIVE",
-                decidedById: viewerId,
-                decidedAt: new Date(),
+                assignedById: viewerId,
               },
               create: {
-                organisationId: orgId,
+                campaignId: campId,
                 userId: accessRequest.requesterId,
                 role: accessRequest.requestedRole,
                 status: "ACTIVE",
-                decidedById: viewerId,
-                decidedAt: new Date(),
+                assignedById: viewerId,
               },
             });
           }
@@ -146,17 +175,24 @@ export async function PATCH(
         });
 
         // Notify requester of approval
+        const entityName = accessRequest.campaign?.name || orgName;
         await createNotification({
           userId: accessRequest.requesterId,
           type: "request_approved",
           title: "Access Request Approved!",
-          body: `Your request to join "${campaignName}" as ${accessRequest.requestedRole.toLowerCase()} has been approved. Welcome to the team!`,
+          body: `Your request to join "${entityName}" as ${accessRequest.requestedRole.toLowerCase()} has been approved. Welcome to the team!`,
           href: "/app",
         });
 
         return NextResponse.json({
           success: true,
           status: "APPROVED",
+          organisationId: orgId,
+          requestedRole: accessRequest.requestedRole,
+          requesterId: accessRequest.requesterId,
+          requesterName: accessRequest.requester?.name,
+          campaignId: accessRequest.campaignId,
+          campaignName: accessRequest.campaign?.name,
           message: "Access request approved successfully.",
         });
       } else {
@@ -176,7 +212,7 @@ export async function PATCH(
           userId: accessRequest.requesterId,
           type: "request_rejected",
           title: "Access Request Declined",
-          body: `Your request to join "${campaignName}" was not approved.${note ? ` Note: ${note}` : ""}`,
+          body: `Your request to join "${orgName}" was not approved.${note ? ` Note: ${note}` : ""}`,
           href: "/onboarding/pending",
         });
 
@@ -208,20 +244,22 @@ export async function PATCH(
       reqItem.decidedAt = new Date().toISOString();
       reqItem.decisionNote = note || null;
 
-      const existingCm = demoCampaignMembersRef.value.find(
-        (m) => m.campaignId === reqItem.campaignId && m.userId === reqItem.requesterId
-      );
-      if (existingCm) {
-        existingCm.role = reqItem.requestedRole;
-        existingCm.status = "ACTIVE";
-      } else {
-        demoCampaignMembersRef.value.push({
-          id: `cm-${Date.now()}`,
-          campaignId: reqItem.campaignId,
-          userId: reqItem.requesterId,
-          role: reqItem.requestedRole,
-          status: "ACTIVE",
-        });
+      if (reqItem.campaignId) {
+        const existingCm = demoCampaignMembersRef.value.find(
+          (m) => m.campaignId === reqItem.campaignId && m.userId === reqItem.requesterId
+        );
+        if (existingCm) {
+          existingCm.role = reqItem.requestedRole;
+          existingCm.status = "ACTIVE";
+        } else {
+          demoCampaignMembersRef.value.push({
+            id: `cm-${Date.now()}`,
+            campaignId: reqItem.campaignId,
+            userId: reqItem.requesterId,
+            role: reqItem.requestedRole,
+            status: "ACTIVE",
+          });
+        }
       }
 
       // Update demo user if exists
@@ -259,11 +297,22 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       status: reqItem.status,
+      organisationId: (reqItem as any).organisationId || "org-techfest-committee",
+      requestedRole: reqItem.requestedRole,
+      requesterId: reqItem.requesterId,
+      campaignId: reqItem.campaignId,
     });
   } catch (error) {
     console.error("[AccessRequest Decision API] Error processing decision:", error);
+    const detail = error instanceof Error ? error.message.split("\n").filter(Boolean).slice(-1)[0] : String(error);
+    const schemaOutOfDate = /does not exist|Unknown (arg|argument|field)|column/i.test(String((error as any)?.message || ""));
     return NextResponse.json(
-      { error: "Failed to process access request decision." },
+      {
+        error: schemaOutOfDate
+          ? "Failed to process access request decision: the database schema is out of date. Run `npx dotenv-cli -e .env.local -- npx prisma db push` and restart the server."
+          : "Failed to process access request decision.",
+        ...(process.env.NODE_ENV !== "production" ? { detail } : {}),
+      },
       { status: 500 }
     );
   }

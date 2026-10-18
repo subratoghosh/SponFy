@@ -110,6 +110,8 @@ export interface EmailDraft {
   approvedAt?: string;
   sentAt?: string;
   createdAt: string;
+  sentByName?: string;
+  sentByUsername?: string;
   senderName?: string;
   senderEmail?: string;
   senderRole?: string;
@@ -419,13 +421,17 @@ export interface CampaignMember {
   userId: string;
   role: OrgRole;
   status: MemberStatus;
+  assignedById?: string | null;
+  revokedAt?: string | Date | null;
   createdAt: string | Date;
 }
+
+export type CampaignAssignment = CampaignMember;
 
 export interface AccessRequest {
   id: string;
   requesterId: string;
-  campaignId: string;
+  campaignId?: string | null;
   organisationId?: string | null;
   requestedRole: OrgRole;
   message?: string | null;
@@ -460,6 +466,7 @@ export interface AdminUser {
   orgName: string | null;
   orgType: string | null;
   role: UserRole;
+  accountMode?: AccountMode | string;
   status: AccountStatus;
   campaignsCount: number;
   emailsSentCount: number;

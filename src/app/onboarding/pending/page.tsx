@@ -24,7 +24,7 @@ import { SponfyBrand } from "@/components/ui/SponfyBrand";
 interface RequestStatusData {
   id: string;
   status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
-  requestedRole?: "ORGANISER" | "EXECUTIVE";
+  requestedRole?: string;
   campaignName: string;
   organisationName: string;
   city?: string;
@@ -178,7 +178,9 @@ export default function OnboardingPendingPage() {
                 You're in! Access Approved
               </h1>
               <p className="text-xs sm:text-sm text-text-dim max-w-md mx-auto leading-relaxed">
-                The campaign organisers have approved your request. You now have full access to collaborate on this campaign.
+                {statusData?.requestedRole === "EXECUTIVE"
+                  ? "The organisers have approved your request to join the campaign. You can now access your executive workspace."
+                  : "The organisers have approved your request. You now have full access to the workspace."}
               </p>
             </div>
 
@@ -219,7 +221,7 @@ export default function OnboardingPendingPage() {
                 Access Request Not Approved
               </h1>
               <p className="text-xs sm:text-sm text-text-dim max-w-md mx-auto leading-relaxed">
-                The campaign organiser was unable to accept your request to join this campaign team.
+                The organisers were unable to accept your request at this time.
               </p>
             </div>
 

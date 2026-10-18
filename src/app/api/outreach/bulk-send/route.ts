@@ -161,6 +161,23 @@ export async function POST(req: Request) {
       // payload optional: if empty, sends all eligible approved
     }
 
+    // Spec Non-negotiable 5: Each item in a bulk request is authorized individually. One unauthorized ID fails the entire request.
+    if (targetDraftIds.length > 0) {
+      const { verifyDraftOwnership } = await import("@/lib/security/auth-guard");
+      for (const draftId of targetDraftIds) {
+        const verified = await verifyDraftOwnership(draftId, userId);
+        if (!verified) {
+          return NextResponse.json(
+            {
+              error: `Forbidden. You do not have authorization for draft "${draftId}".`,
+              code: "FORBIDDEN",
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const [allDrafts, allSponsors, profile] = await Promise.all([
       getDrafts(undefined, userId),
       getSponsors(undefined, userId),

@@ -21,6 +21,7 @@ let inMemoryUsers: AdminUser[] = process.env.NODE_ENV === "test" ? [
     orgName: "SponFy Engineering",
     orgType: "Core Team",
     role: "ADMIN",
+    accountMode: "INDIVIDUAL",
     status: "ACTIVE",
     campaignsCount: 3,
     emailsSentCount: 42,
@@ -35,11 +36,42 @@ let inMemoryUsers: AdminUser[] = process.env.NODE_ENV === "test" ? [
     orgName: "Tech Event 2026",
     orgType: "Conference",
     role: "USER",
+    accountMode: "INDIVIDUAL",
     status: "ACTIVE",
     campaignsCount: 2,
     emailsSentCount: 34,
     lastActiveAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "usr-org-3",
+    name: "Sneha Patel (Organiser)",
+    email: "sneha@fest.org",
+    image: null,
+    orgName: "E-Cell Global",
+    orgType: "College Fest",
+    role: "ORGANISER",
+    accountMode: "ORGANISER",
+    status: "ACTIVE",
+    campaignsCount: 5,
+    emailsSentCount: 88,
+    lastActiveAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "usr-exec-4",
+    name: "Rohan Verma (Executive)",
+    email: "rohan@fest.org",
+    image: null,
+    orgName: "E-Cell Global",
+    orgType: "College Fest",
+    role: "EXECUTIVE",
+    accountMode: "EXECUTIVE",
+    status: "ACTIVE",
+    campaignsCount: 1,
+    emailsSentCount: 12,
+    lastActiveAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ] : [];
 
@@ -492,12 +524,14 @@ export async function getAdminUsers(params: {
   search?: string;
   role?: string;
   status?: string;
+  section?: "user" | "organiser" | "executive" | "all";
 } = {}): Promise<{ users: AdminUser[]; total: number; page: number; totalPages: number }> {
   const page = Math.max(1, params.page || 1);
   const limit = Math.max(1, Math.min(50, params.limit || 10));
   const search = (params.search || "").toLowerCase().trim();
   const role = params.role || "all";
   const status = params.status || "all";
+  const section = params.section || "all";
 
   if (isDatabaseConfigured()) {
     try {
@@ -512,6 +546,17 @@ export async function getAdminUsers(params: {
       }
       if (role !== "all") where.role = role;
       if (status !== "all") where.status = status;
+
+      if (section === "organiser") {
+        where.OR = [{ role: "ORGANISER" }, { accountMode: "ORGANISER" }];
+      } else if (section === "executive") {
+        where.OR = [{ role: "EXECUTIVE" }, { accountMode: "EXECUTIVE" }];
+      } else if (section === "user") {
+        where.AND = [
+          { role: { notIn: ["ORGANISER", "EXECUTIVE"] } },
+          { OR: [{ accountMode: "INDIVIDUAL" }, { accountMode: null }] },
+        ];
+      }
 
       const [dbUsers, total] = await Promise.all([
         p.user.findMany({
@@ -539,6 +584,7 @@ export async function getAdminUsers(params: {
         orgName: u.orgName,
         orgType: u.orgType,
         role: u.role || "USER",
+        accountMode: u.accountMode || "INDIVIDUAL",
         status: u.status || "ACTIVE",
         campaignsCount: u._count?.campaigns || 0,
         emailsSentCount: u._count?.messages || 0,
@@ -575,6 +621,19 @@ export async function getAdminUsers(params: {
 
   if (status !== "all") {
     filtered = filtered.filter((u) => u.status === status);
+  }
+
+  if (section === "organiser") {
+    filtered = filtered.filter((u) => u.role === "ORGANISER" || u.accountMode === "ORGANISER");
+  } else if (section === "executive") {
+    filtered = filtered.filter((u) => u.role === "EXECUTIVE" || u.accountMode === "EXECUTIVE");
+  } else if (section === "user") {
+    filtered = filtered.filter(
+      (u) =>
+        u.role !== "ORGANISER" &&
+        u.role !== "EXECUTIVE" &&
+        (!u.accountMode || u.accountMode === "INDIVIDUAL")
+    );
   }
 
   const total = filtered.length;
@@ -637,7 +696,31 @@ export async function updateUserRole(
   if (isDatabaseConfigured()) {
     try {
       const p = prisma as any;
-      if (newRole === "USER") {
+      const targetUser = await p.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true, accountMode: true },
+      });
+
+      if (!targetUser) {
+        return { success: false, error: "User account not found." };
+      }
+
+      // Security restriction: Platform ADMIN can ONLY be assigned to an individual user.
+      if (newRole === "ADMIN") {
+        const isIndividual =
+          (!targetUser.accountMode || targetUser.accountMode === "INDIVIDUAL") &&
+          targetUser.role !== "ORGANISER" &&
+          targetUser.role !== "EXECUTIVE";
+
+        if (!isIndividual) {
+          return {
+            success: false,
+            error: "Admin role can only be assigned to an individual user.",
+          };
+        }
+      }
+
+      if (newRole !== "ADMIN" && targetUser.role === "ADMIN") {
         const dbAdmins = await p.user.findMany({
           where: { role: "ADMIN", status: "ACTIVE" },
           select: { id: true },
@@ -662,24 +745,40 @@ export async function updateUserRole(
     }
   }
 
+  const u = inMemoryUsers.find((user) => user.id === userId);
+  if (!u) {
+    return { success: false, error: "User not found." };
+  }
+
+  // Security restriction: Platform ADMIN can ONLY be assigned to an individual user.
+  if (newRole === "ADMIN") {
+    const isIndividual =
+      (!u.accountMode || u.accountMode === "INDIVIDUAL") &&
+      u.role !== "ORGANISER" &&
+      u.role !== "EXECUTIVE";
+
+    if (!isIndividual) {
+      return {
+        success: false,
+        error: "Admin role can only be assigned to an individual user.",
+      };
+    }
+  }
+
   // Prevent demoting the last active administrator in in-memory fallback
   const currentAdmins = inMemoryUsers.filter(
-    (u) => u.role === "ADMIN" && u.status === "ACTIVE"
+    (usr) => usr.role === "ADMIN" && usr.status === "ACTIVE"
   );
-  if (newRole === "USER" && currentAdmins.length === 1 && currentAdmins[0].id === userId) {
+  if (newRole !== "ADMIN" && u.role === "ADMIN" && currentAdmins.length === 1 && currentAdmins[0].id === userId) {
     return {
       success: false,
       error: "Cannot demote the sole active platform administrator.",
     };
   }
 
-  const u = inMemoryUsers.find((user) => user.id === userId);
-  if (u) {
-    u.role = newRole;
-    await recordAuditLog(adminId, "role_changed", "user", userId, { newRole });
-    return { success: true };
-  }
-  return { success: false, error: "User not found." };
+  u.role = newRole;
+  await recordAuditLog(adminId, "role_changed", "user", userId, { newRole });
+  return { success: true };
 }
 
 export async function deleteUserAccount(

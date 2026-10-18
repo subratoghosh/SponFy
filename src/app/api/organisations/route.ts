@@ -36,6 +36,107 @@ function generateSlug(name: string): string {
   return `${base || "org"}-${randomSuffix}`;
 }
 
+export async function GET(req: Request) {
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+  const userId = authRes.context.userId;
+
+  // Rate limiting: 60 reads/minute/user
+  const { checkRateLimit, createRateLimitResponse } = await import("@/lib/security/rate-limit");
+  const rateLimit = await checkRateLimit("read", userId);
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
+
+  const { searchParams } = new URL(req.url);
+  const q = searchParams.get("q")?.trim() || "";
+
+  try {
+    if (isDatabaseConfigured()) {
+      const where: any = q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { city: { contains: q, mode: "insensitive" } },
+              { slug: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {};
+
+      const orgs = await (prisma as any).organisation.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          type: true,
+          city: true,
+          website: true,
+          description: true,
+          logoUrl: true,
+          createdAt: true,
+          _count: {
+            select: {
+              campaigns: true,
+              members: {
+                where: { status: "ACTIVE" },
+              },
+            },
+          },
+        },
+        take: 20,
+        orderBy: { name: "asc" },
+      });
+
+      return NextResponse.json({
+        success: true,
+        organisations: orgs.map((o: any) => ({
+          id: o.id,
+          name: o.name,
+          slug: o.slug,
+          type: o.type,
+          city: o.city,
+          website: o.website,
+          description: o.description,
+          logoUrl: o.logoUrl,
+          campaignsCount: o._count?.campaigns ?? 0,
+          membersCount: o._count?.members ?? 0,
+        })),
+      });
+    }
+
+    // Demo mode
+    const lower = q.toLowerCase();
+    const filtered = demoOrganisationsRef.value.filter(
+      (o) =>
+        !q ||
+        o.name.toLowerCase().includes(lower) ||
+        (o.city && o.city.toLowerCase().includes(lower)) ||
+        o.slug.toLowerCase().includes(lower)
+    );
+
+    return NextResponse.json({
+      success: true,
+      organisations: filtered.map((o) => ({
+        id: o.id,
+        name: o.name,
+        slug: o.slug,
+        type: o.type,
+        city: o.city,
+        website: o.website,
+        description: o.description,
+        campaignsCount: 1,
+        membersCount: 1,
+      })),
+    });
+  } catch (err: any) {
+    console.error("[Organisations GET] Error searching organisations:", err);
+    return NextResponse.json({ error: "Failed to search organisations" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   const authRes = await requireAuth();
   if (!authRes.success) {
@@ -62,6 +163,48 @@ export async function POST(req: Request) {
 
     // Neon PostgreSQL dual-mode transaction
     if (isDatabaseConfigured()) {
+      // Duplicate guard: if someone else already registered an organisation with this
+      // name, the person should request to join it instead of creating a copy.
+      if (!organisationId) {
+        const sameNameOrg = await (prisma as any).organisation.findFirst({
+          where: { name: { equals: name.trim(), mode: "insensitive" } },
+          select: { id: true, name: true, createdById: true },
+        });
+        if (sameNameOrg && sameNameOrg.createdById !== userId) {
+          return NextResponse.json(
+            {
+              error: `An organisation named "${sameNameOrg.name}" already exists on SponFy. Go back, choose "Select existing company / organisation" and request to join its campaign instead.`,
+              code: "ORGANISATION_EXISTS",
+              organisationId: sameNameOrg.id,
+            },
+            { status: 409 }
+          );
+        }
+      }
+
+      // Duplicate guard: one campaign per name per organisation.
+      const targetOrgIdForCheck = organisationId || null;
+      if (targetOrgIdForCheck) {
+        const sameNameCampaign = await prisma.campaign.findFirst({
+          where: {
+            organisationId: targetOrgIdForCheck,
+            name: { equals: campaign.name.trim(), mode: "insensitive" },
+            archived: false,
+          },
+          select: { id: true, name: true },
+        });
+        if (sameNameCampaign) {
+          return NextResponse.json(
+            {
+              error: `This organisation already has a campaign called "${sameNameCampaign.name}". Request to join it from "Select existing company / organisation", or use a different name.`,
+              code: "CAMPAIGN_EXISTS",
+              campaignId: sameNameCampaign.id,
+            },
+            { status: 409 }
+          );
+        }
+      }
+
       const outcome = await prisma.$transaction(async (tx: any) => {
         let org: any = null;
 
@@ -234,8 +377,19 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("[Organisations API] Error creating organisation & campaign:", error);
+    const rawMessage = String((error as any)?.message || error);
+    const detail = rawMessage.split("\n").filter(Boolean).slice(-1)[0];
+    const schemaOutOfDate = /does not exist|Unknown (arg|argument|field)|column/i.test(rawMessage);
+    const staleSession = /Foreign key constraint|P2003|P2025|No record was found/i.test(rawMessage);
     return NextResponse.json(
-      { error: "Failed to create organisation and campaign. Please try again." },
+      {
+        error: schemaOutOfDate
+          ? "Failed to create organisation and campaign: the database schema is out of date. Run `npx dotenv-cli -e .env.local -- npx prisma db push` and restart the server."
+          : staleSession
+            ? "Failed to create organisation and campaign: your session does not match a saved account. Please sign out and sign in again."
+            : "Failed to create organisation and campaign. Please try again.",
+        ...(process.env.NODE_ENV !== "production" ? { detail } : {}),
+      },
       { status: 500 }
     );
   }

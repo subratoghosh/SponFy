@@ -192,6 +192,7 @@ model User {
   organisationMemberships  OrganisationMember[] @relation("OrgMemberUser")
   decidedOrgMemberships    OrganisationMember[] @relation("OrgMemberDecider")
   campaignMemberships     CampaignMember[]
+  assignedCampaignMembers CampaignMember[]     @relation("CampaignAssignmentAssigner")
   accessRequests          AccessRequest[]      @relation("AccessRequester")
   decidedAccessRequests   AccessRequest[]      @relation("AccessDecider")
   notifications           Notification[]
@@ -746,15 +747,18 @@ model OrganisationMember {
 }
 
 model CampaignMember {
-  id         String       @id @default(cuid())
-  campaignId String
-  userId     String
-  role       OrgRole
-  status     MemberStatus
-  createdAt  DateTime     @default(now())
+  id           String       @id @default(cuid())
+  campaignId   String
+  userId       String
+  role         OrgRole
+  status       MemberStatus
+  assignedById String?
+  revokedAt    DateTime?
+  createdAt    DateTime     @default(now())
 
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy User?     @relation("CampaignAssignmentAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
 
   @@unique([campaignId, userId])
   @@index([userId])
@@ -765,7 +769,7 @@ model CampaignMember {
 model AccessRequest {
   id             String        @id @default(cuid())
   requesterId    String
-  campaignId     String
+  campaignId     String?
   organisationId String?
   requestedRole  OrgRole
   message        String?
@@ -778,12 +782,12 @@ model AccessRequest {
 
   requester    User          @relation("AccessRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   decidedBy    User?         @relation("AccessDecider", fields: [decidedById], references: [id], onDelete: SetNull)
-  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign     Campaign?     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   organisation Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
 
   @@index([campaignId, status])
   @@index([requesterId])
-  @@index([organisationId])
+  @@index([organisationId, status])
   @@map("access_requests")
 }
 

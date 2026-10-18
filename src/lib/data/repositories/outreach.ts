@@ -80,8 +80,11 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
       return records.map((r: any) => {
         const outboundMsg = r.messages?.[0];
         const senderUser = outboundMsg?.user || r.user;
+        const senderNameValue: string | undefined = senderUser?.name || undefined;
+        const senderEmailValue: string | undefined = senderUser?.email || outboundMsg?.fromEmail || undefined;
         return {
           id: r.id,
+          userId: r.userId,
           companyId: r.companyId,
           contactId: r.contactId || undefined,
           subject: r.subject,
@@ -91,9 +94,15 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
           approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
           sentAt: r.sentAt ? r.sentAt.toISOString() : outboundMsg?.sentAt ? outboundMsg.sentAt.toISOString() : undefined,
           createdAt: r.createdAt.toISOString(),
-          senderName: senderUser?.name || undefined,
-          senderEmail: senderUser?.email || outboundMsg?.fromEmail || undefined,
+          senderName: senderNameValue,
+          senderEmail: senderEmailValue,
           senderRole: senderUser?.designation || senderUser?.role || undefined,
+          sentByName: senderNameValue,
+          sentByUsername: senderNameValue
+            ? senderNameValue.split(" ")[0].toLowerCase()
+            : senderEmailValue
+              ? senderEmailValue.split("@")[0].toLowerCase()
+              : undefined,
         };
       });
     } catch (err) {
@@ -675,6 +684,8 @@ export async function recordSentMessage(
       ...draftsStoreRef.value[sentIdx],
       status: "sent",
       sentAt: new Date().toISOString(),
+      sentByName: draftsStoreRef.value[sentIdx].sentByName || "Team Executive",
+      sentByUsername: draftsStoreRef.value[sentIdx].sentByUsername || "executive",
       senderName: draftsStoreRef.value[sentIdx].senderName || "Subrato Ghosh",
       senderEmail: draftsStoreRef.value[sentIdx].senderEmail || "organizer@sponfy.dev",
       senderRole: draftsStoreRef.value[sentIdx].senderRole || "EXECUTIVE",

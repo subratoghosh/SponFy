@@ -39,36 +39,39 @@ export async function GET(request: NextRequest) {
     const draftWhere: any = {};
 
     if (campaignId) {
+      if (userId && !isDemo) {
+        const { getCampaignAccess } = await import("@/lib/security/campaign-access");
+        const { allowed } = await getCampaignAccess(userId, campaignId);
+        if (!allowed) {
+          return NextResponse.json({ error: "Forbidden. No access to this campaign." }, { status: 403 });
+        }
+      }
       companyWhere.campaignId = campaignId;
       campaignWhere.id = campaignId;
-      if (userId) {
-        messageWhere.userId = userId;
-        draftWhere.userId = userId;
-      }
+      messageWhere.draft = { company: { campaignId } };
+      draftWhere.company = { campaignId };
     } else if (userId) {
-      const userCampaigns = await prisma.campaign.findMany({
-        where: {
-          OR: [
-            { userId },
-            { members: { some: { userId, status: "ACTIVE" } } },
-          ],
-        },
-        select: { id: true },
-      });
-      const accessibleCampaignIds = userCampaigns.map((c) => c.id);
+      const { getUserAccessibleCampaignIds } = await import("@/lib/security/campaign-access");
+      const accessibleIds = await getUserAccessibleCampaignIds(userId);
 
       companyWhere.OR = [
         { userId },
         ...(isDemo ? [{ userId: "usr-demo-lead" }] : []),
-        ...(accessibleCampaignIds.length > 0 ? [{ campaignId: { in: accessibleCampaignIds } }] : []),
+        ...(accessibleIds.length > 0 ? [{ campaignId: { in: accessibleIds } }] : []),
       ];
-      if (accessibleCampaignIds.length > 0) {
-        campaignWhere.id = { in: accessibleCampaignIds };
+      if (accessibleIds.length > 0) {
+        campaignWhere.id = { in: accessibleIds };
       } else {
         campaignWhere.userId = userId;
       }
-      messageWhere.userId = userId;
-      draftWhere.userId = userId;
+      messageWhere.OR = [
+        { userId },
+        ...(accessibleIds.length > 0 ? [{ draft: { company: { campaignId: { in: accessibleIds } } } }] : []),
+      ];
+      draftWhere.OR = [
+        { userId },
+        ...(accessibleIds.length > 0 ? [{ company: { campaignId: { in: accessibleIds } } }] : []),
+      ];
     }
 
     const [companies, drafts, messages, campaigns, userMeetings] = await Promise.all([

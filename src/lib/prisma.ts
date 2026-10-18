@@ -6,6 +6,14 @@ const prismaClientSingleton = () => {
       ? { db: { url: process.env.DATABASE_URL } }
       : undefined,
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+    // Neon (us-east) is far from India, so each query adds ~250ms+ of latency.
+    // The default 5s interactive-transaction timeout is too short for multi-step
+    // writes (create organisation + campaign, approve access request), which then
+    // roll back with "Transaction already closed".
+    transactionOptions: {
+      maxWait: 10_000,
+      timeout: 30_000,
+    },
   });
 };
 

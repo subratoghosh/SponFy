@@ -37,11 +37,10 @@ export async function GET(request: NextRequest) {
       pagination: { total: 0, page: 1, limit, totalPages: 0, hasMore: false },
     });
   }
-
   try {
     const { getCampaignAccess } = await import("@/lib/security/campaign-access");
-
     const andConditions: any[] = [];
+
     if (campaignId) {
       const access = await getCampaignAccess(userId, campaignId);
       if (!access.allowed) {
@@ -62,6 +61,17 @@ export async function GET(request: NextRequest) {
                 some: {
                   userId,
                   status: "ACTIVE",
+                },
+              },
+            },
+            {
+              organisation: {
+                members: {
+                  some: {
+                    userId,
+                    role: "ORGANISER",
+                    status: "ACTIVE",
+                  },
                 },
               },
             },

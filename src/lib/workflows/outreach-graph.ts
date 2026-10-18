@@ -3,6 +3,7 @@ import { Company, Campaign, EmailDraft, EmailQuality } from "@/types";
 import { isSuppressed } from "../data/repositories/settings";
 import { prisma, isDatabaseConfigured } from "../prisma";
 import { decrypt } from "../crypto";
+import { RealGmailClient } from "../integrations/gmail";
 
 export async function runOutreachWorkflow(
   company: Company,
@@ -76,6 +77,17 @@ export async function executeApprovedSend(
   }
 
   const gmail = getGmailClient(tokens);
+
+  // A real Gmail client with no stored tokens crashes inside googleapis with
+  // "Cannot read properties of undefined (reading 'access_token')".
+  // Fail early with an actionable message instead.
+  if (gmail instanceof RealGmailClient && !tokens) {
+    console.warn("[executeApprovedSend] No ACTIVE Gmail account found for userId:", targetUserId);
+    throw new Error(
+      "Gmail is not connected for this account. Open Settings -> Gmail OAuth and click Connect Gmail Inbox, then send again."
+    );
+  }
+
   const sendRes = await gmail.sendEmail(toEmail, draft.subject, draft.body);
 
   return sendRes;

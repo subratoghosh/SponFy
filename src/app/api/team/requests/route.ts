@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/security/auth-guard";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { demoAccessRequestsRef } from "@/lib/data/repositories/access-requests";
+import { demoAccessRequestsRef } from "@/lib/security/campaign-access";
 
 export async function GET() {
   const authRes = await requireAuth();
@@ -13,11 +13,11 @@ export async function GET() {
 
   try {
     if (isDatabaseConfigured()) {
-      // 1. Find all campaigns the viewer owns OR is an active ORGANISER of
-      const viewerCampaigns = await (prisma as any).campaign.findMany({
+      // 1. Find all organisations the viewer is an active ORGANISER or creator of
+      const viewerOrgs = await (prisma as any).organisation.findMany({
         where: {
           OR: [
-            { userId: viewerId },
+            { createdById: viewerId },
             {
               members: {
                 some: {
@@ -31,18 +31,41 @@ export async function GET() {
         },
         select: { id: true },
       });
+      const orgIds = viewerOrgs.map((o: any) => o.id);
 
+      // 2. Find all campaigns the viewer owns, or in viewer's orgs, or is an active ORGANISER of
+      const viewerCampaigns = await (prisma as any).campaign.findMany({
+        where: {
+          OR: [
+            { userId: viewerId },
+            { organisationId: { in: orgIds } },
+            {
+              members: {
+                some: {
+                  userId: viewerId,
+                  role: "ORGANISER",
+                  status: "ACTIVE",
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
       const campaignIds = viewerCampaigns.map((c: any) => c.id);
 
-      if (campaignIds.length === 0) {
+      if (orgIds.length === 0 && campaignIds.length === 0) {
         return NextResponse.json({ success: true, requests: [] });
       }
 
-      // 2. Fetch pending access requests for those campaigns
+      // 3. Fetch pending access requests for those organisations or campaigns
       const pendingRequests = await (prisma as any).accessRequest.findMany({
         where: {
-          campaignId: { in: campaignIds },
           status: "PENDING",
+          OR: [
+            ...(orgIds.length > 0 ? [{ organisationId: { in: orgIds } }] : []),
+            ...(campaignIds.length > 0 ? [{ campaignId: { in: campaignIds } }] : []),
+          ],
         },
         include: {
           requester: {
@@ -54,6 +77,12 @@ export async function GET() {
               collegeOrCompany: true,
               department: true,
               image: true,
+            },
+          },
+          organisation: {
+            select: {
+              id: true,
+              name: true,
             },
           },
           campaign: {
@@ -91,9 +120,10 @@ export async function GET() {
           whyJoin: details.whyJoin || null,
           message: r.message,
           details,
-          campaignId: r.campaignId,
-          campaignName: r.campaign?.name || "Campaign",
-          organisationName: r.campaign?.organisation?.name || "Organisation",
+          campaignId: r.campaignId || null,
+          campaignName: r.campaign?.name || null,
+          organisationId: r.organisationId || r.campaign?.organisationId || null,
+          organisationName: r.organisation?.name || r.campaign?.organisation?.name || "Organisation",
           createdAt: r.createdAt.toISOString(),
         };
       });

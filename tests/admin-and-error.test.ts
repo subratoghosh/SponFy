@@ -52,6 +52,56 @@ describe("Admin Governance & Platform Telemetry", { timeout: 15000 }, () => {
     expect(demoteAttempt.error).toContain("sole active platform administrator");
   });
 
+  it("filters user management into 3 sections: user, organiser, and executive", async () => {
+    const userSection = await getAdminUsers({ section: "user" });
+    const orgSection = await getAdminUsers({ section: "organiser" });
+    const execSection = await getAdminUsers({ section: "executive" });
+
+    expect(userSection.users.length).toBeGreaterThanOrEqual(1);
+    expect(orgSection.users.length).toBeGreaterThanOrEqual(1);
+    expect(execSection.users.length).toBeGreaterThanOrEqual(1);
+
+    for (const u of userSection.users) {
+      expect(u.role).not.toBe("ORGANISER");
+      expect(u.role).not.toBe("EXECUTIVE");
+    }
+
+    for (const u of orgSection.users) {
+      expect(u.role === "ORGANISER" || u.accountMode === "ORGANISER").toBe(true);
+    }
+
+    for (const u of execSection.users) {
+      expect(u.role === "EXECUTIVE" || u.accountMode === "EXECUTIVE").toBe(true);
+    }
+  });
+
+  it("enforces that admin can ONLY be assigned to an individual user", async () => {
+    const { users: admins } = await getAdminUsers({ role: "ADMIN" });
+    const adminId = admins[0].id;
+
+    // Organiser cannot be promoted to ADMIN
+    const { users: orgUsers } = await getAdminUsers({ section: "organiser" });
+    const orgUser = orgUsers[0];
+    const orgPromoAttempt = await updateUserRole(orgUser.id, "ADMIN", adminId);
+    expect(orgPromoAttempt.success).toBe(false);
+    expect(orgPromoAttempt.error).toContain("Admin role can only be assigned to an individual user");
+
+    // Executive cannot be promoted to ADMIN
+    const { users: execUsers } = await getAdminUsers({ section: "executive" });
+    const execUser = execUsers[0];
+    const execPromoAttempt = await updateUserRole(execUser.id, "ADMIN", adminId);
+    expect(execPromoAttempt.success).toBe(false);
+    expect(execPromoAttempt.error).toContain("Admin role can only be assigned to an individual user");
+
+    // Individual user CAN be promoted to ADMIN
+    const { users: individualUsers } = await getAdminUsers({ section: "user" });
+    const targetIndividual = individualUsers.find((u) => u.role === "USER");
+    if (targetIndividual) {
+      const promoResult = await updateUserRole(targetIndividual.id, "ADMIN", adminId);
+      expect(promoResult.success).toBe(true);
+    }
+  });
+
   it("records immutable audit log entries", async () => {
     const { logs: initialLogs } = await getAuditLogs();
     const initialCount = initialLogs.length;
