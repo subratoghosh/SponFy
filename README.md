@@ -20,7 +20,7 @@ SponFy is an enterprise-grade sponsorship operating system built for college hac
 | **[3. Six-Step Send-Guard Security Engine](#3-six-step-send-guard-security-engine)** | Gate Decision Flowchart | Non-bypassable human approvals, spacing, and quotas |
 | **[4. Multi-Layer Deliverability Shield](#4-multi-layer-deliverability-shield)** | Verification Pipeline | DNS MX, SPF/DMARC, disposable filters, and AI check |
 | **[5. 7-Factor Fit Scoring Breakdown](#5-transparent-7-factor-fit-scoring-algorithm)** | Mermaid Pie Chart & Matrix | 0–100 explainable sponsor evaluation breakdown |
-| **[6. Inbound Reply & Intent Intelligence](#6-real-time-reply-sync--intent-classification-engine)** | NLP Decision Machine | Automated intent classification and question extraction |
+| **[6. Inbound Reply & Intent Intelligence](#6-real-time-reply-sync--intent-classification-engine)** | NLP Decision Machine | Automation intent classification and question extraction |
 | **[7. 4-Touch Follow-Up Cadence & Circuit Breakers](#7-automated-4-touch-follow-up-engine--circuit-breakers)** | Lifecycle Timeline Flow | Scheduled cadence and real-time auto-halting triggers |
 | **[8. Meeting Scheduler & Morning Reminders](#8-meeting-calendar-scheduler--overview-reminders)** | Interaction Flowchart | Big calendar multi-slot scheduling and login popups |
 | **[9. AES-256-GCM Cryptographic Vault](#9-cryptographic-storage--token-security-vault)** | Sequence Diagram | OAuth token encryption, IV handling, and tamper defense |
