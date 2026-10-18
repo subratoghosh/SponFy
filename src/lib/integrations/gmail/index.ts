@@ -160,7 +160,18 @@ export class RealGmailClient implements IGmailClient {
       // Never pretend a real send succeeded: the caller must see the failure,
       // otherwise the tracker marks a sponsor "Contacted" when nothing was sent.
       console.error("Real Gmail API send failed:", err);
-      throw new Error(`Gmail send failed: ${err?.message || err}`);
+      const rawMessage = String(err?.message || err);
+      if (/insufficient permission|insufficientPermissions|ACCESS_TOKEN_SCOPE_INSUFFICIENT/i.test(rawMessage)) {
+        throw new Error(
+          "Gmail send failed: your connected Gmail did not grant send permission. Go to Settings -> Gmail OAuth, click Disconnect, then Connect Gmail Inbox and tick 'Send email on your behalf' on Google's screen."
+        );
+      }
+      if (/invalid_grant/i.test(rawMessage)) {
+        throw new Error(
+          "Gmail send failed: the Gmail connection has expired or was revoked. Reconnect Gmail in Settings -> Gmail OAuth."
+        );
+      }
+      throw new Error(`Gmail send failed: ${rawMessage}`);
     }
   }
 
