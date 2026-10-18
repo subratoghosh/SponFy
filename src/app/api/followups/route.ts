@@ -4,7 +4,9 @@ import { loadFollowups } from "@/lib/outreach/followup-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request?: Request) {
+export async function GET(request: Request): Promise<NextResponse>;
+export async function GET(): Promise<NextResponse>;
+export async function GET(request?: Request): Promise<NextResponse> {
   try {
     const session = await auth();
     const userId = session?.user?.id || (process.env.NODE_ENV === "test" ? "usr-demo-lead" : undefined);
