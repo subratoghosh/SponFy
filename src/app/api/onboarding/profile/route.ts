@@ -23,6 +23,75 @@ interface DemoUserProfile {
 
 const demoProfilesRef = memoryStore<Record<string, DemoUserProfile>>("onboardingProfiles", () => ({}));
 
+export async function GET() {
+  const authRes = await requireAuth();
+  if (!authRes.success) {
+    return authRes.response;
+  }
+
+  const userId = authRes.context.userId;
+  const sessionEmail = authRes.context.user.email?.toLowerCase().trim();
+
+  if (isDatabaseConfigured()) {
+    try {
+      const dbUser =
+        (await (prisma as any).user.findUnique({
+          where: { id: userId },
+          select: {
+            name: true,
+            phone: true,
+            designation: true,
+            collegeOrCompany: true,
+            department: true,
+            onboardingStatus: true,
+          },
+        })) ||
+        (sessionEmail
+          ? await (prisma as any).user.findUnique({
+              where: { email: sessionEmail },
+              select: {
+                name: true,
+                phone: true,
+                designation: true,
+                collegeOrCompany: true,
+                department: true,
+                onboardingStatus: true,
+              },
+            })
+          : null);
+
+      if (dbUser) {
+        return NextResponse.json({
+          success: true,
+          profile: {
+            name: dbUser.name || authRes.context.user.name || "",
+            phone: dbUser.phone || "",
+            designation: dbUser.designation || "",
+            collegeOrCompany: dbUser.collegeOrCompany || "",
+            department: dbUser.department || "",
+            onboardingStatus: dbUser.onboardingStatus || "NOT_STARTED",
+          },
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to fetch profile in GET /api/onboarding/profile:", err);
+    }
+  }
+
+  const demoProfile = demoProfilesRef.value[userId] || ({} as any);
+  return NextResponse.json({
+    success: true,
+    profile: {
+      name: demoProfile.name || authRes.context.user.name || "",
+      phone: demoProfile.phone || "",
+      designation: demoProfile.designation || "",
+      collegeOrCompany: demoProfile.collegeOrCompany || "",
+      department: demoProfile.department || "",
+      onboardingStatus: demoProfile.onboardingStatus || "NOT_STARTED",
+    },
+  });
+}
+
 export async function PATCH(req: Request) {
   const authRes = await requireAuth();
   if (!authRes.success) {

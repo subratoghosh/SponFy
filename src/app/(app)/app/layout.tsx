@@ -17,6 +17,24 @@ export default async function AppLayout({
 }) {
   const session = await auth();
 
+  const isDemo =
+    process.env.NEXT_PUBLIC_DEMO_MODE === "true" ||
+    !process.env.DATABASE_URL ||
+    process.env.DATABASE_URL.includes("placeholder");
+
+  if (!session?.user) {
+    if (!isDemo) {
+      redirect("/login");
+    }
+  } else if (session.user.role !== "ADMIN") {
+    const status = session.user.onboardingStatus || "NOT_STARTED";
+    if (status === "PENDING_APPROVAL") {
+      redirect("/onboarding/pending");
+    } else if (status !== "COMPLETE") {
+      redirect("/onboarding");
+    }
+  }
+
   return (
     <ToastProvider>
       <ActivityHeartbeat />

@@ -22,17 +22,34 @@ export async function middleware(request: NextRequest) {
 
   // Protect /app, /onboarding, and /admin
   if (pathname.startsWith("/app") || pathname.startsWith("/onboarding") || pathname.startsWith("/admin")) {
-    const secret =
-      process.env.AUTH_SECRET ||
-      process.env.NEXTAUTH_SECRET ||
-      "sponfy-dev-auth-secret-super-safe-fallback-32chars";
+    const secrets = [
+      process.env.AUTH_SECRET,
+      process.env.NEXTAUTH_SECRET,
+      "sponfy-dev-auth-secret-super-safe-fallback-32chars",
+    ].filter((s, idx, arr): s is string => Boolean(s) && arr.indexOf(s) === idx);
 
     let token: any = null;
     try {
       token = await getToken({
         req: request,
-        secret,
+        secret: secrets,
       });
+      if (!token) {
+        token = await getToken({
+          req: request,
+          secret: secrets,
+          secureCookie: true,
+          cookieName: "__Secure-authjs.session-token",
+        });
+      }
+      if (!token) {
+        token = await getToken({
+          req: request,
+          secret: secrets,
+          secureCookie: true,
+          cookieName: "__Secure-next-auth.session-token",
+        });
+      }
     } catch {
       // In edge or decrypt mismatch, token remains null
     }
@@ -51,6 +68,13 @@ export async function middleware(request: NextRequest) {
       request.cookies.get("next-auth.session-token") ||
       request.cookies.get("__Secure-next-auth.session-token");
 
+    // If a session cookie is present but cannot be decrypted, the cookie is invalid or expired
+    if (!token && sessionToken) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("error", "SessionExpired");
+      return NextResponse.redirect(loginUrl);
+    }
+
     // In Demo Mode with no DB and no session, only allow /app and /onboarding without auth. Never /admin!
     if (!token && !sessionToken) {
       if (isDemo && !pathname.startsWith("/admin")) {
@@ -65,7 +89,7 @@ export async function middleware(request: NextRequest) {
     // Signed-in user onboarding status check:
     // Skip onboarding restrictions for ADMIN.
     if (token && token.role !== "ADMIN") {
-      const status = (token.onboardingStatus as string) || "COMPLETE";
+      const status = (token.onboardingStatus as string) || "NOT_STARTED";
 
       // If a COMPLETE user manually opens any /onboarding path, redirect to /app
       if (pathname.startsWith("/onboarding") && status === "COMPLETE") {
