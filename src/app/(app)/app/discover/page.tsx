@@ -179,8 +179,11 @@ export default function DiscoverPage() {
 
       // Refresh list
       loadSavedResults(selectedCampaignId);
-      mutate("/api/sponsors");
-      mutate("/api/outreach");
+      // SWR keys for these lists are arrays like [url, userId], so match by URL prefix.
+      const matchesApi = (prefix: string) => (key: unknown) =>
+        (Array.isArray(key) ? String(key[0]) : String(key)).startsWith(prefix);
+      mutate(matchesApi("/api/sponsors"));
+      mutate(matchesApi("/api/outreach"));
     } catch (err: any) {
       toast(err.message || "Failed to approve candidates", "error");
     } finally {
@@ -217,8 +220,11 @@ export default function DiscoverPage() {
 
       // Refresh list
       loadSavedResults(selectedCampaignId);
-      mutate("/api/sponsors");
-      mutate("/api/outreach");
+      // SWR keys for these lists are arrays like [url, userId], so match by URL prefix.
+      const matchesApi = (prefix: string) => (key: unknown) =>
+        (Array.isArray(key) ? String(key[0]) : String(key)).startsWith(prefix);
+      mutate(matchesApi("/api/sponsors"));
+      mutate(matchesApi("/api/outreach"));
     } catch (err: any) {
       toast(err.message || "Failed to approve candidates", "error");
     } finally {
