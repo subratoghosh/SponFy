@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { EmailDraft } from "@/types";
-import { Send, ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, UserCheck, Edit3 } from "lucide-react";
+import { Send, ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, UserCheck, Edit3, Sparkles } from "lucide-react";
 
 interface VerificationDetails {
   status: "VALID" | "RISKY" | "INVALID" | "NO_MX" | "BOUNCED" | "DISPOSABLE";
@@ -38,6 +38,10 @@ interface SendConfirmationDialogProps {
   isPatternGuess?: boolean;
   remainingDailyCap?: number;
   dailyCapLimit?: number;
+  /** Company being emailed; enables the "Find email with AI" button. */
+  companyId?: string;
+  /** Called after AI discovery saves a new contact, so the parent can refresh. */
+  onContactDiscovered?: () => void;
 }
 
 export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
@@ -51,17 +55,57 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
   isPatternGuess = false,
   remainingDailyCap,
   dailyCapLimit,
+  companyId,
+  onContactDiscovered,
 }) => {
   const [selectedSource, setSelectedSource] = useState<"discovered" | "custom">(toEmail ? "discovered" : "custom");
   const [customEmail, setCustomEmail] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verifResult, setVerifResult] = useState<VerificationDetails | null>(null);
+  const [findingEmail, setFindingEmail] = useState(false);
+  const [findMessage, setFindMessage] = useState<{ tone: "success" | "info" | "error"; text: string } | null>(null);
+
+  // AI contact discovery: web search for a real public contact, then strict
+  // verification (Hunter primary, ZeroBounce secondary) before it is saved.
+  const handleFindEmailWithAI = async () => {
+    if (!companyId) return;
+    setFindingEmail(true);
+    setFindMessage(null);
+    try {
+      const res = await fetch("/api/sponsors/discover-contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success && data.contact?.email) {
+        setSelectedSource("custom");
+        setCustomEmail(data.contact.email);
+        setVerifResult(null);
+        setFindMessage({
+          tone: "success",
+          text: `Found ${data.contact.email}${data.contact.name ? ` (${data.contact.name})` : ""}. Verifying deliverability...`,
+        });
+        onContactDiscovered?.();
+      } else {
+        setFindMessage({
+          tone: res.ok ? "info" : "error",
+          text: data.reason || data.error || "No verified public contact found. Type an email manually.",
+        });
+      }
+    } catch {
+      setFindMessage({ tone: "error", text: "Contact discovery failed. Type an email manually." });
+    } finally {
+      setFindingEmail(false);
+    }
+  };
 
   useEffect(() => {
     if (open) {
       setSelectedSource(toEmail ? "discovered" : "custom");
       setCustomEmail("");
       setVerifResult(null);
+      setFindMessage(null);
     }
   }, [open, draft.id]);
 
@@ -187,6 +231,40 @@ export const SendConfirmationDialog: React.FC<SendConfirmationDialogProps> = ({
                 <span className="text-[11px] text-red-600 mt-1 block">Please enter a valid email address.</span>
               )}
             </div>
+          )}
+
+          {/* AI email search (web discovery + Hunter / ZeroBounce verification) */}
+          {companyId && (
+            <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+              <Button
+                type="button"
+                variant="butter"
+                size="sm"
+                loading={findingEmail}
+                disabled={findingEmail || loading}
+                onClick={handleFindEmailWithAI}
+                className="text-xs font-bold shrink-0"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1" />
+                {findingEmail ? "Searching the web..." : "Find email with AI"}
+              </Button>
+              <span className="text-[10px] text-text-dim leading-snug">
+                Searches public sources for {companyName}&apos;s partnerships contact, verified with Hunter &amp; ZeroBounce.
+              </span>
+            </div>
+          )}
+          {findMessage && (
+            <p
+              className={`text-[11px] mt-1 ${
+                findMessage.tone === "success"
+                  ? "text-emerald-700"
+                  : findMessage.tone === "error"
+                    ? "text-red-600"
+                    : "text-amber-800"
+              }`}
+            >
+              {findMessage.text}
+            </p>
           )}
         </div>
 
