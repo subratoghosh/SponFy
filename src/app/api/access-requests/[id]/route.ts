@@ -304,8 +304,15 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("[AccessRequest Decision API] Error processing decision:", error);
+    const detail = error instanceof Error ? error.message.split("\n").filter(Boolean).slice(-1)[0] : String(error);
+    const schemaOutOfDate = /does not exist|Unknown (arg|argument|field)|column/i.test(String((error as any)?.message || ""));
     return NextResponse.json(
-      { error: "Failed to process access request decision." },
+      {
+        error: schemaOutOfDate
+          ? "Failed to process access request decision: the database schema is out of date. Run `npx dotenv-cli -e .env.local -- npx prisma db push` and restart the server."
+          : "Failed to process access request decision.",
+        ...(process.env.NODE_ENV !== "production" ? { detail } : {}),
+      },
       { status: 500 }
     );
   }
