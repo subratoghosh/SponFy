@@ -151,11 +151,14 @@ export default function TeamManagementPage() {
       }
       if (campRes.ok) {
         const campData = await campRes.json();
-        const camps = Array.isArray(campData)
+        // /api/campaigns responds with { success, data: [...] }
+        const camps: any[] = Array.isArray(campData)
           ? campData
-          : campData.campaigns || [];
+          : campData.data || campData.campaigns || [];
         setCampaignOptions(
-          camps.map((c: any) => ({
+          camps
+            .filter((c: any) => !c.archived && c.status !== "archived")
+            .map((c: any) => ({
             id: c.id,
             name: c.name,
             eventType: c.eventType || "Event",
