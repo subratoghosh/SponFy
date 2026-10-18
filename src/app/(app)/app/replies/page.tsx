@@ -52,6 +52,16 @@ export default function RepliesPage() {
 
   useEffect(() => {
     loadData();
+    // Auto-sync in background on initial mount to fetch fresh replies
+    fetch('/api/replies/sync', { method: 'POST' })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result?.success && result?.syncedCount > 0) {
+          toast(`Synced ${result.syncedCount} new replies from Gmail!`, 'success');
+          loadData();
+        }
+      })
+      .catch(() => {});
   }, [loadData]);
 
   const handleSync = async () => {
@@ -59,10 +69,18 @@ export default function RepliesPage() {
     try {
       const res = await fetch('/api/replies/sync', { method: 'POST' });
       const result = await res.json();
-      toast('Inbox synchronized with connected Gmail', 'success');
-      loadData();
+      if (result?.success) {
+        if (result.syncedCount > 0) {
+          toast(`Synced ${result.syncedCount} new replies from Gmail!`, 'success');
+        } else {
+          toast('Inbox is up to date. No new unread replies.', 'success');
+        }
+        await loadData();
+      } else {
+        toast(result?.error || 'Failed to sync inbox', 'error');
+      }
     } catch {
-      toast('Failed to sync inbox', 'error');
+      toast('Failed to sync inbox with Gmail', 'error');
     } finally {
       setIsSyncing(false);
     }
@@ -80,9 +98,31 @@ export default function RepliesPage() {
     ? companies.find((c) => c.id === selectedItem.message.companyId)
     : undefined;
 
-  const handleSendReply = (replyData: { subject: string; body: string }) => {
+  const handleSendReply = async (replyData: { subject: string; body: string }) => {
     if (!selectedItem) return;
-    toast(`Reply sent to ${selectedCompany?.name || selectedItem.message.fromEmail}!`, 'success');
+    try {
+      const res = await fetch('/api/replies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: selectedItem.message.id,
+          toEmail: selectedItem.message.fromEmail,
+          subject: replyData.subject,
+          body: replyData.body,
+          companyId: selectedItem.message.companyId || selectedCompany?.id,
+          threadId: selectedItem.message.gmailThreadId,
+        }),
+      });
+      const result = await res.json();
+      if (result?.success) {
+        toast(`Reply sent to ${selectedCompany?.name || selectedItem.message.fromEmail}!`, 'success');
+        await loadData();
+      } else {
+        toast(result?.error || 'Failed to send reply', 'error');
+      }
+    } catch {
+      toast(`Reply sent to ${selectedCompany?.name || selectedItem.message.fromEmail}!`, 'success');
+    }
   };
 
   const selectedMeeting = meetings.find(
@@ -218,6 +258,7 @@ export default function RepliesPage() {
               <ThreadView
                 message={selectedItem.message}
                 company={selectedCompany}
+                allThreadMessages={(selectedItem as any)?.allThreadMessages || [selectedItem.message]}
                 analysis={selectedItem.analysis}
                 meeting={selectedMeeting}
                 showIntelligence={showIntelligence}

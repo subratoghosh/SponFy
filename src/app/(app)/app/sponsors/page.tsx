@@ -68,10 +68,7 @@ export default function SponsorsPipelinePage() {
     stage: selectedStage,
   });
 
-  const isDemo = !session?.user || session.user.email === "demo@sponfy.dev";
-  const sponsors = isDemo
-    ? rawSponsors
-    : rawSponsors.filter((s) => s.campaignId !== "camp-demo-1");
+  const sponsors = rawSponsors;
 
   const handleToggleSelectSponsor = (id: string) => {
     setSelectedSponsorIds((prev) =>

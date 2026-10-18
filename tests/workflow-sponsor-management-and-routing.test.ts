@@ -290,5 +290,130 @@ describe("Sponsor Management, Grok Verification & Outreach Routing Tests", () =>
       const json = await res.json();
       expect(json.error).toContain("approved sponsors");
     });
+
+    it("allows drafting email for demo-lead company without ownership error", async () => {
+      const company = await addSponsor({
+        userId: "usr-demo-lead",
+        campaignId: "camp-demo-1",
+        name: "Demo Lead Company",
+        website: "https://demolead.example.com",
+        industry: "AI",
+        description: "Company created by demo lead",
+        stage: "Qualified",
+        fitScore: 88,
+        pipelineValue: 50000,
+        confidence: 90,
+        scoreBreakdown: [],
+        signals: [],
+        researchStatus: "pending",
+      });
+
+      const req = new NextRequest("http://localhost:3000/api/outreach/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId: company.id }),
+      });
+
+      const res = await postDraft(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(json.draft).toBeDefined();
+    });
+
+    it("safely cleans up child drafts when deleting a sponsor", async () => {
+      const company = await addSponsor({
+        userId,
+        campaignId,
+        name: "Cascade Delete Company",
+        website: "https://cascadedelete.example.com",
+        industry: "Cloud",
+        description: "Testing cascade delete",
+        stage: "Qualified",
+        fitScore: 85,
+        pipelineValue: 0,
+        confidence: 85,
+        scoreBreakdown: [],
+        signals: [],
+        researchStatus: "pending",
+      });
+
+      // Create a draft for this company
+      await saveDraft({
+        userId,
+        companyId: company.id,
+        subject: "Hackathon sponsorship",
+        body: "Hello sponsor",
+        status: "draft",
+      });
+
+      const draftsBefore = await getDraftsByCompanyId(company.id);
+      expect(draftsBefore.length).toBe(1);
+
+      // Delete the company
+      const deleted = await removeSponsor(company.id);
+      expect(deleted).toBe(true);
+
+      // Verify drafts were cleaned up
+      const draftsAfter = await getDraftsByCompanyId(company.id);
+      expect(draftsAfter.length).toBe(0);
+
+      // Verify company is gone
+      const found = await getSponsorById(company.id);
+      expect(found).toBeNull();
+    });
+  });
+
+  describe("Gmail Reply Sync Route", () => {
+    it("POST /api/replies/sync synchronizes inbox and returns status without throwing", async () => {
+      const { POST: syncReplies } = await import("@/app/api/replies/sync/route");
+      const req = new NextRequest("http://localhost:3000/api/replies/sync", {
+        method: "POST",
+      });
+
+      const res = await syncReplies(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(typeof json.syncedCount).toBe("number");
+      expect(Array.isArray(json.threads)).toBe(true);
+    });
+
+    it("GET /api/replies returns inbound messages and intent analyses", async () => {
+      const { GET: getReplies } = await import("@/app/api/replies/route");
+      const req = new NextRequest("http://localhost:3000/api/replies", {
+        method: "GET",
+      });
+
+      const res = await getReplies(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(Array.isArray(json.data)).toBe(true);
+      expect(json.data.length).toBeGreaterThan(0);
+      expect(json.data[0].message).toBeDefined();
+      expect(json.data[0].message.direction).toBe("inbound");
+    });
+
+    it("POST /api/replies sends reply and logs outbound message", async () => {
+      const { POST: postReply } = await import("@/app/api/replies/route");
+      const req = new NextRequest("http://localhost:3000/api/replies", {
+        method: "POST",
+        body: JSON.stringify({
+          toEmail: "partner@example.com",
+          subject: "Re: Sponsorship Discussion",
+          body: "Thank you for the reply. Let's schedule a call.",
+          companyId: "comp-postman",
+        }),
+      });
+
+      const res = await postReply(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(json.message).toBeDefined();
+      expect(json.message.direction).toBe("outbound");
+      expect(json.message.toEmail).toBe("partner@example.com");
+    });
   });
 });

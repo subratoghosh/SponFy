@@ -43,6 +43,7 @@ function OutreachContent() {
   const [sending, setSending] = useState(false);
   const [selectedDraftIds, setSelectedDraftIds] = useState<string[]>([]);
   const [approvingBulk, setApprovingBulk] = useState(false);
+  const [removingBulk, setRemovingBulk] = useState(false);
   const [isMassOutreachOpen, setIsMassOutreachOpen] = useState(false);
   const [dailyStats, setDailyStats] = useState({ sent: 0, limit: 30 });
   const composerRef = useRef<HTMLDivElement>(null);
@@ -165,29 +166,76 @@ function OutreachContent() {
     }
   };
 
-  const handleRejectDraft = async () => {
-    if (!activeDraft) return;
-    const confirmReject = window.confirm(
-      `Are you sure you want to reject and discard this draft for ${activeCompany?.name || "this company"}?`
+  const handleRemoveDraft = async (id: string) => {
+    const targetDraft = drafts.find((d: EmailDraft) => d.id === id);
+    if (!targetDraft) return;
+    if (targetDraft.status === "sent" || targetDraft.status === "sending") {
+      toast("Dispatched emails cannot be removed from queue.", "warning");
+      return;
+    }
+    const targetComp = companies.find((c: Company) => c.id === targetDraft.companyId);
+    const confirmDelete = window.confirm(
+      `Are you sure you want to remove the outreach draft for ${targetComp?.name || "this company"} from the queue?`
     );
-    if (!confirmReject) return;
+    if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`/api/outreach/draft?id=${encodeURIComponent(activeDraft.id)}`, {
+      const res = await fetch(`/api/outreach/draft?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
       const data = await res.json();
       if (data.success) {
-        toast(`Draft for ${activeCompany?.name || "company"} rejected and removed.`, "info");
-        const remaining = drafts.filter((d: EmailDraft) => d.id !== activeDraft.id);
-        setSelectedDraftId(remaining[0]?.id || null);
+        toast(`Draft for ${targetComp?.name || "company"} removed from queue.`, "info");
+        if (selectedDraftId === id) {
+          const remaining = drafts.filter((d: EmailDraft) => d.id !== id);
+          setSelectedDraftId(remaining[0]?.id || null);
+        }
+        setSelectedDraftIds((prev) => prev.filter((item) => item !== id));
         loadData();
       } else {
-        toast(data.error || "Failed to reject draft", "error");
+        toast(data.error || "Failed to remove draft", "error");
       }
     } catch {
-      toast("Error rejecting draft", "error");
+      toast("Error removing draft", "error");
     }
+  };
+
+  const handleBulkRemove = async () => {
+    if (selectedDraftIds.length === 0) return;
+    const confirmDelete = window.confirm(
+      `Are you sure you want to remove ${selectedDraftIds.length} draft(s) from the outreach queue?`
+    );
+    if (!confirmDelete) return;
+
+    setRemovingBulk(true);
+    try {
+      const res = await fetch("/api/outreach/draft", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedDraftIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast(`Removed ${data.removedCount ?? selectedDraftIds.length} draft(s) from queue.`, "info");
+        if (selectedDraftIds.includes(selectedDraftId || "")) {
+          const remaining = drafts.filter((d: EmailDraft) => !selectedDraftIds.includes(d.id));
+          setSelectedDraftId(remaining[0]?.id || null);
+        }
+        setSelectedDraftIds([]);
+        loadData();
+      } else {
+        toast(data.error || "Failed to remove drafts", "error");
+      }
+    } catch {
+      toast("Error removing selected drafts", "error");
+    } finally {
+      setRemovingBulk(false);
+    }
+  };
+
+  const handleRejectDraft = async () => {
+    if (!activeDraft) return;
+    await handleRemoveDraft(activeDraft.id);
   };
 
   const getRecipientEmail = (comp?: Company | null, draft?: EmailDraft | null) => {
@@ -384,6 +432,9 @@ function OutreachContent() {
               onClearSelection={handleClearSelection}
               onBulkApprove={handleBulkApprove}
               approvingBulk={approvingBulk}
+              onRemoveDraft={handleRemoveDraft}
+              onBulkRemove={handleBulkRemove}
+              removingBulk={removingBulk}
             />
           </div>
 

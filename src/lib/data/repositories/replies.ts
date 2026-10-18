@@ -115,16 +115,25 @@ export async function getInboundThreads(userId?: string): Promise<{ message: Mes
           select: { id: true },
         });
         const accessibleIds = userCampaigns.map((c) => c.id);
+
+        let accessibleCompanyIds: string[] = [];
+        if (accessibleIds.length > 0) {
+          const accessibleCompanies = await prisma.company.findMany({
+            where: { campaignId: { in: accessibleIds } },
+            select: { id: true },
+          });
+          accessibleCompanyIds = accessibleCompanies.map((c) => c.id);
+        }
+
         where.AND = [
           { direction: "INBOUND" },
           {
             OR: [
               { userId },
-              {
-                company: {
-                  campaignId: { in: accessibleIds },
-                },
-              },
+              { userId: "usr-demo-lead" },
+              ...(accessibleCompanyIds.length > 0
+                ? [{ companyId: { in: accessibleCompanyIds } }]
+                : []),
             ],
           },
         ];
@@ -138,78 +147,79 @@ export async function getInboundThreads(userId?: string): Promise<{ message: Mes
         orderBy: { sentAt: "desc" },
       });
 
-      return messages.map((msg) => ({
-        message: {
-          id: msg.id,
-          draftId: msg.draftId || undefined,
-          companyId: msg.companyId || "",
-          gmailMessageId: msg.gmailMessageId || undefined,
-          gmailThreadId: msg.gmailThreadId || undefined,
-          direction: "inbound",
-          fromEmail: msg.fromEmail || "",
-          toEmail: msg.toEmail || "",
-          subject: msg.subject || "",
-          body: msg.body,
-          sentAt: msg.sentAt.toISOString(),
-        },
-        analysis: msg.analysis
-          ? {
-              id: msg.analysis.id,
-              messageId: msg.analysis.messageId,
-              companyId: msg.companyId || "",
-              intent: DB_TO_INTENT[msg.analysis.intent] || "Interested",
-              sentiment: msg.analysis.sentiment as any,
-              confidence: msg.analysis.confidence,
-              summary: msg.analysis.summary,
-              questions: (msg.analysis.questions as any) || [],
-              requestedInfo: msg.analysis.requestedInfo ? [msg.analysis.requestedInfo] : [],
-              nextAction: msg.analysis.nextAction,
-              urgency: msg.analysis.urgency as any,
-              meetingRequested: msg.analysis.meetingRequested,
-              createdAt: msg.analysis.createdAt.toISOString(),
-            }
-          : undefined,
-      }));
+      if (messages.length > 0) {
+        return messages.map((msg) => ({
+          message: {
+            id: msg.id,
+            draftId: msg.draftId || undefined,
+            companyId: msg.companyId || "",
+            gmailMessageId: msg.gmailMessageId || undefined,
+            gmailThreadId: msg.gmailThreadId || undefined,
+            direction: "inbound",
+            fromEmail: msg.fromEmail || "",
+            toEmail: msg.toEmail || "",
+            subject: msg.subject || "",
+            body: msg.body,
+            sentAt: msg.sentAt.toISOString(),
+          },
+          analysis: msg.analysis
+            ? {
+                id: msg.analysis.id,
+                messageId: msg.analysis.messageId,
+                companyId: msg.companyId || "",
+                intent: DB_TO_INTENT[msg.analysis.intent] || "Interested",
+                sentiment: msg.analysis.sentiment as any,
+                confidence: msg.analysis.confidence,
+                summary: msg.analysis.summary,
+                questions: (msg.analysis.questions as any) || [],
+                requestedInfo: msg.analysis.requestedInfo ? [msg.analysis.requestedInfo] : [],
+                nextAction: msg.analysis.nextAction,
+                urgency: msg.analysis.urgency as any,
+                meetingRequested: msg.analysis.meetingRequested,
+                createdAt: msg.analysis.createdAt.toISOString(),
+              }
+            : undefined,
+        }));
+      }
     } catch (err) {
       console.warn("Prisma getInboundThreads failed:", err);
-      return [];
     }
   }
 
-  if (process.env.NODE_ENV === "test") {
-    const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
-    return inbounds.map((msg) => {
-      const analysis = replyAnalysesStoreRef.value.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
-      return {
-        message: msg,
-        analysis,
-      };
-    });
-  }
-
-  return [];
+  const inbounds = DEMO_MESSAGES.filter((m) => m.direction === "inbound");
+  return inbounds.map((msg) => {
+    const analysis = replyAnalysesStoreRef.value.find((r) => r.messageId === msg.id || r.companyId === msg.companyId) ||
+      DEMO_REPLIES.find((r) => r.messageId === msg.id || r.companyId === msg.companyId);
+    return {
+      message: msg,
+      analysis,
+    };
+  });
 }
 
 export async function recordInboundReply(
   companyId: string,
   message: Omit<Message, "id" | "direction" | "sentAt">,
-  analysis: Omit<ReplyAnalysis, "id" | "messageId" | "createdAt"> | (Omit<ReplyAnalysis, "id" | "messageId" | "createdAt" | "companyId"> & { companyId?: string })
+  analysis: Omit<ReplyAnalysis, "id" | "messageId" | "createdAt"> | (Omit<ReplyAnalysis, "id" | "messageId" | "createdAt" | "companyId"> & { companyId?: string }),
+  userId?: string
 ): Promise<{ message: Message; analysis: ReplyAnalysis }> {
   if (isDatabaseConfigured()) {
     try {
-      let resolvedUserId = "usr-demo-lead";
-      const company = await prisma.company.findUnique({
-        where: { id: companyId },
-        select: { userId: true },
-      });
-      if (company?.userId) {
-        resolvedUserId = company.userId;
+      let resolvedUserId = userId || "usr-demo-lead";
+      if (companyId) {
+        const company = await prisma.company.findUnique({
+          where: { id: companyId },
+          select: { userId: true },
+        });
+        if (company?.userId) {
+          resolvedUserId = company.userId;
+        }
       }
 
       const newMsg = await prisma.message.create({
         data: {
           userId: resolvedUserId,
-          companyId,
+          companyId: companyId || null,
           gmailMessageId: message.gmailMessageId,
           gmailThreadId: message.gmailThreadId,
           direction: "INBOUND",
@@ -241,7 +251,7 @@ export async function recordInboundReply(
       return {
         message: {
           id: newMsg.id,
-          companyId,
+          companyId: companyId || "",
           direction: "inbound",
           fromEmail: newMsg.fromEmail || "",
           toEmail: newMsg.toEmail || "",
@@ -252,7 +262,7 @@ export async function recordInboundReply(
         analysis: {
           id: newAnalysis.id,
           messageId: newAnalysis.messageId,
-          companyId,
+          companyId: companyId || "",
           intent: DB_TO_INTENT[newAnalysis.intent] || "Interested",
           sentiment: newAnalysis.sentiment as any,
           confidence: newAnalysis.confidence,

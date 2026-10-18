@@ -21,6 +21,7 @@ import {
   Edit3,
   Check,
   X,
+  UserCheck,
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "next-auth/react";
@@ -233,6 +234,39 @@ export const EmailComposer: React.FC<EmailComposerProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Executive Sender Tag Banner */}
+      {draft.status === "sent" && (
+        <div className="p-4 bg-blue-50/90 rounded-2xl border border-blue-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-blue-950 animate-fade-in shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+              <UserCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-extrabold text-blue-950 text-xs">
+                  Sent by: {draft.senderName || "Executive"}
+                </span>
+                {draft.senderRole && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-200/80 text-blue-900 uppercase tracking-wider">
+                    {draft.senderRole}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] text-blue-700 block mt-0.5">
+                {draft.senderEmail ? `${draft.senderEmail} • ` : ""}
+                {draft.sentAt
+                  ? `Dispatched on ${new Date(draft.sentAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}`
+                  : "Dispatched via verified email channel"}
+              </span>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-extrabold text-[11px] border border-blue-300 self-start sm:self-auto shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+            Executive Tag Attached
+          </span>
+        </div>
+      )}
 
       {/* Recipient Bar */}
       {isEditingRecipient ? (

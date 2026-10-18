@@ -2,7 +2,7 @@
 
 import React from "react";
 import { EmailDraft, Company } from "@/types";
-import { CheckCircle2, AlertTriangle, CheckSquare, Square, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertTriangle, CheckSquare, Square, Loader2, Trash2, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DraftQueueListProps {
@@ -18,6 +18,9 @@ interface DraftQueueListProps {
   onClearSelection?: () => void;
   onBulkApprove?: () => void;
   approvingBulk?: boolean;
+  onRemoveDraft?: (id: string) => void;
+  onBulkRemove?: () => void;
+  removingBulk?: boolean;
 }
 
 export const DraftQueueList: React.FC<DraftQueueListProps> = ({
@@ -33,6 +36,9 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
   onClearSelection,
   onBulkApprove,
   approvingBulk = false,
+  onRemoveDraft,
+  onBulkRemove,
+  removingBulk = false,
 }) => {
   const filtered = drafts.filter((d) =>
     statusFilter === "all" ? true : d.status === statusFilter
@@ -74,16 +80,18 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
       </div>
 
       {/* Bulk selection controls for 'draft' or 'all' */}
-      {eligibleForApproval.length > 0 && onToggleDraftSelect && (
-        <div className="flex items-center justify-between px-1 text-xs">
+      {(eligibleForApproval.length > 0 || selectedDraftIds.length > 0) && onToggleDraftSelect && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs">
           <div className="flex items-center gap-2">
-            <button
-              onClick={onSelectAllEligible}
-              className="text-[11px] font-bold text-green-dark hover:underline flex items-center gap-1"
-            >
-              <CheckSquare className="w-3.5 h-3.5" />
-              Select All Eligible ({eligibleForApproval.length})
-            </button>
+            {eligibleForApproval.length > 0 && (
+              <button
+                onClick={onSelectAllEligible}
+                className="text-[11px] font-bold text-green-dark hover:underline flex items-center gap-1"
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                Select All ({eligibleForApproval.length})
+              </button>
+            )}
             {selectedDraftIds.length > 0 && onClearSelection && (
               <button
                 onClick={onClearSelection}
@@ -93,19 +101,39 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
               </button>
             )}
           </div>
-          {selectedDraftIds.length > 0 && onBulkApprove && (
-            <button
-              onClick={onBulkApprove}
-              disabled={approvingBulk}
-              className="bg-green-dark text-butter-cream px-3 py-1 rounded-lg font-bold text-[11px] hover:bg-green-dark/90 flex items-center gap-1.5 transition-colors disabled:opacity-50"
-            >
-              {approvingBulk ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <CheckCircle2 className="w-3 h-3" />
+          {selectedDraftIds.length > 0 && (
+            <div className="flex items-center gap-1.5 ml-auto">
+              {onBulkRemove && (
+                <button
+                  type="button"
+                  onClick={onBulkRemove}
+                  disabled={removingBulk}
+                  className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors disabled:opacity-50"
+                  title="Remove selected drafts from queue"
+                >
+                  {removingBulk ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-rose-600" />
+                  ) : (
+                    <Trash2 className="w-3 h-3 text-rose-600" />
+                  )}
+                  Remove ({selectedDraftIds.length})
+                </button>
               )}
-              Approve ({selectedDraftIds.length})
-            </button>
+              {onBulkApprove && (
+                <button
+                  onClick={onBulkApprove}
+                  disabled={approvingBulk}
+                  className="bg-green-dark text-butter-cream px-3 py-1 rounded-lg font-bold text-[11px] hover:bg-green-dark/90 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  {approvingBulk ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-3 h-3" />
+                  )}
+                  Approve ({selectedDraftIds.length})
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -117,13 +145,14 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
           const isSelected = selectedDraftId === d.id;
           const isChecked = selectedDraftIds.includes(d.id);
           const canCheck = d.status === "draft" && !d.needsAttention;
+          const canRemove = d.status !== "sent" && d.status !== "sending";
 
           return (
             <div
               key={d.id}
               onClick={() => onSelectDraft(d.id)}
               className={cn(
-                "p-3.5 rounded-2xl border text-xs transition-all cursor-pointer space-y-1.5 relative",
+                "p-3.5 rounded-2xl border text-xs transition-all cursor-pointer space-y-1.5 relative group",
                 isSelected
                   ? "bg-butter-panel border-green-dark ring-2 ring-butter-cream shadow-sm"
                   : "bg-white border-green-dark/10 hover:border-green-dark/30"
@@ -171,6 +200,19 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
                   >
                     {d.status}
                   </span>
+                  {onRemoveDraft && canRemove && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveDraft(d.id);
+                      }}
+                      title="Remove draft from queue"
+                      className="p-1 rounded-md text-text-muted hover:text-rose-600 hover:bg-rose-50 transition-colors opacity-70 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
               <p className="text-text-dim text-[11px] truncate font-medium">
@@ -180,6 +222,17 @@ export const DraftQueueList: React.FC<DraftQueueListProps> = ({
                 <span>Quality: {d.quality?.overall != null ? `${d.quality.overall}%` : "–"}</span>
                 <span className="truncate ml-2">{comp?.contacts?.[0]?.name || comp?.contacts?.[0]?.email || "No contact yet"}</span>
               </div>
+              {d.status === "sent" && (
+                <div className="flex items-center gap-1.5 pt-1.5 border-t border-green-dark/6">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 truncate max-w-full">
+                    <UserCheck className="w-3 h-3 text-blue-600 shrink-0" />
+                    <span className="truncate">
+                      Sent by: <strong className="font-extrabold">{d.senderName || d.senderEmail || "Executive"}</strong>
+                      {d.senderRole ? ` (${d.senderRole})` : ""}
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
           );
         })}

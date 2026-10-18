@@ -108,7 +108,11 @@ export interface EmailDraft {
   needsAttention?: boolean;
   attentionReason?: string;
   approvedAt?: string;
+  sentAt?: string;
   createdAt: string;
+  senderName?: string;
+  senderEmail?: string;
+  senderRole?: string;
 }
 
 // Message

@@ -60,19 +60,42 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
       }
       const records = await prisma.emailDraft.findMany({
         where: Object.keys(where).length > 0 ? where : undefined,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, role: true, designation: true },
+          },
+          messages: {
+            where: { direction: "OUTBOUND" },
+            orderBy: { sentAt: "desc" },
+            take: 1,
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, role: true, designation: true },
+              },
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
       });
-      return records.map((r) => ({
-        id: r.id,
-        companyId: r.companyId,
-        contactId: r.contactId || undefined,
-        subject: r.subject,
-        body: r.body,
-        quality: (r.quality as any) || {},
-        status: DB_TO_DRAFT_STATUS[r.status] || "draft",
-        approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
-        createdAt: r.createdAt.toISOString(),
-      }));
+      return records.map((r: any) => {
+        const outboundMsg = r.messages?.[0];
+        const senderUser = outboundMsg?.user || r.user;
+        return {
+          id: r.id,
+          companyId: r.companyId,
+          contactId: r.contactId || undefined,
+          subject: r.subject,
+          body: r.body,
+          quality: (r.quality as any) || {},
+          status: DB_TO_DRAFT_STATUS[r.status] || "draft",
+          approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
+          sentAt: r.sentAt ? r.sentAt.toISOString() : outboundMsg?.sentAt ? outboundMsg.sentAt.toISOString() : undefined,
+          createdAt: r.createdAt.toISOString(),
+          senderName: senderUser?.name || undefined,
+          senderEmail: senderUser?.email || outboundMsg?.fromEmail || undefined,
+          senderRole: senderUser?.designation || senderUser?.role || undefined,
+        };
+      });
     } catch (err) {
       console.warn("Prisma getDrafts failed:", err);
       return [];
@@ -93,10 +116,27 @@ export async function getDrafts(status?: DraftStatus, userId?: string): Promise<
 export async function getDraftById(id: string): Promise<EmailDraft | null> {
   if (isDatabaseConfigured()) {
     try {
-      const r = await prisma.emailDraft.findUnique({
+      const r: any = await prisma.emailDraft.findUnique({
         where: { id },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, role: true, designation: true },
+          },
+          messages: {
+            where: { direction: "OUTBOUND" },
+            orderBy: { sentAt: "desc" },
+            take: 1,
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, role: true, designation: true },
+              },
+            },
+          },
+        },
       });
       if (r) {
+        const outboundMsg = r.messages?.[0];
+        const senderUser = outboundMsg?.user || r.user;
         return {
           id: r.id,
           companyId: r.companyId,
@@ -106,7 +146,11 @@ export async function getDraftById(id: string): Promise<EmailDraft | null> {
           quality: (r.quality as any) || {},
           status: DB_TO_DRAFT_STATUS[r.status] || "draft",
           approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
+          sentAt: r.sentAt ? r.sentAt.toISOString() : outboundMsg?.sentAt ? outboundMsg.sentAt.toISOString() : undefined,
           createdAt: r.createdAt.toISOString(),
+          senderName: senderUser?.name || undefined,
+          senderEmail: senderUser?.email || outboundMsg?.fromEmail || undefined,
+          senderRole: senderUser?.designation || senderUser?.role || undefined,
         };
       }
     } catch (err) {
@@ -123,20 +167,43 @@ export async function getDraftsByCompanyId(companyId: string): Promise<EmailDraf
     try {
       const records = await prisma.emailDraft.findMany({
         where: { companyId },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, role: true, designation: true },
+          },
+          messages: {
+            where: { direction: "OUTBOUND" },
+            orderBy: { sentAt: "desc" },
+            take: 1,
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, role: true, designation: true },
+              },
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
       });
       if (records.length > 0) {
-        return records.map((r) => ({
-          id: r.id,
-          companyId: r.companyId,
-          contactId: r.contactId || undefined,
-          subject: r.subject,
-          body: r.body,
-          quality: (r.quality as any) || {},
-          status: DB_TO_DRAFT_STATUS[r.status] || "draft",
-          approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
-          createdAt: r.createdAt.toISOString(),
-        }));
+        return records.map((r: any) => {
+          const outboundMsg = r.messages?.[0];
+          const senderUser = outboundMsg?.user || r.user;
+          return {
+            id: r.id,
+            companyId: r.companyId,
+            contactId: r.contactId || undefined,
+            subject: r.subject,
+            body: r.body,
+            quality: (r.quality as any) || {},
+            status: DB_TO_DRAFT_STATUS[r.status] || "draft",
+            approvedAt: r.approvedAt ? r.approvedAt.toISOString() : undefined,
+            sentAt: r.sentAt ? r.sentAt.toISOString() : outboundMsg?.sentAt ? outboundMsg.sentAt.toISOString() : undefined,
+            createdAt: r.createdAt.toISOString(),
+            senderName: senderUser?.name || undefined,
+            senderEmail: senderUser?.email || outboundMsg?.fromEmail || undefined,
+            senderRole: senderUser?.designation || senderUser?.role || undefined,
+          };
+        });
       }
     } catch (err) {
       console.warn("Prisma getDraftsByCompanyId failed, falling back to memory store:", err);
@@ -304,24 +371,99 @@ export async function updateDraft(
 export async function deleteDraft(id: string, userId?: string): Promise<boolean> {
   if (isDatabaseConfigured()) {
     try {
-      await prisma.emailDraft.deleteMany({
-        where: {
-          id,
-          ...(userId ? { userId } : {}),
-        },
+      let whereClause: any = {
+        id,
+        status: { notIn: ["SENT", "SENDING"] },
+      };
+      if (userId) {
+        const userCampaigns = await prisma.campaign.findMany({
+          where: {
+            OR: [
+              { userId },
+              {
+                members: {
+                  some: {
+                    userId,
+                    status: "ACTIVE",
+                  },
+                },
+              },
+            ],
+          },
+          select: { id: true },
+        });
+        const accessibleIds = userCampaigns.map((c) => c.id);
+        whereClause.OR = [
+          { userId },
+          { company: { campaignId: { in: accessibleIds } } },
+        ];
+      }
+      const res = await prisma.emailDraft.deleteMany({
+        where: whereClause,
       });
-      return true;
+      return res.count > 0;
     } catch (err) {
       console.warn("Prisma deleteDraft failed, falling back to memory store:", err);
     }
   }
 
   const idx = draftsStoreRef.value.findIndex((d) => d.id === id);
-  if (idx !== -1) {
+  if (idx !== -1 && draftsStoreRef.value[idx].status !== "sent" && draftsStoreRef.value[idx].status !== "sending") {
     draftsStoreRef.value.splice(idx, 1);
     return true;
   }
   return false;
+}
+
+export async function deleteDrafts(ids: string[], userId?: string): Promise<number> {
+  if (ids.length === 0) return 0;
+  if (isDatabaseConfigured()) {
+    try {
+      let whereClause: any = {
+        id: { in: ids },
+        status: { notIn: ["SENT", "SENDING"] },
+      };
+      if (userId) {
+        const userCampaigns = await prisma.campaign.findMany({
+          where: {
+            OR: [
+              { userId },
+              {
+                members: {
+                  some: {
+                    userId,
+                    status: "ACTIVE",
+                  },
+                },
+              },
+            ],
+          },
+          select: { id: true },
+        });
+        const accessibleIds = userCampaigns.map((c) => c.id);
+        whereClause.OR = [
+          { userId },
+          { company: { campaignId: { in: accessibleIds } } },
+        ];
+      }
+      const res = await prisma.emailDraft.deleteMany({
+        where: whereClause,
+      });
+      return res.count;
+    } catch (err) {
+      console.warn("Prisma deleteDrafts failed, falling back to memory store:", err);
+    }
+  }
+
+  let count = 0;
+  draftsStoreRef.value = draftsStoreRef.value.filter((d) => {
+    if (ids.includes(d.id) && d.status !== "sent" && d.status !== "sending") {
+      count++;
+      return false;
+    }
+    return true;
+  });
+  return count;
 }
 
 export async function approveDraft(id: string): Promise<EmailDraft | null> {
@@ -483,7 +625,7 @@ export async function recordSentMessage(
 
       await prisma.emailDraft.update({
         where: { id: draftId },
-        data: { status: "SENT" },
+        data: { status: "SENT", sentAt: new Date() },
       });
 
       const msg = await prisma.message.create({
@@ -523,7 +665,16 @@ export async function recordSentMessage(
   }
 
   const sentIdx = draftsStoreRef.value.findIndex((d) => d.id === draftId);
-  if (sentIdx !== -1) draftsStoreRef.value[sentIdx] = { ...draftsStoreRef.value[sentIdx], status: "sent" };
+  if (sentIdx !== -1) {
+    draftsStoreRef.value[sentIdx] = {
+      ...draftsStoreRef.value[sentIdx],
+      status: "sent",
+      sentAt: new Date().toISOString(),
+      senderName: draftsStoreRef.value[sentIdx].senderName || "Subrato Ghosh",
+      senderEmail: draftsStoreRef.value[sentIdx].senderEmail || "organizer@sponfy.dev",
+      senderRole: draftsStoreRef.value[sentIdx].senderRole || "EXECUTIVE",
+    };
+  }
 
   const message: Message = {
     id: `msg-${Date.now()}`,

@@ -7,7 +7,7 @@ import { computeFollowups, type FollowupItem } from "./followups";
 export async function loadFollowups(now?: Date, userId?: string, campaignId?: string): Promise<FollowupItem[]> {
   const [companies, messages, drafts] = await Promise.all([
     getSponsors(campaignId, userId),
-    getMessages(),
+    getMessages(undefined, userId),
     getDrafts(undefined, userId),
   ]);
 

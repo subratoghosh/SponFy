@@ -317,4 +317,78 @@ describe("outreach routes (demo store)", () => {
       addSponsor({ ...existing, name: existing.name.toUpperCase(), contacts: [] })
     ).rejects.toThrow(/already in this campaign/);
   });
+
+  it("allows removing an un-sent draft from outreach queue via DELETE /api/outreach/draft?id=...", async () => {
+    const { DELETE: deleteDraftRoute } = await import("@/app/api/outreach/draft/route");
+    const { getDraftById } = await import("@/lib/data/repositories/outreach");
+    const { draft } = await freshDraftForUncontactedCompany();
+
+    const req = new Request(`http://localhost/api/outreach/draft?id=${draft.id}`, {
+      method: "DELETE",
+    });
+    const res = await deleteDraftRoute(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(await getDraftById(draft.id)).toBeNull();
+  });
+
+  it("allows bulk removing un-sent drafts from outreach queue via DELETE /api/outreach/draft with { ids: [...] }", async () => {
+    const { DELETE: deleteDraftRoute } = await import("@/app/api/outreach/draft/route");
+    const { getDraftById } = await import("@/lib/data/repositories/outreach");
+    const item1 = await freshDraftForUncontactedCompany();
+    const item2 = await freshDraftForUncontactedCompany();
+
+    const req = new Request("http://localhost/api/outreach/draft", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [item1.draft.id, item2.draft.id] }),
+    });
+    const res = await deleteDraftRoute(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.removedCount).toBe(2);
+    expect(await getDraftById(item1.draft.id)).toBeNull();
+    expect(await getDraftById(item2.draft.id)).toBeNull();
+  });
+
+  it("prevents removing sent or sending drafts from the outreach queue", async () => {
+    const { DELETE: deleteDraftRoute } = await import("@/app/api/outreach/draft/route");
+    const { POST: send } = await import("@/app/api/outreach/send/route");
+    const { POST: approve } = await import("@/app/api/outreach/approve/route");
+    const { contact, draft } = await freshDraftForUncontactedCompany();
+
+    await approve(post({ draftId: draft.id }));
+    await send(post({ draftId: draft.id, toEmail: contact.email }));
+
+    const req = new Request(`http://localhost/api/outreach/draft?id=${draft.id}`, {
+      method: "DELETE",
+    });
+    const res = await deleteDraftRoute(req);
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toMatch(/Cannot remove a draft that has already been dispatched/i);
+  });
+
+  it("populates executive sender tag metadata (senderName, senderEmail, senderRole, sentAt) for sent drafts", async () => {
+    const { GET: state } = await import("@/app/api/outreach/state/route");
+    const { POST: send } = await import("@/app/api/outreach/send/route");
+    const { POST: approve } = await import("@/app/api/outreach/approve/route");
+    const { contact, draft } = await freshDraftForUncontactedCompany();
+
+    await approve(post({ draftId: draft.id }));
+    const sendRes = await send(post({ draftId: draft.id, toEmail: contact.email }));
+    expect(sendRes.status).toBe(200);
+
+    const stateRes = await state();
+    const stateData = await stateRes.json();
+    const sentDraft = stateData.drafts.find((d: any) => d.id === draft.id);
+
+    expect(sentDraft).toBeDefined();
+    expect(sentDraft.status).toBe("sent");
+    expect(sentDraft.sentAt).toBeDefined();
+    expect(sentDraft.senderName).toBeDefined();
+    expect(sentDraft.senderRole).toBeDefined();
+  });
 });
