@@ -477,6 +477,8 @@ function OutreachContent() {
           isPatternGuess={!activeCompany.contacts?.some((c) => c.email && c.status === "verified")}
           remainingDailyCap={Math.max(0, dailyStats.limit - dailyStats.sent)}
           dailyCapLimit={dailyStats.limit}
+          companyId={activeCompany.id}
+          onContactDiscovered={loadData}
         />
       )}
 
