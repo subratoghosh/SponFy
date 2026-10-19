@@ -444,8 +444,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `ADMIN_EMAILS` | Comma-separated admin emails verified on server side | Yes |
 | `GOOGLE_CLIENT_ID` | Google Cloud OAuth Client ID for Gmail API & Sign In | Yes |
 | `GOOGLE_CLIENT_SECRET` | Google Cloud OAuth Client Secret | Yes |
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint for distributed rate limiting | Recommended |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST authentication token | Recommended |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint for distributed rate limiting | Yes |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST authentication token | Yes|
 | `GROQ_API_KEY` | Groq API key for Llama 3.3 70B fast scoring | Yes |
 | `GEMINI_API_KEY` | Google Gemini API key for deep dossier synthesis | Yes |
 | `TAVILY_API_KEY` | Tavily Search API key for real-time web discovery | Yes |
